@@ -1,0 +1,55 @@
+<aside class="fixed left-0 top-0 h-full w-[260px] bg-surface-container-low border-r border-outline-variant/30 flex flex-col z-50">
+  <!-- Brand Logo -->
+  <div class="py-8 px-6">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white">
+        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">medical_services</span>
+      </div>
+      <div>
+        <h1 class="font-headline-sm text-headline-sm font-bold text-primary">Sanad</h1>
+        <p class="font-label-sm text-label-sm text-on-surface-variant/70 uppercase tracking-widest">Admin Portal</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="flex-1 px-4 space-y-1">
+    @for (item of navItems; track item.route) {
+      <a 
+        [routerLink]="item.route" 
+        routerLinkActive="text-primary font-bold border-l-4 border-primary bg-secondary-container/10"
+        [routerLinkActiveOptions]="{ exact: true }"
+        class="flex items-center gap-3 px-4 py-3 text-on-surface-variant font-medium hover:bg-surface-container-high transition-colors duration-200"
+      >
+        <span class="material-symbols-outlined">{{ item.icon }}</span>
+        <span class="font-label-md text-label-md">{{ item.label }}</span>
+      </a>
+    }
+
+    <!-- System Section Header -->
+    <div class="pt-8 pb-4 px-4">
+      <p class="font-label-sm text-label-sm text-outline uppercase tracking-tighter">System</p>
+    </div>
+
+    <!-- Settings Link -->
+    <a 
+      routerLink="/settings" 
+      routerLinkActive="text-primary font-bold border-l-4 border-primary bg-secondary-container/10"
+      class="flex items-center gap-3 px-4 py-3 text-on-surface-variant font-medium hover:bg-surface-container-high transition-colors duration-200"
+    >
+      <span class="material-symbols-outlined">settings</span>
+      <span class="font-label-md text-label-md">Settings</span>
+    </a>
+  </nav>
+
+  <!-- Health Card widget -->
+  <div class="p-4 mt-auto">
+    <div class="bg-primary-container text-on-primary-container p-4 rounded-2xl">
+      <p class="font-label-md text-label-md font-bold mb-1">System Health</p>
+      <div class="w-full bg-black/10 h-1.5 rounded-full overflow-hidden">
+        <div class="bg-white h-full w-[94%]"></div>
+      </div>
+      <p class="font-label-sm text-label-sm mt-2 opacity-80">94.2% Uptime</p>
+    </div>
+  </div>
+</aside>

@@ -1,3 +1,77 @@
-/* You can add global styles to this file, and also import other style files */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+@import "./Styles/_variables.css";
+@import "./Styles/_typography.css";
+@import "./Styles/_animations.css";
+@import "./Styles/_utilities.css";
 
-@import 'tailwindcss';
+@theme {
+  --color-secondary-fixed: #b1efd8;
+  --color-surface: #fcf9f8;
+  --color-secondary-fixed-dim: #96d3bd;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-tint: #006a6a;
+  --color-primary-container: #0d8282;
+  --color-secondary-container: #aeedd5;
+  --color-inverse-primary: #78d6d5;
+  --color-on-error: #ffffff;
+  --color-inverse-surface: #303030;
+  --color-primary-fixed: #94f2f2;
+  --color-on-secondary-container: #316d5b;
+  --color-tertiary-fixed: #ebe1d4;
+  --color-surface-container-low: #f6f3f2;
+  --color-on-tertiary-fixed: #1f1b13;
+  --color-on-secondary-fixed-variant: #0d503f;
+  --color-tertiary-container: #7b7469;
+  --color-on-primary-container: #f3fffe;
+  --color-on-tertiary-fixed-variant: #4c463d;
+  --color-on-primary-fixed: #002020;
+  --color-on-background: #1b1c1c;
+  --color-tertiary-fixed-dim: #cec5b9;
+  --color-on-tertiary-container: #fffbff;
+  --color-on-surface: #1b1c1c;
+  --color-on-surface-variant: #3e4949;
+  --color-surface-container: #f0eded;
+  --color-secondary: #2c6956;
+  --color-outline-variant: #bdc9c8;
+  --color-surface-bright: #fcf9f8;
+  --color-primary: #006767;
+  --color-outline: #6e7979;
+  --color-background: #F3E9DC;
+  --color-on-tertiary: #ffffff;
+  --color-surface-container-high: #eae7e7;
+  --color-on-error-container: #93000a;
+  --color-inverse-on-surface: #f3f0f0;
+  --color-surface-dim: #dcd9d9;
+  --color-on-primary-fixed-variant: #004f50;
+  --color-on-secondary: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-secondary-fixed: #002118;
+  --color-error: #ba1a1a;
+  --color-surface-container-highest: #e4e2e1;
+  --color-on-primary: #ffffff;
+  --color-tertiary: #615b51;
+  --color-surface-variant: #e4e2e1;
+  --color-primary-fixed-dim: #78d6d5;
+
+  /* Spacing overrides if needed */
+  --spacing-card-padding: 20px;
+  --spacing-unit: 4px;
+  --spacing-input-height: 40px;
+  --spacing-gutter: 16px;
+  --spacing-container-margin: 24px;
+  --spacing-row-height-dense: 48px;
+  --spacing-row-height-standard: 64px;
+
+  /* Font Families */
+  --font-body-sm: "Plus Jakarta Sans", sans-serif;
+  --font-label-sm: "Plus Jakarta Sans", sans-serif;
+  --font-label-md: "Plus Jakarta Sans", sans-serif;
+  --font-body-md: "Plus Jakarta Sans", sans-serif;
+  --font-headline-md: "Plus Jakarta Sans", sans-serif;
+  --font-body-lg: "Plus Jakarta Sans", sans-serif;
+  --font-title-lg: "Plus Jakarta Sans", sans-serif;
+  --font-headline-lg: "Plus Jakarta Sans", sans-serif;
+  --font-headline-sm: "Plus Jakarta Sans", sans-serif;
+}
+

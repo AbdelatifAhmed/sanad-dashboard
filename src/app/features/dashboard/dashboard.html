@@ -1,0 +1,172 @@
+<!-- Header & Actions -->
+<div class="mb-8 flex justify-between items-end flex-wrap gap-4">
+  <div>
+    <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Dashboard Overview</h2>
+    <p class="font-body-md text-body-md text-on-surface-variant mt-1">Welcome back. Here's what's happening with Sanad today.</p>
+  </div>
+  <button 
+    (click)="createBooking()"
+    class="flex items-center gap-2 bg-primary text-white px-6 py-2.5 rounded-lg font-label-md text-label-md hover:bg-primary-container transition-all card-shadow cursor-pointer select-none active:scale-[0.98]"
+  >
+    <span class="material-symbols-outlined text-[18px]">add_circle</span>
+    New Booking
+  </button>
+</div>
+
+<!-- KPI Section -->
+<section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+  @for (kpi of kpis(); track kpi.id) {
+    <app-stat-card [kpi]="kpi"></app-stat-card>
+  }
+</section>
+
+<!-- Analytics Charts Section -->
+<section class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+  <!-- Left: Request Trends -->
+  <div class="lg:col-span-2">
+    <app-chart-card type="trends" title="Request Trends"></app-chart-card>
+  </div>
+  <!-- Right: User Distribution -->
+  <div>
+    <app-chart-card type="distribution" title="User Distribution"></app-chart-card>
+  </div>
+</section>
+
+<!-- Recent Activity List Section -->
+<section class="mb-8">
+  <div class="bg-white p-6 rounded-2xl card-shadow border border-white">
+    <div class="flex justify-between items-center mb-6">
+      <h4 class="font-title-lg text-title-lg text-on-surface font-bold">Recent Activity</h4>
+      <button class="text-primary font-label-md text-label-md hover:underline font-semibold cursor-pointer">View All</button>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      @for (act of recentActivities(); track act.id) {
+        <div class="flex gap-4 p-4 rounded-xl bg-surface-container-low hover:bg-surface-container transition-all">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0" [class]="act.iconBg + ' ' + act.iconColor">
+            <span class="material-symbols-outlined">{{ act.icon }}</span>
+          </div>
+          <div>
+            <p class="font-body-md text-body-md text-on-surface font-semibold">{{ act.title }}</p>
+            <p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">{{ act.description }}</p>
+            <p class="font-label-sm text-label-sm text-outline-variant mt-1.5">{{ act.time }}</p>
+          </div>
+        </div>
+      } @empty {
+        <div class="col-span-3 text-center py-6 text-on-surface-variant font-body-md">
+          No recent activity logs available.
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- Bottom Data Tables Section -->
+<section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  <!-- Recent Users Table -->
+  <div class="bg-white rounded-2xl card-shadow border border-white overflow-hidden flex flex-col justify-between">
+    <div>
+      <div class="p-6 border-b border-outline-variant/30 flex justify-between items-center">
+        <h4 class="font-title-lg text-title-lg text-on-surface font-bold">Recent Users</h4>
+        <span class="material-symbols-outlined text-outline-variant cursor-pointer hover:text-on-surface">more_vert</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead class="bg-surface-container-low">
+            <tr>
+              <th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider font-semibold">Name</th>
+              <th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider font-semibold">Role</th>
+              <th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider font-semibold">Status</th>
+              <th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider font-semibold">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-outline-variant/20">
+            @for (usr of filteredUsers(); track usr.id) {
+              <tr class="hover:bg-surface-container-lowest transition-colors">
+                <td class="px-6 py-4">
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-secondary-container/20 flex items-center justify-center text-secondary font-bold text-[11px] select-none">
+                      {{ usr.initials }}
+                    </div>
+                    <p class="font-body-md text-body-md font-semibold text-on-surface">{{ usr.name }}</p>
+                  </div>
+                </td>
+                <td class="px-6 py-4 font-body-md text-body-md text-on-surface-variant">{{ usr.role }}</td>
+                <td class="px-6 py-4">
+                  <span 
+                    class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-tighter"
+                    [class]="usr.status === 'Active' ? 'bg-secondary-container/40 text-secondary' : 'bg-error-container/40 text-error'"
+                  >
+                    {{ usr.status }}
+                  </span>
+                </td>
+                <td class="px-6 py-4">
+                  <button 
+                    (click)="viewUser(usr.name)"
+                    class="text-primary hover:bg-primary/5 p-1.5 rounded-md transition-all cursor-pointer"
+                  >
+                    <span class="material-symbols-outlined text-[20px] block">visibility</span>
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="4" class="px-6 py-8 text-center text-on-surface-variant font-body-md">
+                  No users found matching "{{ statsService.searchQuery() }}"
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pending Verifications List -->
+  <div class="bg-white rounded-2xl card-shadow border border-white overflow-hidden flex flex-col">
+    <div class="p-6 border-b border-outline-variant/30 flex justify-between items-center">
+      <h4 class="font-title-lg text-title-lg text-on-surface font-bold">Pending Verifications</h4>
+      <span class="bg-error text-white text-[10px] px-2.5 py-1 rounded-full font-bold">
+        {{ pendingVerifications().length }} ACTION REQUIRED
+      </span>
+    </div>
+    
+    <div class="p-6 space-y-4 overflow-y-auto max-h-[360px] flex-1">
+      @for (cand of pendingVerifications(); track cand.id) {
+        <div class="flex items-center justify-between p-4 rounded-xl border border-outline-variant/20 hover:border-primary/30 transition-all flex-wrap gap-3">
+          <div class="flex items-center gap-4">
+            <img 
+              [alt]="cand.name" 
+              class="w-12 h-12 rounded-lg object-cover border border-outline-variant/30" 
+              [src]="cand.avatar"
+            />
+            <div>
+              <p class="font-body-md text-body-md font-bold text-on-surface">{{ cand.name }}</p>
+              <p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">{{ cand.role }}</p>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button 
+              (click)="viewUser(cand.name)"
+              class="px-4 py-1.5 rounded-lg border border-primary text-primary font-label-md text-label-md hover:bg-primary/5 cursor-pointer font-bold select-none active:scale-95 transition-all"
+            >
+              View
+            </button>
+            <button 
+              (click)="approve(cand.id)"
+              class="px-4 py-1.5 rounded-lg bg-primary text-white font-label-md text-label-md hover:shadow-md cursor-pointer font-bold select-none active:scale-95 transition-all"
+            >
+              Approve
+            </button>
+          </div>
+        </div>
+      } @empty {
+        <div class="flex flex-col items-center justify-center py-10 text-center">
+          <span class="material-symbols-outlined text-[48px] text-secondary-fixed-dim">task_alt</span>
+          <p class="font-title-lg text-title-lg text-on-surface font-bold mt-3">All Caught Up!</p>
+          <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">No verifications pending administrative review.</p>
+        </div>
+      }
+    </div>
+  </div>
+</section>

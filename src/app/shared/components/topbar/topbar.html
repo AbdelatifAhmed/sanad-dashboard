@@ -1,0 +1,47 @@
+<header class="fixed top-0 right-0 left-[260px] h-[64px] bg-surface flex justify-between items-center px-[16px] z-40 border-b border-outline-variant/30">
+  <!-- Search Bar -->
+  <div class="flex items-center gap-4 flex-1">
+    <div class="relative w-full max-w-md">
+      <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary">search</span>
+      <input 
+        (input)="onSearch($event)"
+        [value]="statsService.searchQuery()"
+        class="w-full pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full font-body-md text-body-md focus:ring-2 focus:ring-primary/20 outline-none transition-all" 
+        placeholder="Search for caregivers, families, or bookings..." 
+        type="text"
+      />
+    </div>
+  </div>
+
+  <!-- User Action Center -->
+  <div class="flex items-center gap-6">
+    <!-- Notifications -->
+    <button class="relative hover:bg-surface-container rounded-full p-2 transition-colors">
+      <span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+      <span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+    </button>
+    
+    <div class="h-8 w-[1px] bg-outline-variant/50"></div>
+
+    <!-- Admin Profile / Logout Action -->
+    <div 
+      (click)="logout()"
+      title="Click to Logout" 
+      class="flex items-center gap-3 cursor-pointer group select-none"
+    >
+      <div class="text-right">
+        <p class="font-label-md text-label-md text-on-surface leading-tight font-bold group-hover:text-primary transition-colors">
+          {{ authService.currentUser()?.name || 'Admin User' }}
+        </p>
+        <p class="font-label-sm text-label-sm text-on-surface-variant">
+          {{ authService.currentUser()?.role || 'Super Admin' }}
+        </p>
+      </div>
+      <img 
+        alt="Admin Avatar" 
+        class="w-10 h-10 rounded-full object-cover border-2 border-primary/20 group-hover:border-primary transition-all" 
+        src="https://lh3.googleusercontent.com/aida-public/AB6AXuBu5M_QB2oWcZyr0DcBkUTx5wp64KlbbHzy5hm-hHV2Pzu1FstA5QqP06uCcNSv0947BLFlBpshQ9W-trxgeNoFSMTPoZB6WWssdnUeVzGCU_K8u9smODq-oE1IcSJ0d7p9F6UklljR4jEIckqYcmXW91jX7E79FdVsiYpbJ2NaAS_Qn-JJ152Z3RjwfgG-5dKZYVQPRvqj2nfeKlpavEq2O5QVjEE99y5NVjMW6Sinw2kJeWt1VldPt6sp9PLwX3wFBrwRLoKrUPqr"
+      />
+    </div>
+  </div>
+</header>

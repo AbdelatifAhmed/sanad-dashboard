@@ -1,0 +1,111 @@
+:root {
+  /* ─── Brand Colors (Deep Teal) ─── */
+  --clr-primary-50:  #E8F6F6;
+  --clr-primary-100: #C7EAEA;
+  --clr-primary-200: #A2DCDC;
+  --clr-primary-300: #74C5C5;
+  --clr-primary-400: #4CB0B0;
+  --clr-primary-500: #1F8A8A;   /* Main Brand (Deep Teal) */
+  --clr-primary-600: #197272;
+  --clr-primary-700: #135858;
+  --clr-primary-800: #0D3E3E;
+  --clr-primary-900: #072626;
+
+  /* ─── Accent (Soft Green) ─── */
+  --clr-accent-400: #CEF3E5;
+  --clr-accent-500: #A8E6CF;   /* Main Accent (Soft Green) */
+  --clr-accent-600: #88CCA3;
+
+  /* ─── Neutral (Warm Beige, Soft Gray, Text) ─── */
+  --clr-neutral-0:   #FFFFFF;
+  --clr-neutral-50:  #FAF7F2;   /* Warm beige tint */
+  --clr-neutral-100: #F3E9DC;   /* Warm Beige */
+  --clr-neutral-200: #EAE3D9;
+  --clr-neutral-300: #E6E6E6;   /* Soft Gray */
+  --clr-neutral-400: #CCCCCC;
+  --clr-neutral-500: #999999;
+  --clr-neutral-600: #777777;
+  --clr-neutral-700: #555555;
+  --clr-neutral-800: #3E3E3E;
+  --clr-neutral-900: #2B2B2B;   /* Text color */
+  --clr-neutral-950: #1C1C1C;
+
+  /* ─── Semantic Colors ─── */
+  --clr-success-light: #E8F5E9;
+  --clr-success:       #2E7D32;
+  --clr-success-dark:  #1B5E20;
+
+  --clr-warning-light: #FFF8E1;
+  --clr-warning:       #FFB300;
+  --clr-warning-dark:  #FF8F00;
+
+  --clr-danger-light:  #FFEBEE;
+  --clr-danger:        #C62828;
+  --clr-danger-dark:   #B71C1C;
+
+  --clr-info-light:    #E3F2FD;
+  --clr-info:          #1565C0;
+  --clr-info-dark:     #0D47A1;
+
+  /* ─── Spacing Scale ─── */
+  --sp-1:  0.25rem;   /* 4px  */
+  --sp-2:  0.5rem;    /* 8px  */
+  --sp-3:  0.75rem;   /* 12px */
+  --sp-4:  1rem;      /* 16px */
+  --sp-5:  1.25rem;   /* 20px */
+  --sp-6:  1.5rem;    /* 24px */
+  --sp-8:  2rem;      /* 32px */
+  --sp-10: 2.5rem;    /* 40px */
+  --sp-12: 3rem;      /* 48px */
+  --sp-16: 4rem;      /* 64px */
+
+  /* ─── Border Radius ─── */
+  --radius-sm:   0.375rem;  /* 6px  */
+  --radius-md:   0.5rem;    /* 8px  */
+  --radius-lg:   0.75rem;   /* 12px */
+  --radius-xl:   1rem;      /* 16px */
+  --radius-2xl:  1.5rem;    /* 24px */
+  --radius-full: 9999px;
+
+  /* ─── Shadows ─── */
+  --shadow-sm:  0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md:  0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg:  0 10px 15px -3px rgb(0 0 0 / 0.1);
+  --shadow-xl:  0 20px 25px -5px rgb(0 0 0 / 0.1);
+
+  /* ─── Layout ─── */
+  --sidebar-width:          260px;
+  --sidebar-collapsed:      72px;
+  --topbar-height:          64px;
+
+  /* ─── Transitions ─── */
+  --transition-fast:   150ms ease;
+  --transition-base:   250ms ease;
+  --transition-slow:   350ms ease;
+
+  /* ─── Z-Index Scale ─── */
+  --z-dropdown:  1000;
+  --z-sticky:    1020;
+  --z-modal:     1050;
+  --z-toast:     1090;
+}
+
+[data-theme="dark"] {
+  --clr-bg-primary:    var(--clr-neutral-950);
+  --clr-bg-secondary:  var(--clr-neutral-900);
+  --clr-bg-card:       var(--clr-neutral-800);
+  --clr-bg-hover:      var(--clr-neutral-700);
+  --clr-border:        var(--clr-neutral-700);
+  --clr-text-primary:  var(--clr-neutral-50);
+  --clr-text-secondary:var(--clr-neutral-400);
+}
+
+[data-theme="light"] {
+  --clr-bg-primary:    var(--clr-neutral-50);     /* Light warm background */
+  --clr-bg-secondary:  var(--clr-neutral-100);    /* Warm beige layout accent */
+  --clr-bg-card:       var(--clr-neutral-0);      /* Clean white cards */
+  --clr-bg-hover:      var(--clr-neutral-300);     /* Soft gray hover effects */
+  --clr-border:        var(--clr-neutral-300);     /* Soft gray borders */
+  --clr-text-primary:  var(--clr-neutral-900);     /* Text: #2B2B2B */
+  --clr-text-secondary:var(--clr-neutral-600);
+}
