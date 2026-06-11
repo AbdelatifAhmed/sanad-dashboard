@@ -44,7 +44,7 @@
     <div class="flex justify-center items-center h-[200px]">
       <div 
         class="relative w-44 h-44 rounded-full flex items-center justify-center shadow-inner"
-        style="background: conic-gradient(#006767 0% 71.4%, #96d3bd 71.4% 100%);"
+        [style.background]="(familiesPercentage === 0 && caregiversPercentage === 0) ? '#e2e8f0' : ('conic-gradient(#006767 0% ' + familiesPercentage + '%, #96d3bd ' + familiesPercentage + '% 100%)')"
       >
         <!-- Inner Cutout for Donut effect -->
         <div class="absolute w-[120px] h-[120px] bg-white rounded-full flex flex-col items-center justify-center shadow-md">

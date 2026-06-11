@@ -19,6 +19,9 @@ export class DashboardComponent {
   recentActivities = this.statsService.recentActivities;
   pendingVerifications = this.statsService.pendingVerifications;
   filteredUsers = this.statsService.filteredUsers;
+  totalUsersCount = this.statsService.totalUsersCount;
+  familiesPercentage = this.statsService.familiesPercentage;
+  caregiversPercentage = this.statsService.caregiversPercentage;
 
   approve(candidateId: string): void {
     this.statsService.approveVerification(candidateId);
