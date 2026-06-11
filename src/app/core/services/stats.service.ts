@@ -1,4 +1,5 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 export interface KPI {
   id: string;
@@ -38,10 +39,40 @@ export interface CaregiverCandidate {
   details?: string;
 }
 
+export interface DashboardStatsResponse {
+  status: string;
+  data: {
+    kpis: {
+      globalUsers: number;
+      totalFamilies: number;
+      totalCompanions: number;
+      activeServices: number;
+      completedServices: number;
+    };
+    companionsBreakdown: {
+      verified: number;
+      pendingOnboarding: number;
+      rejected: number;
+    };
+    bookingsBreakdown: {
+      pendingApproval: number;
+      inProgress: number;
+      completed: number;
+      totalRequests: number;
+    };
+  };
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class StatsService {
+  private readonly http = inject(HttpClient);
+  private readonly API_URL = 'http://localhost:5000/api/admin/dashboard/stats';
+
+  constructor() {
+    this.loadDashboardStats();
+  }
   // Writable signals for state management
   readonly kpis = signal<KPI[]>([
     {
@@ -241,5 +272,39 @@ export class StatsService {
       iconColor: 'text-primary'
     };
     this.recentActivities.set([newAct, ...this.recentActivities()]);
+  }
+
+  loadDashboardStats(): void {
+    const token = localStorage.getItem('sanad_admin_token');
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+
+    this.http.get<DashboardStatsResponse>(this.API_URL, { headers }).subscribe({
+      next: (response) => {
+        if (response.status === 'success') {
+          const apiKpis = response.data.kpis;
+          this.kpis.update(kpis => kpis.map(kpi => {
+            switch (kpi.id) {
+              case 'total-users':
+                return { ...kpi, value: apiKpis.globalUsers.toLocaleString() };
+              case 'total-families':
+                return { ...kpi, value: apiKpis.totalFamilies.toLocaleString() };
+              case 'total-caregivers':
+                return { ...kpi, value: apiKpis.totalCompanions.toLocaleString() };
+              case 'active-requests':
+                return { ...kpi, value: apiKpis.activeServices.toLocaleString() };
+              case 'completed-bookings':
+                return { ...kpi, value: apiKpis.completedServices.toLocaleString() };
+              default:
+                return kpi;
+            }
+          }));
+        }
+      },
+      error: (err) => {
+        console.error('Error loading dashboard stats:', err);
+      }
+    });
   }
 }
