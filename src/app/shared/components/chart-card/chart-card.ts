@@ -31,7 +31,7 @@ export class ChartCardComponent {
   ];
 
   // Data for the Donut Chart
-  familiesPercentage = 71.4;
-  caregiversPercentage = 28.6;
-  totalCount = '12.4k';
+  @Input() familiesPercentage = 0;
+  @Input() caregiversPercentage = 0;
+  @Input() totalCount: string | number = 0;
 }

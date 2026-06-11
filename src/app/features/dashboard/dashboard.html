@@ -28,7 +28,13 @@
   </div>
   <!-- Right: User Distribution -->
   <div>
-    <app-chart-card type="distribution" title="User Distribution"></app-chart-card>
+    <app-chart-card 
+      type="distribution" 
+      title="User Distribution"
+      [familiesPercentage]="familiesPercentage()"
+      [caregiversPercentage]="caregiversPercentage()"
+      [totalCount]="totalUsersCount()"
+    ></app-chart-card>
   </div>
 </section>
 

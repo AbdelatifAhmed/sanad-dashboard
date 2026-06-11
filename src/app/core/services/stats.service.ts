@@ -63,6 +63,54 @@ export interface DashboardStatsResponse {
   };
 }
 
+export interface ApiUser {
+  _id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: string;
+  isBanned: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminUsersResponse {
+  status: string;
+  users: ApiUser[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasMore: boolean;
+  };
+}
+
+export interface ApiPendingCompanion {
+  _id: string;
+  userId: {
+    _id: string;
+    name: string;
+    email: string;
+    phone: string;
+  };
+  companionType: string;
+  specialization: string;
+  bio: string;
+  hourlyRate: number;
+  verificationStatus: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PendingCompanionsResponse {
+  status: string;
+  results: number;
+  data: {
+    pendingCompanions: ApiPendingCompanion[];
+  };
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -72,7 +120,33 @@ export class StatsService {
 
   constructor() {
     this.loadDashboardStats();
+    this.loadRecentUsers();
+    this.loadPendingCompanions();
   }
+
+  readonly statsData = signal<DashboardStatsResponse['data'] | null>(null);
+
+  readonly totalUsersCount = computed(() => {
+    const data = this.statsData();
+    return data ? data.kpis.globalUsers.toLocaleString() : '0';
+  });
+
+  readonly familiesPercentage = computed(() => {
+    const data = this.statsData();
+    if (!data) return 0;
+    const total = data.kpis.totalFamilies + data.kpis.totalCompanions;
+    if (total === 0) return 0;
+    return parseFloat(((data.kpis.totalFamilies / total) * 100).toFixed(1));
+  });
+
+  readonly caregiversPercentage = computed(() => {
+    const data = this.statsData();
+    if (!data) return 0;
+    const total = data.kpis.totalFamilies + data.kpis.totalCompanions;
+    if (total === 0) return 0;
+    return parseFloat(((data.kpis.totalCompanions / total) * 100).toFixed(1));
+  });
+
   // Writable signals for state management
   readonly kpis = signal<KPI[]>([
     {
@@ -160,32 +234,9 @@ export class StatsService {
     }
   ]);
 
-  readonly users = signal<User[]>([
-    { id: 'usr-1', name: 'Lina Ahmed', initials: 'LA', role: 'Family', status: 'Active' },
-    { id: 'usr-2', name: 'Omar Malik', initials: 'OM', role: 'Caregiver', status: 'Pending' },
-    { id: 'usr-3', name: 'Sara Yasin', initials: 'SY', role: 'Family', status: 'Active' }
-  ]);
+  readonly users = signal<User[]>([]);
 
-  readonly pendingVerifications = signal<CaregiverCandidate[]>([
-    {
-      id: 'cand-1',
-      name: 'Fatima Nour',
-      role: 'RN, 5 yrs Experience',
-      avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDC4OhyMg1p71s7M-w6qpSHGallZWnDOLRecoTy3UOKBGQ_ljURVLBRkGD5wcVMvCPJjjKo7B1UtBIC8bkUdY8ulYdMfbQUNn_dw_6BCHhjWGQUuRDTV3jW2NfyhTLq9rgyszdRNLQX6LFnTiDqdqvTEsdi4bU_wVfN2OlXi7I6IBWXUqh2a49y7_kEdjTtuF8vDYm0-v5MzKFE0OIBR9r4nkioRgHokvq894RHp-M82j6gp9xrjfXTF5Gr3kCI7Gx3oPfkYfGvQ9eY',
-    },
-    {
-      id: 'cand-2',
-      name: 'Zaid Khalil',
-      role: 'Specialized Physiotherapist',
-      avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDDnS9WYjv9cVd_U5mC_Z_qxzAfDZnsIDY3HnNXrmyYno1vZVEdUm1A1Lk1Gjr4oB0VSbZ4cliHP5a6epULKyi72DHVJekAp2XqOAb5dKvuRiBgTgYK-hpMFioNOotKmAb_EZHS8jUKPMy_T-0DLD0PP-URuiAXQiQi1z7VvtlL0nDtdZwfrRfL94f04EOcAwgplJqhnv9xrtegDA_sfowzVOYb1Ho8ydtDrxiHhGW8_Bdh5nKwfADl5dsyZP10-zVZ1NA27i7ZesZ9',
-    },
-    {
-      id: 'cand-3',
-      name: 'Hana Bakri',
-      role: 'Certified Home Aid',
-      avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC5eYJ3yH1ihxweqDFDAsO3EZ4mCxsJWgR9aMJHBHPIdDneSU0L-sMvUxtKcGVM4BexeUzIXyuqcsSOEB64mL8Wg8L2J_CdVZy8Dwmv0lwIqBunWc93FtRsXrUJRSR2hakDBW5y1-CpzjycjMV6fgcq66m9FJuM45MlxiKoiiOmKyFcM_gmdYUHtPhPjvn9akkJVHjXl6vZ8ra7JbySizZTcW1qYlyPz7PW8l1q6ef97jwvgDGtC_qnubbfZxiJmzCpBdG7C7kVzVKX',
-    }
-  ]);
+  readonly pendingVerifications = signal<CaregiverCandidate[]>([]);
 
   // Writable signal for search queries
   readonly searchQuery = signal<string>('');
@@ -206,49 +257,48 @@ export class StatsService {
 
   // Action methods to update state dynamically
   approveVerification(candidateId: string): void {
-    const list = this.pendingVerifications();
-    const candidate = list.find(c => c.id === candidateId);
-    
-    if (candidate) {
-      // 1. Remove from pending verifications
-      this.pendingVerifications.set(list.filter(c => c.id !== candidateId));
+    const token = localStorage.getItem('sanad_admin_token');
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
 
-      // 2. Add to recent activities
-      const newAct: Activity = {
-        id: `act-${Date.now()}`,
-        title: `Verification Approved: ${candidate.name}`,
-        description: `${candidate.role} is now active for bookings`,
-        time: 'Just now',
-        type: 'verify_ok',
-        icon: 'verified',
-        iconBg: 'bg-tertiary-container/20',
-        iconColor: 'text-tertiary'
-      };
-      this.recentActivities.set([newAct, ...this.recentActivities()]);
+    this.http.patch<any>(
+      `http://localhost:5000/api/admin/companions/verify-companion/${candidateId}`,
+      { status: 'verified' },
+      { headers }
+    ).subscribe({
+      next: (response) => {
+        if (response.status === 'success') {
+          const list = this.pendingVerifications();
+          const candidate = list.find(c => c.id === candidateId);
+          
+          if (candidate) {
+            // 1. Remove from pending verifications
+            this.pendingVerifications.set(list.filter(c => c.id !== candidateId));
 
-      // 3. Update KPIs (increase total users/caregivers, decrease pending count if applicable)
-      this.kpis.update(kpis => kpis.map(kpi => {
-        if (kpi.id === 'total-caregivers') {
-          const rawVal = parseInt(kpi.value.replace(/,/g, ''), 10);
-          return { ...kpi, value: (rawVal + 1).toLocaleString() };
+            // 2. Add to recent activities
+            const newAct: Activity = {
+              id: `act-${Date.now()}`,
+              title: `Verification Approved: ${candidate.name}`,
+              description: `${candidate.role} is now active for bookings`,
+              time: 'Just now',
+              type: 'verify_ok',
+              icon: 'verified',
+              iconBg: 'bg-tertiary-container/20',
+              iconColor: 'text-tertiary'
+            };
+            this.recentActivities.set([newAct, ...this.recentActivities()]);
+
+            // 3. Refresh Dashboard KPIs and Users from backend
+            this.loadDashboardStats();
+            this.loadRecentUsers();
+          }
         }
-        if (kpi.id === 'total-users') {
-          const rawVal = parseInt(kpi.value.replace(/,/g, ''), 10);
-          return { ...kpi, value: (rawVal + 1).toLocaleString() };
-        }
-        return kpi;
-      }));
-
-      // 4. Add user to the main list
-      const newUser: User = {
-        id: `usr-${Date.now()}`,
-        name: candidate.name,
-        initials: candidate.name.split(' ').map(n => n[0]).join('').toUpperCase(),
-        role: 'Caregiver',
-        status: 'Active'
-      };
-      this.users.set([newUser, ...this.users()]);
-    }
+      },
+      error: (err) => {
+        console.error('Error verifying companion:', err);
+      }
+    });
   }
 
   addNewBooking(): void {
@@ -283,6 +333,7 @@ export class StatsService {
     this.http.get<DashboardStatsResponse>(this.API_URL, { headers }).subscribe({
       next: (response) => {
         if (response.status === 'success') {
+          this.statsData.set(response.data);
           const apiKpis = response.data.kpis;
           this.kpis.update(kpis => kpis.map(kpi => {
             switch (kpi.id) {
@@ -304,6 +355,62 @@ export class StatsService {
       },
       error: (err) => {
         console.error('Error loading dashboard stats:', err);
+      }
+    });
+  }
+
+  loadRecentUsers(): void {
+    const token = localStorage.getItem('sanad_admin_token');
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+
+    this.http.get<AdminUsersResponse>('http://localhost:5000/api/admin/users', { headers }).subscribe({
+      next: (response) => {
+        if (response.status === 'success') {
+          const filteredSorted = response.users
+            .filter(u => u.role !== 'admin')
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+          const mappedUsers: User[] = filteredSorted.map(u => ({
+            id: u._id,
+            name: u.name,
+            initials: u.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
+            role: u.role,
+            status: u.isBanned ? 'Banned' : 'Active'
+          }));
+
+          this.users.set(mappedUsers);
+        }
+      },
+      error: (err) => {
+        console.error('Error loading recent users:', err);
+      }
+    });
+  }
+
+  loadPendingCompanions(): void {
+    const token = localStorage.getItem('sanad_admin_token');
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+
+    this.http.get<PendingCompanionsResponse>('http://localhost:5000/api/admin/companions/pending-companions', { headers }).subscribe({
+      next: (response) => {
+        if (response.status === 'success') {
+          const companions = response.data.pendingCompanions;
+          const mapped: CaregiverCandidate[] = companions.map(c => ({
+            id: c._id,
+            name: c.userId ? c.userId.name : 'Unknown User',
+            role: c.specialization && c.specialization !== 'none' ? c.specialization : c.companionType,
+            avatar: c.userId ? `https://ui-avatars.com/api/?name=${encodeURIComponent(c.userId.name)}&background=006767&color=fff&size=128` : 'https://ui-avatars.com/api/?name=U&background=006767&color=fff&size=128',
+            details: c.bio
+          }));
+          this.pendingVerifications.set(mapped);
+        }
+      },
+      error: (err) => {
+        console.error('Error loading pending companions:', err);
       }
     });
   }
