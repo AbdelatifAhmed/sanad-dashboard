@@ -46,10 +46,26 @@ export const routes: Routes = [
       {
         path: 'caregivers',
         loadComponent: () =>
-          import('./features/dashboard/dashboard').then(
-            (m) => m.DashboardComponent
+          import('./features/caregiver-verification/caregiver-verification').then(
+            (m) => m.CaregiverVerificationComponent
           ),
-        title: 'Sanad Admin — Caregivers'
+        title: 'Sanad Admin — Caregivers Verification'
+      },
+      {
+        path: 'families',
+        loadComponent: () =>
+          import('./features/family-management/family-list/family-list.component').then(
+            (m) => m.FamilyListComponent
+          ),
+        title: 'Sanad Admin — Family Management'
+      },
+      {
+        path: 'families/:id',
+        loadComponent: () =>
+          import('./features/family-management/family-details/family-details.component').then(
+            (m) => m.FamilyDetailsComponent
+          ),
+        title: 'Sanad Admin — Family Details'
       },
       {
         path: 'bookings',
@@ -78,8 +94,8 @@ export const routes: Routes = [
       {
         path: 'settings',
         loadComponent: () =>
-          import('./features/dashboard/dashboard').then(
-            (m) => m.DashboardComponent
+          import('./features/settings/settings.component').then(
+            (m) => m.SettingsComponent
           ),
         title: 'Sanad Admin — Settings'
       }

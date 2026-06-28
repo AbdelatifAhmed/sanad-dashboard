@@ -1,9 +1,5 @@
 import { Component, Input } from '@angular/core';
-
-export interface BarData {
-  label: string;
-  height: number;
-}
+import type { BarData } from '../../../core/services/stats.service';
 
 @Component({
   selector: 'app-chart-card',
@@ -15,20 +11,10 @@ export interface BarData {
 export class ChartCardComponent {
   @Input({ required: true }) type: 'trends' | 'distribution' = 'trends';
   @Input() title: string = '';
+  @Input() isLoading: boolean = false;
 
-  // Data for the Bar Chart
-  trendsData: BarData[] = [
-    { label: 'Mon', height: 40 },
-    { label: 'Tue', height: 55 },
-    { label: 'Wed', height: 45 },
-    { label: 'Thu', height: 75 },
-    { label: 'Fri', height: 95 },
-    { label: 'Sat', height: 60 },
-    { label: 'Sun', height: 35 },
-    { label: 'Mon', height: 50 },
-    { label: 'Tue', height: 80 },
-    { label: 'Wed', height: 40 }
-  ];
+  // Live trends data from parent — parent is responsible for supplying real values
+  @Input() trendsData: BarData[] = [];
 
   // Data for the Donut Chart
   @Input() familiesPercentage = 0;

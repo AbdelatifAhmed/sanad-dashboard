@@ -25,7 +25,7 @@
 
     <!-- Admin Profile / Logout Action -->
     <div 
-      (click)="logout()"
+      (click)="openLogoutModal($event)"
       title="Click to Logout" 
       class="flex items-center gap-3 cursor-pointer group select-none"
     >
@@ -45,3 +45,34 @@
     </div>
   </div>
 </header>
+
+<!-- Logout Confirmation Dialog -->
+@if (showLogoutModal()) {
+  <div class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm transition-all duration-300">
+    <div class="bg-surface-container-lowest p-6 rounded-2xl shadow-xl max-w-md w-full border border-outline-variant/30 animate-in fade-in zoom-in-95 duration-200" (click)="$event.stopPropagation()">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-full bg-error/10 flex items-center justify-center text-error">
+          <span class="material-symbols-outlined">logout</span>
+        </div>
+        <h3 class="font-headline-sm text-headline-sm font-bold text-on-surface">Logout</h3>
+      </div>
+      <p class="font-body-md text-body-md text-on-surface-variant mb-6">
+        Are you sure you want to sign out?
+      </p>
+      <div class="flex justify-end gap-3">
+        <button 
+          (click)="cancelLogout()"
+          class="px-4 py-2 border border-outline rounded-lg text-primary font-label-md hover:bg-surface-container-low transition-colors"
+        >
+          Cancel
+        </button>
+        <button 
+          (click)="confirmLogout()"
+          class="px-4 py-2 bg-error text-white font-label-md rounded-lg hover:bg-error/90 active:scale-95 transition-all"
+        >
+          Logout
+        </button>
+      </div>
+    </div>
+  </div>
+}
