@@ -10,4 +10,5 @@ import { KPI } from '../../../core/services/stats.service';
 })
 export class StatCardComponent {
   @Input({ required: true }) kpi!: KPI;
+  @Input() isLoading: boolean = false;
 }

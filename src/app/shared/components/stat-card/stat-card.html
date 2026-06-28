@@ -1,17 +1,31 @@
-<div class="bg-white p-5 rounded-2xl card-shadow border border-white flex flex-col justify-between h-full min-h-[140px] transition-all hover:scale-[1.02] duration-200">
-  <div class="flex justify-between items-start mb-4">
-    <div class="p-2 rounded-lg" [class]="kpi.iconBg + ' ' + kpi.iconColor">
-      <span class="material-symbols-outlined">{{ kpi.icon }}</span>
+@if (isLoading) {
+  <!-- Skeleton loader -->
+  <div class="bg-white p-5 rounded-2xl card-shadow border border-white flex flex-col justify-between h-full min-h-[140px] animate-pulse">
+    <div class="flex justify-between items-start mb-4">
+      <div class="w-10 h-10 rounded-lg bg-surface-container-low"></div>
+      <div class="h-4 w-12 rounded bg-surface-container-low"></div>
     </div>
-    <span 
-      class="font-label-sm text-label-sm font-bold"
-      [class]="kpi.trend === 'up' ? 'text-secondary' : kpi.trend === 'down' ? 'text-error' : 'text-on-surface-variant'"
-    >
-      {{ kpi.change }}
-    </span>
+    <div>
+      <div class="h-3 w-24 rounded bg-surface-container-low mb-2"></div>
+      <div class="h-7 w-16 rounded bg-surface-container"></div>
+    </div>
   </div>
-  <div>
-    <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">{{ kpi.title }}</p>
-    <h3 class="font-headline-sm text-headline-sm text-on-surface font-bold mt-1">{{ kpi.value }}</h3>
+} @else {
+  <div class="bg-white p-5 rounded-2xl card-shadow border border-white flex flex-col justify-between h-full min-h-[140px] transition-all hover:scale-[1.02] duration-200">
+    <div class="flex justify-between items-start mb-4">
+      <div class="p-2 rounded-lg" [class]="kpi.iconBg + ' ' + kpi.iconColor">
+        <span class="material-symbols-outlined">{{ kpi.icon }}</span>
+      </div>
+      <span
+        class="font-label-sm text-label-sm font-bold"
+        [class]="kpi.trend === 'up' ? 'text-secondary' : kpi.trend === 'down' ? 'text-error' : 'text-on-surface-variant'"
+      >
+        {{ kpi.change }}
+      </span>
+    </div>
+    <div>
+      <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">{{ kpi.title }}</p>
+      <h3 class="font-headline-sm text-headline-sm text-on-surface font-bold mt-1">{{ kpi.value }}</h3>
+    </div>
   </div>
-</div>
+}

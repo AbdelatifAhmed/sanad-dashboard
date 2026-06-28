@@ -1,0 +1,12 @@
+.tab-active {
+  color: #006767;
+  border-bottom: 2px solid #006767;
+  font-weight: 700;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
