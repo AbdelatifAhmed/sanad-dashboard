@@ -1,0 +1,222 @@
+/* ═══════════════════════════════════════════════════════════════
+   Bookings Directory — matches Caregivers & Families pattern
+════════════════════════════════════════════════════════════════ */
+
+.bk-dir-page {
+  min-height: calc(100vh - 112px);
+  padding: 28px 28px 40px;
+  background: var(--color-background);
+  display: flex; flex-direction: column; gap: 20px;
+}
+
+/* ── Header ─────────────────────────────────────────────────── */
+.bk-dir-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px;
+}
+.bk-dir-title {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 24px; font-weight: 800; color: var(--color-on-surface); margin: 0;
+}
+.bk-dir-title .material-symbols-outlined { font-size: 26px; color: var(--color-primary); }
+.bk-dir-subtitle { font-size: 14px; color: var(--color-on-surface-variant); margin: 4px 0 0; }
+.bk-count-badge {
+  display: flex; align-items: center; gap: 6px;
+  background: #fff; border: 1px solid var(--color-outline-variant);
+  border-radius: 20px; padding: 6px 16px;
+  font-size: 13px; font-weight: 700; color: var(--color-on-surface);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+/* ── Stats ──────────────────────────────────────────────────── */
+.bk-stats-row {
+  display: flex; flex-wrap: wrap; gap: 10px;
+}
+.bk-stat-card {
+  flex: 1; min-width: 110px;
+  background: #fff; border-radius: 14px;
+  border: 1px solid var(--color-outline-variant);
+  padding: 14px 18px; text-align: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.bk-stat-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; color: var(--color-on-surface-variant); }
+.bk-stat-value { font-size: 26px; font-weight: 800; line-height: 1.2; margin-top: 4px; }
+
+/* ── Status chips ───────────────────────────────────────────── */
+.bk-chips {
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+.bk-chip {
+  display: inline-flex; align-items: center;
+  padding: 6px 16px; border-radius: 20px;
+  font-size: 13px; font-weight: 600;
+  border: 1.5px solid var(--color-outline-variant);
+  background: #fff; color: var(--color-on-surface-variant);
+  cursor: pointer; transition: all 150ms; white-space: nowrap;
+}
+.bk-chip:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.bk-chip.bk-chip-active.chip-all       { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+.bk-chip.bk-chip-active.chip-pending   { background: #fff3cd; color: #856404; border-color: #fde68a; }
+.bk-chip.bk-chip-active.chip-awaiting  { background: #eff6ff; color: #1e40af; border-color: #bfdbfe; }
+.bk-chip.bk-chip-active.chip-approved  { background: rgba(44,105,86,0.1); color: var(--color-secondary); border-color: rgba(44,105,86,0.3); }
+.bk-chip.bk-chip-active.chip-active    { background: rgba(0,103,103,0.08); color: var(--color-primary); border-color: rgba(0,103,103,0.3); }
+.bk-chip.bk-chip-active.chip-completed { background: #ecfdf5; color: #065f46; border-color: #86efac; }
+.bk-chip.bk-chip-active.chip-cancelled { background: var(--color-error-container); color: var(--color-error); border-color: var(--color-error); }
+
+/* ── Results row ────────────────────────────────────────────── */
+.bk-results-row { font-size: 13px; color: var(--color-on-surface-variant); }
+.bk-results-text { font-weight: 500; }
+
+/* ── Grid ───────────────────────────────────────────────────── */
+.bk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+@media (max-width: 680px) { .bk-grid { grid-template-columns: 1fr; } }
+
+/* ── Booking Card ───────────────────────────────────────────── */
+.bk-card {
+  background: #fff;
+  border-radius: 16px;
+  border: 1.5px solid var(--color-outline-variant);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  padding: 18px 20px;
+  display: flex; flex-direction: column; gap: 14px;
+  cursor: pointer; outline: none;
+  transition: box-shadow 200ms, border-color 200ms, transform 200ms;
+}
+.bk-card:hover {
+  box-shadow: 0 6px 24px rgba(0,103,103,0.11);
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
+}
+.bk-card:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+
+/* Parties row */
+.bk-card-header {
+  display: flex; align-items: center; gap: 10px;
+}
+.bk-party {
+  display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;
+}
+.bk-avatar {
+  width: 38px; height: 38px; border-radius: 50%;
+  object-fit: cover; flex-shrink: 0;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+.bk-avatar-ph {
+  width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700;
+}
+.bk-avatar-family { background: rgba(44,105,86,0.1); color: var(--color-secondary); }
+.bk-avatar-cg     { background: rgba(0,103,103,0.1); color: var(--color-primary); }
+.bk-party-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.bk-party-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; color: var(--color-on-surface-variant); }
+.bk-party-name  { font-size: 13px; font-weight: 700; color: var(--color-on-surface); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bk-arrow { font-size: 18px; color: var(--color-outline-variant); flex-shrink: 0; }
+
+.bk-divider { height: 1px; background: var(--color-outline-variant); }
+
+/* Meta grid */
+.bk-meta-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px;
+}
+.bk-meta-item {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 500; color: var(--color-on-surface-variant);
+  overflow: hidden;
+}
+.bk-meta-item span:last-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bk-meta-icon { font-size: 14px; color: var(--color-primary); opacity: 0.7; flex-shrink: 0; }
+
+/* Footer */
+.bk-card-footer {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-outline-variant);
+}
+.bk-badges { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+/* Status badges */
+.bk-status-badge {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.4px; padding: 3px 9px; border-radius: 20px;
+}
+.bk-pending   { background: #fff3cd; color: #856404; }
+.bk-awaiting  { background: #eff6ff; color: #1e40af; }
+.bk-approved  { background: rgba(44,105,86,0.1); color: var(--color-secondary); }
+.bk-active    { background: rgba(0,103,103,0.08); color: var(--color-primary); }
+.bk-completed { background: #ecfdf5; color: #065f46; }
+.bk-cancelled { background: #fff0f0; color: var(--color-error); }
+
+/* Payment badges */
+.bk-pay-badge {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.4px; padding: 3px 8px; border-radius: 12px;
+}
+.pay-paid     { background: #ecfdf5; color: #065f46; }
+.pay-unpaid   { background: #fff0f0; color: var(--color-error); }
+.pay-refunded { background: #eff6ff; color: #1e40af; }
+
+/* CTA */
+.bk-cta {
+  display: flex; align-items: center; gap: 3px;
+  font-size: 12px; font-weight: 700; color: var(--color-primary);
+  white-space: nowrap; opacity: 0; transition: opacity 200ms;
+}
+.bk-card:hover .bk-cta { opacity: 1; }
+
+/* ── Skeleton ───────────────────────────────────────────────── */
+.bk-skeleton {
+  background: #fff; border-radius: 16px;
+  border: 1.5px solid var(--color-outline-variant);
+  padding: 18px 20px; display: flex; flex-direction: column; gap: 14px;
+  animation: bk-pulse 1.5s ease-in-out infinite;
+}
+@keyframes bk-pulse { 0%,100%{opacity:1;} 50%{opacity:0.55;} }
+.bk-sk-row  { display: flex; align-items: center; gap: 10px; }
+.bk-sk-avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--color-surface-container); flex-shrink: 0; }
+.bk-sk-lines { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.bk-sk-body  { display: flex; flex-direction: column; gap: 6px; }
+.bk-sk-line  { height: 10px; border-radius: 6px; background: var(--color-surface-container); }
+.bk-sk-lg    { width: 65%; } .bk-sk-md { width: 50%; } .bk-sk-sm { width: 40%; }
+.bk-sk-footer { display: flex; gap: 8px; }
+.bk-sk-badge  { height: 22px; width: 72px; border-radius: 12px; background: var(--color-surface-container); }
+
+/* ── Error / Empty ──────────────────────────────────────────── */
+.bk-error-state, .bk-empty-state {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 12px; padding: 60px 0;
+  color: var(--color-on-surface-variant); font-size: 14px; font-weight: 500;
+}
+.bk-error-state .material-symbols-outlined,
+.bk-empty-state .material-symbols-outlined { font-size: 48px; color: var(--color-outline); }
+.bk-retry-btn {
+  padding: 8px 24px; border-radius: 10px;
+  background: var(--color-primary); color: #fff;
+  font-size: 13px; font-weight: 600; border: none; cursor: pointer; transition: opacity 150ms;
+}
+.bk-retry-btn:hover { opacity: 0.85; }
+
+/* ── Pagination ─────────────────────────────────────────────── */
+.bk-pagination { display: flex; align-items: center; justify-content: center; gap: 4px; padding-top: 8px; }
+.bk-pg-btn {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: #fff; border: 1.5px solid var(--color-outline-variant);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--color-on-surface); transition: all 150ms;
+}
+.bk-pg-btn:hover:not(:disabled) { border-color: var(--color-primary); color: var(--color-primary); }
+.bk-pg-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.bk-pg-num {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: #fff; border: 1.5px solid var(--color-outline-variant);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  color: var(--color-on-surface); transition: all 150ms;
+}
+.bk-pg-num:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.bk-pg-active { background: var(--color-primary) !important; color: #fff !important; border-color: var(--color-primary) !important; }
+.bk-pg-ellipsis { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: var(--color-on-surface-variant); }

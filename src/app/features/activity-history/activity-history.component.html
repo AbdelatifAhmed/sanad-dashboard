@@ -1,0 +1,220 @@
+<div class="min-h-[calc(100vh-112px)] bg-background p-4 md:p-6 lg:p-8 animate-fade-in">
+
+  <!-- ── Page Header ────────────────────────────────────────────────────────── -->
+  <div class="flex items-center gap-3 border-b border-outline-variant/30 pb-5 mb-6">
+    <button
+      (click)="goBack()"
+      class="p-2 border border-outline-variant hover:bg-surface-container rounded-lg transition-colors flex items-center justify-center cursor-pointer shrink-0"
+      title="Back to Dashboard"
+    >
+      <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+    </button>
+    <div class="flex-1">
+      <h2 class="font-headline-sm text-headline-sm text-on-surface font-bold">Activity History</h2>
+      <p class="text-xs text-on-surface-variant mt-0.5">Complete audit log of platform events</p>
+    </div>
+    @if (!isLoading()) {
+      <span class="text-xs font-bold text-on-surface-variant bg-surface-container px-3 py-1.5 rounded-full border border-outline-variant/30">
+        {{ total() }} events
+      </span>
+    }
+  </div>
+
+  <!-- ── Filters & Search Bar ────────────────────────────────────────────────── -->
+  <div class="bg-white rounded-2xl card-shadow border border-white p-4 mb-6">
+    <div class="flex flex-col lg:flex-row gap-3 items-start lg:items-center flex-wrap">
+
+      <!-- Search -->
+      <div class="relative w-full lg:w-72 shrink-0">
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary text-[20px]">search</span>
+        <input
+          type="text"
+          [value]="searchQuery()"
+          (input)="onSearch($any($event.target).value)"
+          placeholder="Search by name, event, or description…"
+          class="w-full pl-10 pr-4 py-2.5 bg-surface-container-low border-none rounded-xl font-body-sm text-body-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all text-on-surface placeholder:text-on-surface-variant/60"
+        />
+      </div>
+
+      <!-- Category -->
+      <select
+        [value]="category()"
+        (change)="setCategory($any($event.target).value)"
+        class="px-4 py-2.5 bg-surface-container-low rounded-xl font-label-sm text-label-sm text-on-surface border-none outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer transition-all"
+      >
+        @for (opt of categoryOptions; track opt.value) {
+          <option [value]="opt.value">{{ opt.label }}</option>
+        }
+      </select>
+
+      <!-- Role -->
+      <select
+        [value]="role()"
+        (change)="setRole($any($event.target).value)"
+        class="px-4 py-2.5 bg-surface-container-low rounded-xl font-label-sm text-label-sm text-on-surface border-none outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer transition-all"
+      >
+        @for (opt of roleOptions; track opt.value) {
+          <option [value]="opt.value">{{ opt.label }}</option>
+        }
+      </select>
+
+      <!-- Date Range -->
+      <select
+        [value]="dateRange()"
+        (change)="setDateRange($any($event.target).value)"
+        class="px-4 py-2.5 bg-surface-container-low rounded-xl font-label-sm text-label-sm text-on-surface border-none outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer transition-all"
+      >
+        @for (opt of dateOptions; track opt.value) {
+          <option [value]="opt.value">{{ opt.label }}</option>
+        }
+      </select>
+
+      <!-- Sort Toggle -->
+      <button
+        (click)="toggleSort()"
+        class="flex items-center gap-2 px-4 py-2.5 bg-surface-container-low rounded-xl font-label-sm text-label-sm text-on-surface hover:bg-surface-container transition-colors cursor-pointer shrink-0"
+      >
+        <span class="material-symbols-outlined text-[18px]">
+          {{ sort() === 'desc' ? 'arrow_downward' : 'arrow_upward' }}
+        </span>
+        {{ sort() === 'desc' ? 'Newest First' : 'Oldest First' }}
+      </button>
+
+    </div>
+  </div>
+
+  <!-- ── Error Banner ─────────────────────────────────────────────────────────── -->
+  <app-error-banner [message]="error()" (retry)="load()" />
+
+  <!-- ── Skeleton Loader ──────────────────────────────────────────────────────── -->
+  @if (isLoading()) {
+    <app-loading-spinner message="Loading activity history…" />
+  }
+
+  <!-- ── Empty State ──────────────────────────────────────────────────────────── -->
+  @if (!isLoading() && !error() && groups().length === 0) {
+    <app-empty-state icon="history" title="No Activity Found"
+      subtitle="No activity events match your current filters. Try adjusting the search or filters above." />
+  }
+
+  <!-- ── Timeline ─────────────────────────────────────────────────────────────── -->
+  @if (!isLoading() && groups().length > 0) {
+    <div class="space-y-10">
+      @for (group of groups(); track group.label; let gi = $index) {
+
+        <!-- Group Heading -->
+        <div>
+          <div class="flex items-center gap-3 mb-5">
+            <div class="h-px flex-1 bg-outline-variant/30"></div>
+            <span class="font-label-sm text-label-sm font-bold text-on-surface-variant uppercase tracking-widest px-3 py-1 bg-surface-container rounded-full">
+              {{ group.label }}
+            </span>
+            <div class="h-px flex-1 bg-outline-variant/30"></div>
+          </div>
+
+          <!-- Timeline items -->
+          <div class="space-y-0">
+            @for (act of group.activities; track act.id; let last = $last) {
+              <div class="flex gap-4 lg:gap-6 group/item">
+
+                <!-- Left: icon + connector line -->
+                <div class="flex flex-col items-center shrink-0 w-10">
+                  <div
+                    class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 ring-4 ring-white shadow-sm transition-transform group-hover/item:scale-110"
+                    [class]="act.iconBg + ' ' + act.iconColor"
+                  >
+                    <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">{{ act.icon }}</span>
+                  </div>
+                  @if (!last) {
+                    <div class="w-0.5 flex-1 bg-outline-variant/25 mt-2 min-h-[32px]"></div>
+                  }
+                </div>
+
+                <!-- Right: card -->
+                <div class="flex-1 bg-white rounded-2xl border border-outline-variant/25 p-4 lg:p-5 mb-4 hover:border-primary/25 hover:shadow-md transition-all duration-200">
+
+                  <!-- Card top row -->
+                  <div class="flex items-start justify-between gap-3 flex-wrap mb-2">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <!-- Activity title -->
+                      <h4 class="font-body-md text-body-md font-bold text-on-surface">{{ act.title }}</h4>
+                      <!-- Category badge -->
+                      <span
+                        class="text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wide"
+                        [class]="act.badgeClass"
+                      >{{ act.badgeLabel }}</span>
+                    </div>
+                    <!-- Relative time -->
+                    <span class="font-label-sm text-label-sm text-on-surface-variant shrink-0 mt-0.5">{{ timeAgo(act.timestamp) }}</span>
+                  </div>
+
+                  <!-- Description -->
+                  <p class="font-body-sm text-body-sm text-on-surface-variant mb-3">{{ act.description }}</p>
+
+                  <!-- Card bottom row -->
+                  <div class="flex items-center justify-between gap-3 flex-wrap">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <!-- Actor name + role badge -->
+                      <div class="flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-[14px] text-on-surface-variant/60">person</span>
+                        <span class="font-label-sm text-label-sm text-on-surface font-semibold">{{ act.actorName }}</span>
+                      </div>
+                      <span
+                        class="text-[9px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wide"
+                        [class]="getRoleBadge(act.actorRole)"
+                      >{{ getRoleLabel(act.actorRole) }}</span>
+                      <!-- Exact date -->
+                      <span class="font-label-sm text-label-sm text-outline-variant">
+                        {{ act.exactDate | date:'MMM d, y · h:mm a' }}
+                      </span>
+                    </div>
+
+                    <!-- Action button: context-aware (View Profile / View Details) -->
+                    <button
+                      (click)="viewDetails(act)"
+                      class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-primary border border-primary/20 font-label-sm text-label-sm hover:bg-primary/5 active:scale-95 transition-all cursor-pointer shrink-0"
+                    >
+                      <span class="material-symbols-outlined text-[14px]">{{ getActionIcon(act) }}</span>
+                      {{ getActionLabel(act) }}
+                    </button>
+                  </div>
+
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- ── Pagination ─────────────────────────────────────────────────────────── -->
+    @if (totalPages() > 1) {
+      <div class="flex items-center justify-between mt-8 pt-6 border-t border-outline-variant/30">
+        <p class="font-body-sm text-body-sm text-on-surface-variant">
+          Page <span class="font-bold text-on-surface">{{ page() }}</span> of
+          <span class="font-bold text-on-surface">{{ totalPages() }}</span>
+          &nbsp;·&nbsp; {{ total() }} total events
+        </p>
+        <div class="flex gap-2">
+          <button
+            (click)="prevPage()"
+            [disabled]="page() <= 1"
+            class="flex items-center gap-2 px-4 py-2 rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:bg-surface-container disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+          >
+            <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+            Previous
+          </button>
+          <button
+            (click)="nextPage()"
+            [disabled]="page() >= totalPages()"
+            class="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white font-label-md text-label-md hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+          >
+            Next
+            <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+          </button>
+        </div>
+      </div>
+    }
+  }
+
+</div>

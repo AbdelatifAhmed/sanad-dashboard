@@ -1,0 +1,404 @@
+<!-- Booking Details — shared pp-* design system -->
+<div class="pp-page">
+
+  @if (isLoading()) {
+    <div class="pp-loading"><div class="pp-spinner"></div><p>Loading booking details…</p></div>
+  }
+
+  @if (!isLoading() && error()) {
+    <div class="pp-error">
+      <span class="material-symbols-outlined">error</span>
+      <p>{{ error() }}</p>
+      <button class="pp-btn-primary" (click)="goBack()">← Back to Bookings</button>
+    </div>
+  }
+
+  @if (!isLoading() && !error() && booking(); as b) {
+
+    <!-- Breadcrumb -->
+    <div class="pp-breadcrumb">
+      <a class="pp-breadcrumb-link" routerLink="/dashboard">
+        <span class="material-symbols-outlined">home</span>Dashboard
+      </a>
+      <span class="pp-breadcrumb-sep">/</span>
+      <button class="pp-breadcrumb-link" (click)="goBack()">
+        <span class="material-symbols-outlined">arrow_back</span>Bookings
+      </button>
+      <span class="pp-breadcrumb-sep">/</span>
+      <span class="pp-breadcrumb-current">#{{ b._id.slice(-10).toUpperCase() }}</span>
+    </div>
+
+    <!-- ── Profile Header ──────────────────────────────────────────────── -->
+    <div class="pp-header-card">
+
+      <!-- Icon -->
+      <div class="bd-header-icon">
+        <span class="material-symbols-outlined" style="font-size:36px;font-variation-settings:'FILL' 1;color:var(--color-primary)">event_note</span>
+      </div>
+
+      <!-- Identity -->
+      <div class="pp-identity">
+        <div class="pp-name-row">
+          <h1 class="pp-name" style="font-size:18px;font-family:'JetBrains Mono',monospace;">
+            #{{ b._id.slice(-10).toUpperCase() }}
+          </h1>
+          <span class="pp-badge" [class]="getStatusClass(b.status)">
+            {{ getStatusLabel(b.status) }}
+          </span>
+          <span class="pp-badge" [class]="getPaymentClass(b.paymentStatus)">
+            {{ b.paymentStatus | titlecase }}
+          </span>
+        </div>
+        <p class="pp-sub">{{ getServiceLabel(b.jobPostId?.serviceType) }}</p>
+        <div style="display:flex;flex-wrap:wrap;gap:16px;margin-top:6px;">
+          <span class="pp-meta-item">
+            <span class="material-symbols-outlined">family_restroom</span>
+            {{ b.familyId?.name ?? '—' }}
+          </span>
+          <span class="pp-meta-item">
+            <span class="material-symbols-outlined">medical_services</span>
+            {{ b.companionId?.name ?? 'Unassigned' }}
+          </span>
+          <span class="pp-meta-item">
+            <span class="material-symbols-outlined">calendar_month</span>
+            {{ b.startDate | date:'mediumDate' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Stats pills -->
+      <div class="pp-stats-row">
+        <div class="pp-stat-pill">
+          <span class="material-symbols-outlined" style="color:var(--color-primary);font-variation-settings:'FILL' 1;">schedule</span>
+          <div><p class="pp-stat-label">Duration</p><p class="pp-stat-value">{{ b.totalHours }}h</p></div>
+        </div>
+        <div class="pp-stat-pill">
+          <span class="material-symbols-outlined" style="color:var(--color-secondary);font-variation-settings:'FILL' 1;">payments</span>
+          <div><p class="pp-stat-label">Total</p><p class="pp-stat-value">{{ formatCurrency(b.totalPrice) }} EGP</p></div>
+        </div>
+        <div class="pp-stat-pill">
+          <span class="material-symbols-outlined" style="color:#f59e0b;font-variation-settings:'FILL' 1;">receipt</span>
+          <div><p class="pp-stat-label">Rate / hr</p><p class="pp-stat-value">{{ b.hourlyRateAtBooking }} EGP</p></div>
+        </div>
+      </div>
+
+      <!-- Quick actions -->
+      @if (allowedStatuses().length > 0) {
+        <div class="pp-actions">
+          @for (action of allowedStatuses(); track action.value) {
+            <button [class]="action.danger ? 'pp-btn-danger' : 'pp-btn-primary'"
+              (click)="requestStatusChange(action.value)">
+              <span class="material-symbols-outlined" style="font-size:15px;">
+                {{ action.danger ? 'cancel' : 'check_circle' }}
+              </span>
+              {{ action.label }}
+            </button>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- ── Tabs ────────────────────────────────────────────────────────── -->
+    <div class="pp-tabs-bar">
+      @for (tab of tabs; track tab.id) {
+        <button class="pp-tab" [class.pp-tab-active]="activeTab() === tab.id" (click)="activeTab.set(tab.id)">
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">{{ tab.icon }}</span>
+          {{ tab.label }}
+          @if (tab.id === 'proposals' && proposals().length > 0) {
+            <span class="bd-tab-count">{{ proposals().length }}</span>
+          }
+        </button>
+      }
+    </div>
+
+    <!-- ── Tab Content ─────────────────────────────────────────────────── -->
+    <div class="pp-tab-content">
+
+      <!-- ══ OVERVIEW ══ -->
+      @if (activeTab() === 'overview') {
+        <div class="pp-overview-grid">
+          <div class="pp-col">
+
+            <!-- Booking Info -->
+            <div class="pp-card">
+              <h3 class="pp-card-title"><span class="material-symbols-outlined">info</span>Booking Information</h3>
+              <div class="pp-info-grid">
+                <div class="pp-info-row"><span class="pp-info-label">Booking ID</span><span class="pp-info-value" style="font-family:'JetBrains Mono',monospace;font-size:12px;">#{{ b._id.slice(-10).toUpperCase() }}</span></div>
+                <div class="pp-info-row"><span class="pp-info-label">Status</span><span class="pp-badge pp-badge-sm" [class]="getStatusClass(b.status)">{{ getStatusLabel(b.status) }}</span></div>
+                <div class="pp-info-row"><span class="pp-info-label">Service</span><span class="pp-info-value">{{ getServiceLabel(b.jobPostId?.serviceType) }}</span></div>
+                <div class="pp-info-row"><span class="pp-info-label">Duration</span><span class="pp-info-value accent">{{ b.totalHours }}h</span></div>
+                <div class="pp-info-row"><span class="pp-info-label">Start Date</span><span class="pp-info-value">{{ b.startDate | date:'mediumDate' }}</span></div>
+                <div class="pp-info-row"><span class="pp-info-label">End Date</span><span class="pp-info-value">{{ b.endDate | date:'mediumDate' }}</span></div>
+                @if (b.workingDays && b.workingDays.length) {
+                  <div class="pp-info-row" style="grid-column:1/-1;">
+                    <span class="pp-info-label">Working Days</span>
+                    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">
+                      @for (day of b.workingDays; track day) {
+                        <span class="pp-tag pp-tag-teal" style="font-size:11px;padding:2px 10px;">{{ day }}</span>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- Notes -->
+            @if (b.notes) {
+              <div class="pp-card">
+                <h3 class="pp-card-title"><span class="material-symbols-outlined">notes</span>Notes</h3>
+                <p style="font-size:14px;color:var(--color-on-surface);line-height:1.7;">{{ b.notes }}</p>
+              </div>
+            }
+
+          </div>
+
+          <div class="pp-col">
+
+            <!-- Family Info -->
+            <div class="pp-card">
+              <h3 class="pp-card-title"><span class="material-symbols-outlined">family_restroom</span>Family</h3>
+              <div class="bd-party-card">
+                @if (b.familyId?.avatar?.url) {
+                  <img [src]="b.familyId!.avatar!.url" class="bd-party-avatar" />
+                } @else {
+                  <div class="bd-party-avatar bd-party-placeholder-family">{{ getInitials(b.familyId?.name) }}</div>
+                }
+                <div style="flex:1;min-width:0;">
+                  <p style="font-size:15px;font-weight:700;color:var(--color-on-surface);">{{ b.familyId?.name ?? '—' }}</p>
+                  <p style="font-size:12px;color:var(--color-on-surface-variant);margin-top:2px;">{{ b.familyId?.email ?? '' }}</p>
+                  @if (b.familyId?.phone) {
+                    <p style="font-size:12px;color:var(--color-on-surface-variant);margin-top:1px;">{{ b.familyId!.phone }}</p>
+                  }
+                </div>
+              </div>
+              @if (b.familyId?._id) {
+                <button class="bd-view-link" (click)="viewFamily(b.familyId!._id)">
+                  View Family Profile <span class="material-symbols-outlined" style="font-size:14px;">arrow_forward</span>
+                </button>
+              }
+              @if (b.location?.city || b.location?.governorate) {
+                <div class="pp-meta-item" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--color-outline-variant);">
+                  <span class="material-symbols-outlined">location_on</span>
+                  {{ b.location?.city ?? b.location?.governorate }}
+                  @if (b.location?.readableAddress) { · {{ b.location!.readableAddress }} }
+                </div>
+              }
+            </div>
+
+            <!-- Caregiver Info -->
+            <div class="pp-card">
+              <h3 class="pp-card-title"><span class="material-symbols-outlined">medical_services</span>Caregiver</h3>
+              <div class="bd-party-card">
+                @if (b.companionId?.avatar?.url) {
+                  <img [src]="b.companionId!.avatar!.url" class="bd-party-avatar" />
+                } @else {
+                  <div class="bd-party-avatar bd-party-placeholder-cg">{{ getInitials(b.companionId?.name) }}</div>
+                }
+                <div style="flex:1;min-width:0;">
+                  <p style="font-size:15px;font-weight:700;color:var(--color-on-surface);">{{ b.companionId?.name ?? 'Unassigned' }}</p>
+                  <p style="font-size:12px;color:var(--color-on-surface-variant);margin-top:2px;">{{ b.companionId?.email ?? '' }}</p>
+                </div>
+              </div>
+              @if (b.companionId?._id) {
+                <button class="bd-view-link" (click)="viewCaregiver(b.companionId!._id)">
+                  View Caregiver Profile <span class="material-symbols-outlined" style="font-size:14px;">arrow_forward</span>
+                </button>
+              }
+            </div>
+
+          </div>
+        </div>
+      }
+
+      <!-- ══ TIMELINE ══ -->
+      @if (activeTab() === 'timeline') {
+        <div class="pp-card" style="max-width:600px;">
+          <h3 class="pp-card-title"><span class="material-symbols-outlined">timeline</span>Booking Timeline</h3>
+          <div class="pp-timeline">
+            @for (step of timeline(); track step.key; let last = $last) {
+              <div class="pp-timeline-item">
+                <div class="pp-timeline-dot"
+                  [style.background]="step.done ? step.iconBg : 'var(--color-surface-container)'"
+                  [style.border-color]="step.done ? 'transparent' : 'var(--color-outline-variant)'">
+                  <span class="material-symbols-outlined"
+                    style="font-variation-settings:'FILL' 1;"
+                    [style.color]="step.done ? step.iconColor : 'var(--color-outline)'">
+                    {{ step.icon }}
+                  </span>
+                </div>
+                <div class="pp-timeline-content">
+                  <p class="pp-timeline-title" [style.color]="step.done ? 'var(--color-on-surface)' : 'var(--color-on-surface-variant)'">
+                    {{ step.label }}
+                  </p>
+                  @if (step.done && step.timestamp) {
+                    <p class="pp-timeline-time">{{ step.timestamp | date:'medium' }}</p>
+                  } @else if (!step.done) {
+                    <p class="pp-timeline-time" style="font-style:italic;">Not yet reached</p>
+                  }
+                  @if (step.note) {
+                    <p class="pp-timeline-note">{{ step.note }}</p>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- ══ PAYMENT ══ -->
+      @if (activeTab() === 'payment') {
+        <div class="pp-overview-grid">
+          <div class="pp-col">
+            <div class="pp-card">
+              <h3 class="pp-card-title"><span class="material-symbols-outlined">payments</span>Payment Breakdown</h3>
+              <div class="pp-info-grid">
+                <div class="pp-info-row"><span class="pp-info-label">Hourly Rate</span><span class="pp-info-value">{{ b.hourlyRateAtBooking }} EGP/hr</span></div>
+                <div class="pp-info-row"><span class="pp-info-label">Total Hours</span><span class="pp-info-value">{{ b.totalHours }}h</span></div>
+                <div class="pp-info-row"><span class="pp-info-label">Platform Fee (10%)</span><span class="pp-info-value">{{ formatCurrency(b.adminFee) }} EGP</span></div>
+                <div class="pp-info-row"><span class="pp-info-label">Caregiver Earnings</span><span class="pp-info-value">{{ formatCurrency(b.companionEarnings) }} EGP</span></div>
+                <div class="pp-info-row"><span class="pp-info-label">Total Price</span><span class="pp-info-value accent" style="font-size:16px;font-weight:800;">{{ formatCurrency(b.totalPrice) }} EGP</span></div>
+                <div class="pp-info-row"><span class="pp-info-label">Payment Method</span><span class="pp-info-value">{{ b.paymentMethod | titlecase }}</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="pp-col">
+            <!-- Payment status hero -->
+            <div class="bd-payment-hero" [class]="'bd-payment-' + b.paymentStatus">
+              <span class="material-symbols-outlined bd-payment-hero-icon" style="font-variation-settings:'FILL' 1;">
+                {{ b.paymentStatus === 'paid' ? 'check_circle' : b.paymentStatus === 'refunded' ? 'replay' : 'pending' }}
+              </span>
+              <div>
+                <p class="bd-payment-label">Payment Status</p>
+                <p class="bd-payment-value">{{ b.paymentStatus | titlecase }}</p>
+              </div>
+            </div>
+            <div class="pp-card">
+              <h3 class="pp-card-title"><span class="material-symbols-outlined">info</span>Payment Details</h3>
+              <div style="display:flex;flex-direction:column;gap:12px;">
+                <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--color-outline-variant);">
+                  <span class="material-symbols-outlined" style="color:var(--color-primary);font-size:18px;">credit_card</span>
+                  <div><p style="font-size:11px;color:var(--color-on-surface-variant);text-transform:uppercase;letter-spacing:0.4px;font-weight:600;">Method</p>
+                  <p style="font-size:14px;font-weight:600;color:var(--color-on-surface);">{{ b.paymentMethod | titlecase }}</p></div>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;padding:10px 0;">
+                  <span class="material-symbols-outlined" style="color:var(--color-primary);font-size:18px;">calendar_month</span>
+                  <div><p style="font-size:11px;color:var(--color-on-surface-variant);text-transform:uppercase;letter-spacing:0.4px;font-weight:600;">Booked On</p>
+                  <p style="font-size:14px;font-weight:600;color:var(--color-on-surface);">{{ b.createdAt | date:'medium' }}</p></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- ══ REVIEW ══ -->
+      @if (activeTab() === 'review') {
+        @if (!review()) {
+          <app-empty-state icon="star_border" title="No Review Yet" subtitle="No review has been submitted for this booking." />
+        } @else {
+          @let rv = review()!;
+          <div class="pp-card" style="max-width:600px;">
+            <h3 class="pp-card-title"><span class="material-symbols-outlined">star</span>Family Review</h3>
+            <div class="bd-review-header">
+              @if (rv.familyId?.avatar?.url) {
+                <img [src]="rv.familyId!.avatar!.url" class="bd-reviewer-avatar" />
+              } @else {
+                <div class="bd-reviewer-placeholder">{{ getInitials(rv.familyId?.name) }}</div>
+              }
+              <div style="flex:1;">
+                <p style="font-size:15px;font-weight:700;color:var(--color-on-surface);">{{ rv.familyId?.name ?? 'Anonymous' }}</p>
+                <p style="font-size:12px;color:var(--color-on-surface-variant);">{{ rv.createdAt | date:'mediumDate' }}</p>
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+                <div style="display:flex;align-items:center;gap:2px;">
+                  @for (filled of getStarArray(rv.rating); track $index) {
+                    <span class="material-symbols-outlined" style="font-size:18px;font-variation-settings:'FILL' 1;"
+                      [style.color]="filled ? '#f59e0b' : 'var(--color-outline-variant)'">star</span>
+                  }
+                </div>
+                <span style="font-size:14px;font-weight:800;color:var(--color-on-surface);">{{ rv.rating }} / 5</span>
+              </div>
+            </div>
+            @if (rv.comment) {
+              <blockquote class="bd-review-quote">"{{ rv.comment }}"</blockquote>
+            }
+          </div>
+        }
+      }
+
+      <!-- ══ PROPOSALS ══ -->
+      @if (activeTab() === 'proposals') {
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <h3 class="pp-section-title">Applications ({{ proposals().length }})</h3>
+          @if (proposals().length === 0) {
+            <app-empty-state icon="group" title="No Applications" subtitle="No caregiver applications submitted for this booking." />
+          } @else {
+            @for (p of proposals(); track p._id) {
+              <div class="pp-card bd-proposal-card">
+                <div class="bd-proposal-left">
+                  @if (p.companionId?.avatar?.url) {
+                    <img [src]="p.companionId!.avatar!.url" class="bd-proposal-avatar" />
+                  } @else {
+                    <div class="bd-proposal-avatar bd-party-placeholder-cg">{{ getInitials(p.companionId?.name) }}</div>
+                  }
+                  <div>
+                    <p style="font-size:14px;font-weight:700;color:var(--color-on-surface);">{{ p.companionId?.name ?? '—' }}</p>
+                    <p style="font-size:12px;color:var(--color-primary);font-weight:600;margin-top:2px;">
+                      {{ p.proposedRate }} EGP/hr
+                    </p>
+                    @if (p.coverLetter) {
+                      <p style="font-size:12px;color:var(--color-on-surface-variant);margin-top:4px;line-height:1.5;">
+                        {{ p.coverLetter }}
+                      </p>
+                    }
+                  </div>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0;">
+                  <span class="pp-badge pp-badge-sm" [class]="getProposalClass(p.status)">{{ p.status }}</span>
+                  <span style="font-size:11px;color:var(--color-on-surface-variant);">{{ p.createdAt | date:'mediumDate' }}</span>
+                  @if (p.companionId?._id) {
+                    <button class="bd-view-link" (click)="viewCaregiver(p.companionId!._id)">
+                      View Profile <span class="material-symbols-outlined" style="font-size:13px;">arrow_forward</span>
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+          }
+        </div>
+      }
+
+    </div>
+    <!-- /pp-tab-content -->
+
+  }
+</div>
+
+<!-- ── Confirm status change ────────────────────────────────────────────── -->
+@if (confirmStatus()) {
+  <div class="pp-modal-backdrop" (click)="cancelStatusChange()">
+    <div class="pp-modal" (click)="$event.stopPropagation()">
+      <div class="pp-modal-title">
+        <span class="material-symbols-outlined" [style.color]="confirmStatus()!.status === 'cancelled' ? 'var(--color-error)' : 'var(--color-primary)'">
+          {{ confirmStatus()!.status === 'cancelled' ? 'cancel' : 'swap_horiz' }}
+        </span>
+        {{ confirmStatus()!.status === 'cancelled' ? 'Cancel Booking' : 'Update Status' }}
+      </div>
+      <p class="pp-modal-body">
+        Are you sure you want to
+        <strong>{{ confirmStatus()!.status === 'cancelled' ? 'cancel' : 'mark as ' + confirmStatus()!.status }}</strong>
+        this booking? This action cannot be undone.
+      </p>
+      <div class="pp-modal-footer">
+        <button class="pp-btn-ghost" (click)="cancelStatusChange()" [disabled]="isSubmitting()">Cancel</button>
+        <button [class]="confirmStatus()!.status === 'cancelled' ? 'pp-btn-danger' : 'pp-btn-primary'"
+          (click)="executeStatusChange()" [disabled]="isSubmitting()">
+          @if (isSubmitting()) { <span class="pp-spinner-xs"></span> }
+          Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<app-toast [toast]="toast()" />

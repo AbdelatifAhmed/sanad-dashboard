@@ -1,0 +1,486 @@
+<div class="min-h-[calc(100vh-112px)] bg-background p-4 md:p-6 lg:p-8 animate-fade-in">
+
+  <!-- ── Page Header ─────────────────────────────────────────────────── -->
+  <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-7 pb-5 border-b border-outline-variant/30">
+    <div>
+      <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Reports & Analytics</h2>
+      <p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+        Review platform health, operational performance, revenue, bookings, caregivers, and families.
+      </p>
+    </div>
+    <div class="flex items-center gap-3 shrink-0">
+      <!-- Period Selector Dropdown -->
+      <div class="relative period-dropdown-wrapper">
+        <button
+          (click)="togglePeriodDropdown()"
+          [disabled]="isLoading()"
+          class="flex items-center gap-2 px-4 h-[38px] bg-white border border-outline-variant/30 rounded-lg font-label-md text-label-md font-medium text-sm text-on-surface transition-all hover:border-primary/40 hover:bg-surface-container-lowest active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+          title="Select time period"
+        >
+          <span class="material-symbols-outlined text-[17px]">calendar_today</span>
+          <span>{{ getSelectedLabel() }}</span>
+          <span class="material-symbols-outlined text-[17px] transition-transform" [class.rotate-180]="showPeriodDropdown()">expand_more</span>
+        </button>
+
+        <!-- Dropdown Menu -->
+        @if (showPeriodDropdown()) {
+          <div class="absolute right-0 top-[calc(100%+8px)] z-50 bg-white rounded-lg card-shadow border border-outline-variant/20 py-2 min-w-[180px] animate-slide-in-top">
+            @for (opt of periodOptions; track opt.value) {
+              <button
+                (click)="selectPeriod(opt.value)"
+                class="w-full px-4 py-2.5 text-left font-body-sm text-body-sm text-on-surface hover:bg-surface-container-lowest transition-colors flex items-center justify-between cursor-pointer"
+                [class.bg-primary/10]="opt.value === selectedPeriod()"
+                [class.text-primary]="opt.value === selectedPeriod()"
+                [class.font-semibold]="opt.value === selectedPeriod()"
+              >
+                <span>{{ opt.label }}</span>
+                @if (opt.value === selectedPeriod()) {
+                  <span class="material-symbols-outlined text-[16px]">check</span>
+                }
+              </button>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Export button -->
+      <button
+        (click)="exportReport()"
+        [disabled]="isLoading() || !data() || isExporting()"
+        class="flex items-center gap-2 px-4 h-[38px] bg-primary text-white rounded-lg font-label-md text-label-md font-bold text-sm transition-all hover:opacity-90 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+        title="Export report as CSV"
+      >
+        @if (isExporting()) {
+          <svg class="animate-spin h-4 w-4 text-white shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          <span>Exporting…</span>
+        } @else {
+          <span class="material-symbols-outlined text-[17px]">download</span>
+          <span>Export Report</span>
+        }
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Error ────────────────────────────────────────────────────────── -->
+  <app-error-banner [message]="error()" (retry)="load()" />
+
+  <!-- ══════════════════════ SKELETON ══════════════════════════════════ -->
+  @if (isLoading()) {
+
+    <!-- KPI skeleton -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+      @for (i of [1,2,3]; track i) {
+        <div class="bg-white rounded-2xl card-shadow p-5 animate-pulse min-h-[120px]">
+          <div class="flex justify-between mb-4">
+            <div class="w-10 h-10 rounded-xl bg-surface-container-low"></div>
+            <div class="h-4 w-14 rounded bg-surface-container-low"></div>
+          </div>
+          <div class="h-3 w-28 rounded bg-surface-container-low mb-2"></div>
+          <div class="h-7 w-36 rounded bg-surface-container-low"></div>
+        </div>
+      }
+    </div>
+
+    <!-- Chart + side panel skeleton -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
+      <div class="lg:col-span-2 bg-white rounded-2xl card-shadow p-5 animate-pulse h-[320px]">
+        <div class="h-4 w-32 rounded bg-surface-container-low mb-6"></div>
+        <div class="h-full bg-surface-container-low rounded-xl"></div>
+      </div>
+      <div class="bg-white rounded-2xl card-shadow p-5 animate-pulse space-y-4">
+        <div class="h-4 w-40 rounded bg-surface-container-low mb-2"></div>
+        @for (i of [1,2,3,4]; track i) {
+          <div class="space-y-1.5">
+            <div class="flex justify-between">
+              <div class="h-3 w-28 rounded bg-surface-container-low"></div>
+              <div class="h-3 w-8 rounded bg-surface-container-low"></div>
+            </div>
+            <div class="h-2 rounded-full bg-surface-container-low"></div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Table + geo skeleton -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <div class="lg:col-span-2 bg-white rounded-2xl card-shadow p-5 animate-pulse space-y-3">
+        <div class="h-4 w-40 rounded bg-surface-container-low mb-4"></div>
+        @for (i of [1,2,3]; track i) {
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-full bg-surface-container-low shrink-0"></div>
+            <div class="flex-1 space-y-1.5">
+              <div class="h-3 w-32 rounded bg-surface-container-low"></div>
+              <div class="h-2.5 w-24 rounded bg-surface-container-low"></div>
+            </div>
+            <div class="h-3 w-12 rounded bg-surface-container-low"></div>
+            <div class="h-3 w-10 rounded bg-surface-container-low"></div>
+            <div class="h-5 w-14 rounded-full bg-surface-container-low"></div>
+          </div>
+        }
+      </div>
+      <div class="bg-white rounded-2xl card-shadow p-5 animate-pulse h-[260px]">
+        <div class="h-4 w-36 rounded bg-surface-container-low mb-4"></div>
+        <div class="h-40 bg-surface-container-low rounded-xl mb-4"></div>
+        <div class="space-y-2">
+          @for (i of [1,2,3]; track i) {
+            <div class="flex justify-between">
+              <div class="h-3 w-24 rounded bg-surface-container-low"></div>
+              <div class="h-3 w-20 rounded bg-surface-container-low"></div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ══════════════════════ LOADED ════════════════════════════════════ -->
+  @if (!isLoading() && !error() && data()) {
+
+    <!-- ── KPI Cards ──────────────────────────────────────────────── -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+
+      <!-- Total Revenue -->
+      <div class="kpi-card bg-white rounded-2xl card-shadow border border-white p-5 flex flex-col justify-between min-h-[120px]">
+        <div class="flex justify-between items-start mb-3">
+          <div class="p-2.5 rounded-xl bg-secondary-container/20 text-secondary">
+            <span class="material-symbols-outlined text-[22px]">payments</span>
+          </div>
+          <span class="text-xs font-bold text-secondary flex items-center gap-1">
+            <span class="material-symbols-outlined text-[14px]">trending_up</span>
+            Revenue
+          </span>
+        </div>
+        <div>
+          <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Total Revenue</p>
+          <h3 class="font-headline-sm text-headline-sm text-on-surface font-bold mt-1">
+            {{ formatCurrency(kpis()!.totalRevenue) }}
+          </h3>
+        </div>
+      </div>
+
+      <!-- Avg Booking Value -->
+      <div class="kpi-card bg-white rounded-2xl card-shadow border border-white p-5 flex flex-col justify-between min-h-[120px]">
+        <div class="flex justify-between items-start mb-3">
+          <div class="p-2.5 rounded-xl bg-primary/10 text-primary">
+            <span class="material-symbols-outlined text-[22px]">bar_chart</span>
+          </div>
+          <span class="text-xs font-bold text-on-surface-variant">Per booking</span>
+        </div>
+        <div>
+          <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Avg. Booking Value</p>
+          <h3 class="font-headline-sm text-headline-sm text-on-surface font-bold mt-1">
+            {{ formatCurrency(kpis()!.avgBookingValue) }}
+          </h3>
+        </div>
+      </div>
+
+      <!-- Outstanding Payments -->
+      <div class="kpi-card bg-white rounded-2xl card-shadow border border-white p-5 flex flex-col justify-between min-h-[120px]">
+        <div class="flex justify-between items-start mb-3">
+          <div class="p-2.5 rounded-xl bg-error-container/30 text-error">
+            <span class="material-symbols-outlined text-[22px]">error_outline</span>
+          </div>
+          @if (kpis()!.pendingPaymentsCount > 0) {
+            <span class="text-[10px] font-bold bg-error/10 text-error px-2 py-0.5 rounded-full border border-error/20">
+              {{ kpis()!.pendingPaymentsCount }} Pending
+            </span>
+          }
+        </div>
+        <div>
+          <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Outstanding Payments</p>
+          <h3 class="font-headline-sm text-headline-sm text-on-surface font-bold mt-1">
+            {{ formatCurrency(kpis()!.outstandingPayments) }}
+          </h3>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── Secondary KPI row ──────────────────────────────────────── -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+      @for (card of [
+        { label: 'Completed Bookings', value: kpis()!.completedBookings, icon: 'task_alt',       bg: 'bg-secondary-container/20', color: 'text-secondary' },
+        { label: 'Active Bookings',    value: kpis()!.activeBookings,    icon: 'play_circle',    bg: 'bg-tertiary-container/20',  color: 'text-tertiary'  },
+        { label: 'New Families',       value: kpis()!.newFamilies,       icon: 'family_restroom',bg: 'bg-primary/10',             color: 'text-primary'   },
+        { label: 'New Caregivers',     value: kpis()!.newCaregivers,     icon: 'medical_services',bg:'bg-amber-100',              color: 'text-amber-700' }
+      ]; track card.label) {
+        <div class="bg-white rounded-2xl card-shadow border border-white p-4 flex items-center gap-3">
+          <div class="p-2 rounded-xl shrink-0" [class]="card.bg + ' ' + card.color">
+            <span class="material-symbols-outlined text-[20px]">{{ card.icon }}</span>
+          </div>
+          <div class="min-w-0">
+            <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider truncate">{{ card.label }}</p>
+            <p class="font-headline-sm text-headline-sm text-on-surface font-bold">{{ card.value }}</p>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- ── All-Time Totals (small info row) ──────────────────────────── -->
+    <div class="flex items-center gap-4 mb-6 px-4 py-3 bg-surface-container-low/40 rounded-xl border border-outline-variant/20">
+      <span class="material-symbols-outlined text-[18px] text-on-surface-variant">info</span>
+      <p class="font-body-sm text-body-sm text-on-surface-variant">
+        <span class="font-semibold">Platform Totals:</span>
+        <span class="ml-2">{{ kpis()!.totalFamilies }} Families</span>
+        <span class="mx-2">•</span>
+        <span>{{ kpis()!.totalCaregivers }} Caregivers</span>
+      </p>
+    </div>
+
+    <!-- ── Growth Trends + Service Distribution ───────────────────── -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
+
+      <!-- Growth Trends — inline SVG line chart -->
+      <div class="lg:col-span-2 bg-white rounded-2xl card-shadow border border-white p-5">
+        <div class="flex items-center justify-between mb-5 flex-wrap gap-2">
+          <h4 class="font-title-lg text-title-lg font-bold text-on-surface">Growth Trends</h4>
+          <div class="flex items-center gap-5 text-xs font-semibold">
+            <span class="flex items-center gap-2">
+              <span class="w-5 h-0.5 rounded-full inline-block" style="background:#0F766E;"></span>
+              <span class="w-2.5 h-2.5 rounded-full inline-block border-2 border-white shadow-sm" style="background:#0F766E;"></span>
+              New Users
+            </span>
+            <span class="flex items-center gap-2">
+              <span class="w-5 h-0.5 rounded-full inline-block" style="background:#F59E0B;"></span>
+              <span class="w-2.5 h-2.5 rounded-full inline-block border-2 border-white shadow-sm" style="background:#F59E0B;"></span>
+              New Bookings
+            </span>
+          </div>
+        </div>
+
+        @if (growthTrends(); as gt) {
+          <!-- Check if all counts are 0 -->
+          @if (isGrowthEmpty(gt)) {
+            <app-empty-state icon="bar_chart" title="No activity in this period" subtitle="There are no bookings or new users in the selected time range." />
+          } @else {
+            <div class="relative overflow-x-auto">
+              <svg viewBox="0 0 480 220" class="w-full chart-svg" preserveAspectRatio="none" style="min-width:280px; height:200px;">
+                <!-- Horizontal grid lines -->
+                @for (y of [40, 80, 120, 160, 200]; track y) {
+                  <line [attr.y1]="y" [attr.y2]="y" x1="0" x2="480"
+                    stroke="#e5e7eb" stroke-width="1"/>
+                }
+
+                <!-- Users line — Teal #0F766E, stroke 3 -->
+                @if (hasNonZero(gt.users)) {
+                  <path
+                    class="chart-line chart-line--animate"
+                    [attr.d]="buildLinePath(gt.users.map(u => u.count), 480, 220)"
+                    stroke="#0F766E"
+                    stroke-width="3"
+                  />
+                  <!-- Users dots -->
+                  @for (dot of buildDots(gt.users.map(u => u.count), 480, 220); track dot.x) {
+                    <circle
+                      [attr.cx]="dot.x"
+                      [attr.cy]="dot.y"
+                      r="5"
+                      fill="#0F766E"
+                      stroke="#ffffff"
+                      stroke-width="2"
+                      class="chart-dot"
+                    >
+                      <title>{{ dot.v }} new user{{ dot.v !== 1 ? 's' : '' }}</title>
+                    </circle>
+                  }
+                }
+
+                <!-- Bookings line — Amber #F59E0B, stroke 3 -->
+                @if (hasNonZero(gt.bookings)) {
+                  <path
+                    class="chart-line chart-line--animate"
+                    [attr.d]="buildLinePath(gt.bookings.map(b => b.count), 480, 220)"
+                    stroke="#F59E0B"
+                    stroke-width="3"
+                  />
+                  <!-- Bookings dots -->
+                  @for (dot of buildDots(gt.bookings.map(b => b.count), 480, 220); track dot.x) {
+                    <circle
+                      [attr.cx]="dot.x"
+                      [attr.cy]="dot.y"
+                      r="5"
+                      fill="#F59E0B"
+                      stroke="#ffffff"
+                      stroke-width="2"
+                      class="chart-dot"
+                    >
+                      <title>{{ dot.v }} new booking{{ dot.v !== 1 ? 's' : '' }}</title>
+                    </circle>
+                  }
+                }
+              </svg>
+
+              <!-- X-axis labels -->
+              <div class="flex justify-between text-[11px] text-on-surface-variant font-medium mt-2 px-1">
+                @for (w of gt.bookings; track w.week) {
+                  <span>{{ w.week }}</span>
+                }
+              </div>
+            </div>
+          }
+        } @else {
+          <app-empty-state icon="bar_chart" title="No trend data" subtitle="Not enough data to show growth trends yet." />
+        }
+      </div>
+
+      <!-- Service Distribution -->
+      <div class="bg-white rounded-2xl card-shadow border border-white p-5">
+        <h4 class="font-title-lg text-title-lg font-bold text-on-surface mb-5">Service Distribution</h4>
+
+        @if (serviceDistribution().length > 0) {
+          <div class="space-y-4">
+            @for (svc of serviceDistribution(); track svc.type; let i = $index) {
+              <div>
+                <div class="flex items-center justify-between mb-1.5">
+                  <span class="font-body-sm text-body-sm text-on-surface font-medium">{{ svc.label }}</span>
+                  <span class="font-label-sm text-label-sm font-bold text-primary">{{ svc.percentage }}%</span>
+                </div>
+                <div class="h-2 rounded-full bg-surface-container-low overflow-hidden">
+                  <div
+                    class="h-full rounded-full progress-fill"
+                    [class]="getServiceColor(i)"
+                    [style.width.%]="svc.percentage"
+                  ></div>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <app-empty-state icon="donut_large" title="No service data" subtitle="No job posts found yet." />
+        }
+      </div>
+
+    </div>
+
+    <!-- ── Caregiver Performance + Geographic Insights ────────────── -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+      <!-- Caregiver Performance Table -->
+      <div class="lg:col-span-2 bg-white rounded-2xl card-shadow border border-white overflow-hidden">
+        <div class="p-5 border-b border-outline-variant/25 flex items-center justify-between">
+          <h4 class="font-title-lg text-title-lg font-bold text-on-surface">Caregiver Performance</h4>
+          <button
+            (click)="viewAllCaregivers()"
+            class="text-primary font-label-md text-label-md font-semibold hover:underline cursor-pointer text-sm"
+          >
+            View All
+          </button>
+        </div>
+
+        @if (caregiverPerformance().length > 0) {
+          <!-- Desktop table -->
+          <div class="hidden sm:block overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead class="bg-surface-container-low border-b border-outline-variant/20">
+                <tr class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">
+                  <th class="px-5 py-3.5">Caregiver</th>
+                  <th class="px-4 py-3.5">Total Hours</th>
+                  <th class="px-4 py-3.5">Rating</th>
+                  <th class="px-4 py-3.5">Reliability</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-outline-variant/15">
+                @for (cg of caregiverPerformance(); track cg._id) {
+                  <tr class="hover:bg-surface-container-lowest transition-colors text-[13px]">
+                    <td class="px-5 py-3.5">
+                      <div class="flex items-center gap-3">
+                        @if (cg.avatar) {
+                          <img [src]="cg.avatar" [alt]="cg.name"
+                            class="w-9 h-9 rounded-full object-cover border border-outline-variant/20 shrink-0" />
+                        } @else {
+                          <div class="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0">
+                            {{ getInitials(cg.name) }}
+                          </div>
+                        }
+                        <div>
+                          <p class="font-semibold text-on-surface">{{ cg.name }}</p>
+                          <p class="text-[11px] text-on-surface-variant">{{ getSpecializationLabel(cg.specialization) }}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-4 py-3.5 text-on-surface-variant font-medium">{{ cg.totalWorkHours }}h</td>
+                    <td class="px-4 py-3.5">
+                      <span class="flex items-center gap-1 text-amber-500 font-bold text-sm">
+                        <span class="material-symbols-outlined text-[15px]" style="font-variation-settings:'FILL' 1;">star</span>
+                        {{ cg.rating.toFixed(1) }}
+                      </span>
+                    </td>
+                    <td class="px-4 py-3.5">
+                      <span class="text-[10px] font-bold px-2.5 py-1 rounded-full border uppercase tracking-wide"
+                        [class]="getReliabilityClass(cg.reliability)">
+                        {{ cg.reliability }}
+                      </span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Mobile card list -->
+          <div class="sm:hidden divide-y divide-outline-variant/15">
+            @for (cg of caregiverPerformance(); track cg._id) {
+              <div class="p-4 flex items-center gap-3">
+                @if (cg.avatar) {
+                  <img [src]="cg.avatar" [alt]="cg.name" class="w-10 h-10 rounded-full object-cover shrink-0" />
+                } @else {
+                  <div class="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm shrink-0">
+                    {{ getInitials(cg.name) }}
+                  </div>
+                }
+                <div class="flex-1 min-w-0">
+                  <p class="font-semibold text-sm text-on-surface truncate">{{ cg.name }}</p>
+                  <p class="text-[11px] text-on-surface-variant">{{ getSpecializationLabel(cg.specialization) }} · {{ cg.totalWorkHours }}h</p>
+                </div>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase shrink-0"
+                  [class]="getReliabilityClass(cg.reliability)">
+                  {{ cg.reliability }}
+                </span>
+              </div>
+            }
+          </div>
+
+        } @else {
+          <div class="p-6">
+            <app-empty-state icon="medical_services" title="No caregiver data" subtitle="No verified caregivers found." />
+          </div>
+        }
+      </div>
+
+      <!-- Geographic Insights -->
+      <div class="geo-card bg-white rounded-2xl card-shadow border border-white p-5">
+        <h4 class="font-title-lg text-title-lg font-bold text-on-surface mb-4">Geographic Insights</h4>
+
+        <!-- Map: self-contained 280px height, fully clipped inside -->
+        <app-egypt-map [insights]="geographicInsights()" />
+
+        <!-- City booking list below the map -->
+        @if (geographicInsights().length > 0) {
+          <div class="space-y-2 mt-4">
+            @for (geo of geographicInsights(); track geo.city) {
+              <div class="flex items-center justify-between text-sm">
+                <span class="flex items-center gap-2 text-on-surface-variant font-medium">
+                  <span class="w-2 h-2 rounded-full shrink-0" style="background:#0F766E;"></span>
+                  {{ geo.city }}
+                </span>
+                <span class="font-bold text-on-surface">{{ geo.bookings }} Bookings</span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+    </div>
+
+  }
+
+  <!-- ── Empty state when no data at all ───────────────────────────── -->
+  @if (!isLoading() && !error() && !data()) {
+    <app-empty-state icon="analytics" title="No analytics available"
+      subtitle="Analytics data will appear once the platform has activity." />
+  }
+
+</div>

@@ -8,6 +8,7 @@ export interface UserSession {
   email: string;
   role: string;
   name: string;
+  avatar?: { url?: string; public_id?: string } | null;
 }
 
 // The backend login endpoint returns `accessToken`, not `token`
@@ -19,6 +20,7 @@ interface LoginApiResponse {
     email: string;
     phone: string;
     role: string;
+    avatar?: { url?: string; public_id?: string } | null;
   };
 }
 
@@ -30,6 +32,7 @@ interface RefreshApiResponse {
     email: string;
     phone: string;
     role: string;
+    avatar?: { url?: string; public_id?: string } | null;
   };
 }
 
@@ -73,10 +76,11 @@ export class AuthService {
   private storeSession(accessToken: string, user: LoginApiResponse['user']): void {
     localStorage.setItem(this.TOKEN_KEY, accessToken);
     const sessionData: UserSession = {
-      id:    user.id,
-      email: user.email,
-      role:  user.role,
-      name:  user.name
+      id:     user.id,
+      email:  user.email,
+      role:   user.role,
+      name:   user.name,
+      avatar: user.avatar ?? null,
     };
     localStorage.setItem(this.SESSION_KEY, JSON.stringify(sessionData));
     this.currentUser.set(sessionData);

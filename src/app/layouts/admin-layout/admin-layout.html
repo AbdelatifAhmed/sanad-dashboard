@@ -1,12 +1,15 @@
 <div class="min-h-screen bg-background">
-  <!-- Sidebar Panel -->
+  <!-- Sidebar (handles its own positioning and mobile overlay) -->
   <app-sidebar></app-sidebar>
 
-  <!-- Top Action Bar -->
+  <!-- Top bar -->
   <app-topbar></app-topbar>
 
-  <!-- Main View Workspace -->
-  <main class="ml-[260px] mt-[64px] p-[24px] min-h-[calc(100vh-64px)]">
+  <!-- Main content — no left margin on mobile, sidebar-width margin on lg+ -->
+  <main class="lg:ml-[260px] mt-[64px] p-4 md:p-6 min-h-[calc(100vh-64px)]">
     <router-outlet></router-outlet>
   </main>
+
+  <!-- Global toast notifications (used by ToastService) -->
+  <app-toast-outlet></app-toast-outlet>
 </div>

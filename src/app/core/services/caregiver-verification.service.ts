@@ -2,6 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AuthService } from './auth.service';
+import { AdminBooking, BookingsResponse, BookingFilters } from './bookings.service';
+import { AdminReview, ReviewsResponse, ReviewFilters } from './reviews.service';
 
 export interface UserDetails {
   _id: string;
@@ -89,6 +91,19 @@ export interface SingleCompanionResponse {
   };
 }
 
+export interface CompanionWallet {
+  currentBalance: number;
+  totalEarnings: number;
+  pendingBalance: number;
+  lastWithdrawalDate: string | null;
+  walletStatus: 'active' | 'frozen';
+}
+
+export interface CompanionWalletResponse {
+  status: string;
+  data: CompanionWallet;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -149,5 +164,51 @@ export class CaregiverVerificationService {
       message: details?.message
     };
     return this.http.patch<any>(`${this.BASE}/admin/companions/verify-companion/${id}`, body, { headers });
+  }
+
+  /**
+   * Fetch wallet summary for a specific companion (admin only).
+   */
+  getCompanionWallet(id: string): Observable<CompanionWalletResponse> {
+    const headers = this.getHeaders();
+    return this.http.get<CompanionWalletResponse>(
+      `${this.BASE}/admin/companions/${id}/wallet`,
+      { headers }
+    );
+  }
+
+  /**
+   * Fetch bookings for a specific caregiver, scoped server-side by companionId.
+   *
+   * The Booking schema stores `companionId` as a User._id reference (ref: "User").
+   * companion.userId._id is the correct value to pass here.
+   *
+   * The backend filters using:  filter.companionId = new ObjectId(companionId)
+   * so only bookings that belong to this caregiver are ever returned.
+   */
+  getBookingsByCompanion(
+    companionUserId: string,
+    filters: { status?: string; page?: number; limit?: number } = {}
+  ): Observable<BookingsResponse> {
+    const headers = this.getHeaders();
+    let params = new HttpParams().set('companionId', companionUserId);
+    if (filters.status && filters.status !== 'all') params = params.set('status', filters.status);
+    if (filters.page)   params = params.set('page',  filters.page.toString());
+    if (filters.limit)  params = params.set('limit', filters.limit.toString());
+    return this.http.get<BookingsResponse>(`${this.BASE}/admin/bookings`, { headers, params });
+  }
+
+  /**
+   * Fetch reviews for a specific companion.
+   */
+  getReviewsByCompanion(
+    companionId: string,
+    filters: { page?: number; limit?: number } = {}
+  ): Observable<ReviewsResponse> {
+    const headers = this.getHeaders();
+    let params = new HttpParams().set('companionId', companionId);
+    if (filters.page)  params = params.set('page',  filters.page.toString());
+    if (filters.limit) params = params.set('limit', filters.limit.toString());
+    return this.http.get<ReviewsResponse>(`${this.BASE}/admin/reviews`, { headers, params });
   }
 }

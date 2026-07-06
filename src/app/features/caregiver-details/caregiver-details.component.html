@@ -1,0 +1,825 @@
+<!-- ═══════════════════════════════════════════════════════════════════════
+     Caregiver Details — Premium Dashboard Profile
+════════════════════════════════════════════════════════════════════════ -->
+<div class="cd-page">
+
+  <!-- Loading state -->
+  @if (isLoading()) {
+    <div class="cd-loading-screen">
+      <div class="cd-spinner"></div>
+      <p>Loading caregiver profile…</p>
+    </div>
+  }
+
+  <!-- Error state -->
+  @if (!isLoading() && error()) {
+    <div class="cd-error-screen">
+      <span class="material-symbols-outlined">error</span>
+      <p>{{ error() }}</p>
+      <button class="cd-btn-primary" (click)="goBack()">← Back to Caregivers</button>
+    </div>
+  }
+
+  <!-- Main content -->
+  @if (!isLoading() && !error() && companion(); as comp) {
+
+    <!-- ── Breadcrumb ─────────────────────────────────────────────────── -->
+    <div class="cd-breadcrumb">
+      <a class="cd-back-btn" routerLink="/dashboard">
+        <span class="material-symbols-outlined">home</span>
+        Dashboard
+      </a>
+      <span class="cd-breadcrumb-sep">/</span>
+      <button class="cd-back-btn" (click)="goBack()">
+        <span class="material-symbols-outlined">arrow_back</span>
+        Caregivers
+      </button>
+      <span class="cd-breadcrumb-sep">/</span>
+      <span class="cd-breadcrumb-current">{{ comp.userId.name }}</span>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         PROFILE HEADER
+    ════════════════════════════════════════════════════════════════ -->
+    <div class="cd-header-card">
+      <!-- Left: Avatar + core info -->
+      <div class="cd-header-left">
+        <!-- Avatar -->
+        <div class="cd-avatar-wrap">
+          @if (comp.userId.avatar?.url) {
+            <img [src]="comp.userId.avatar!.url" [alt]="comp.userId.name" class="cd-avatar-img" />
+          } @else {
+            <div class="cd-avatar-placeholder">{{ getInitials(comp.userId.name) }}</div>
+          }
+          <span class="cd-avatar-badge" [class]="getStatusClass(comp.verificationStatus)">
+            <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1; font-size:13px;">
+              {{ comp.verificationStatus === 'verified' ? 'verified' : comp.verificationStatus === 'rejected' ? 'cancel' : 'pending' }}
+            </span>
+          </span>
+        </div>
+
+        <!-- Name + role + rating -->
+        <div class="cd-header-identity">
+          <div class="cd-header-name-row">
+            <h1 class="cd-name">{{ comp.userId.name }}</h1>
+            <span class="cd-status-badge" [class]="getStatusClass(comp.verificationStatus)">
+              {{ getStatusLabel(comp.verificationStatus) }}
+            </span>
+          </div>
+          <p class="cd-role">{{ getSpecialization(comp.specialization) }}
+            @if (comp.companionType === 'specialized') { · Specialized Care }
+          </p>
+          <!-- Stars -->
+          <div class="cd-rating-row">
+            <div class="cd-stars">
+              @for (filled of ratingStars(); track $index) {
+                <span class="material-symbols-outlined cd-star" [class.cd-star-filled]="filled === 'full'" style="font-variation-settings:'FILL' 1;">star</span>
+              }
+            </div>
+            <span class="cd-rating-val">{{ safeRating(comp.rating) }}</span>
+            <span class="cd-rating-count">({{ comp.reviewCount }} reviews)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center: Stat pills -->
+      <div class="cd-header-stats">
+        <div class="cd-stat-pill">
+          <span class="material-symbols-outlined cd-stat-icon text-primary">task_alt</span>
+          <div>
+            <p class="cd-stat-label">Completed</p>
+            <p class="cd-stat-val">{{ bookingsTotal() }}</p>
+          </div>
+        </div>
+        <div class="cd-stat-pill">
+          <span class="material-symbols-outlined cd-stat-icon" style="color:#f59e0b">schedule</span>
+          <div>
+            <p class="cd-stat-label">Work Hours</p>
+            <p class="cd-stat-val">{{ safeNum(comp.totalWorkHours) }}h</p>
+          </div>
+        </div>
+        <div class="cd-stat-pill">
+          <span class="material-symbols-outlined cd-stat-icon text-secondary">payments</span>
+          <div>
+            <p class="cd-stat-label">Rate / hr</p>
+            <p class="cd-stat-val">{{ comp.hourlyRate || '—' }} EGP</p>
+          </div>
+        </div>
+        <div class="cd-stat-pill">
+          <span class="material-symbols-outlined cd-stat-icon" style="color:#8b5cf6">reviews</span>
+          <div>
+            <p class="cd-stat-label">Avg Rating</p>
+            <p class="cd-stat-val">{{ safeRating(comp.rating) }} ★</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Contact info + actions -->
+      <div class="cd-header-right">
+        <div class="cd-contact-list">
+          @if (comp.userId.email) {
+            <span class="cd-contact-item">
+              <span class="material-symbols-outlined cd-contact-icon">mail</span>
+              {{ comp.userId.email }}
+            </span>
+          }
+          @if (comp.userId.phone) {
+            <span class="cd-contact-item">
+              <span class="material-symbols-outlined cd-contact-icon">call</span>
+              {{ comp.userId.phone }}
+            </span>
+          }
+          <span class="cd-contact-item">
+            <span class="material-symbols-outlined cd-contact-icon">calendar_month</span>
+            Joined {{ comp.createdAt | date:'mediumDate' }}
+          </span>
+        </div>
+        <!-- Quick actions -->
+        <div class="cd-header-actions">
+          <app-message-button
+            [userId]="comp.userId._id"
+            userRole="companion"
+          />
+          @if (comp.verificationStatus !== 'verified') {
+            <button class="cd-btn-primary" (click)="openModal('approve')">
+              <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">check_circle</span>
+              Approve
+            </button>
+          }
+          @if (comp.verificationStatus !== 'rejected') {
+            <button class="cd-btn-danger" (click)="openModal('reject')">
+              <span class="material-symbols-outlined">cancel</span>
+              Reject
+            </button>
+          }
+          @if (comp.verificationStatus !== 'under_review') {
+            <button class="cd-btn-ghost" (click)="openModal('request_info')">
+              <span class="material-symbols-outlined">help</span>
+              Request Info
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Status alert banners -->
+    @if (comp.verificationStatus === 'rejected') {
+      <div class="cd-alert cd-alert-danger">
+        <span class="material-symbols-outlined">error</span>
+        <div><strong>Application Declined — </strong>{{ comp.rejectionReason || 'No reason provided.' }}</div>
+      </div>
+    }
+    @if (comp.verificationStatus === 'under_review') {
+      <div class="cd-alert cd-alert-warning">
+        <span class="material-symbols-outlined">pending</span>
+        <div><strong>Additional Information Requested — </strong>{{ comp.requestMoreInfoMessage || 'No details.' }}</div>
+      </div>
+    }
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         TABS NAV
+    ════════════════════════════════════════════════════════════════ -->
+    <div class="cd-tabs-bar">
+      @for (tab of tabs; track tab.id) {
+        <button class="cd-tab-btn" [class.cd-tab-active]="activeTab() === tab.id" (click)="setTab(tab.id)">
+          <span class="material-symbols-outlined cd-tab-icon" style="font-variation-settings:'FILL' 1;">{{ tab.icon }}</span>
+          {{ tab.label }}
+        </button>
+      }
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         TAB CONTENT
+    ════════════════════════════════════════════════════════════════ -->
+    <div class="cd-tab-content">
+
+      <!-- ════════ OVERVIEW TAB ════════ -->
+      @if (activeTab() === 'overview') {
+        <div class="cd-overview-grid">
+
+          <!-- LEFT column -->
+          <div class="cd-col-left">
+
+            <!-- About / Bio -->
+            @if (comp.bio) {
+              <div class="cd-card">
+                <h3 class="cd-card-title">
+                  <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">person</span>
+                  About
+                </h3>
+                <p class="cd-bio-text">"{{ comp.bio }}"</p>
+              </div>
+            }
+
+            <!-- Skills -->
+            @if (comp.skills?.length) {
+              <div class="cd-card">
+                <h3 class="cd-card-title">
+                  <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">psychology</span>
+                  Skills & Specializations
+                </h3>
+                <div class="cd-tags-wrap">
+                  @for (skill of comp.skills; track skill._id) {
+                    <span class="cd-tag cd-tag-primary">{{ skill.nameEn }}</span>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Hobbies -->
+            @if (comp.hobbies?.length) {
+              <div class="cd-card">
+                <h3 class="cd-card-title">
+                  <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">interests</span>
+                  Hobbies & Interests
+                </h3>
+                <div class="cd-tags-wrap">
+                  @for (hobby of comp.hobbies; track hobby) {
+                    <span class="cd-tag cd-tag-amber">{{ hobby }}</span>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Verification Progress -->
+            <div class="cd-card">
+              <h3 class="cd-card-title">
+                <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">verified_user</span>
+                Verification Progress
+                <span class="cd-progress-pct">{{ verificationProgress() }}%</span>
+              </h3>
+              <div class="cd-progress-bar-wrap">
+                <div class="cd-progress-bar" [style.width]="verificationProgress() + '%'"></div>
+              </div>
+              <div class="cd-checks-list">
+                @for (chk of verificationChecks(); track chk.label) {
+                  <div class="cd-check-item">
+                    <span class="cd-check-icon" [class.cd-check-done]="chk.done" [class.cd-check-fail]="!chk.done"
+                      style="font-variation-settings:'FILL' 1;" class="material-symbols-outlined">
+                      {{ chk.done ? 'check_circle' : 'cancel' }}
+                    </span>
+                    <span [class.cd-check-text-done]="chk.done" [class.cd-check-text-fail]="!chk.done">{{ chk.label }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+
+          </div>
+
+          <!-- RIGHT column -->
+          <div class="cd-col-right">
+
+            <!-- Professional Info -->
+            <div class="cd-card">
+              <h3 class="cd-card-title">
+                <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">work</span>
+                Professional Information
+              </h3>
+              <div class="cd-prof-grid">
+                <div class="cd-prof-item">
+                  <span class="cd-prof-label">Type</span>
+                  <span class="cd-prof-val">{{ comp.companionType === 'specialized' ? 'Specialized' : 'General' }}</span>
+                </div>
+                <div class="cd-prof-item">
+                  <span class="cd-prof-label">Specialization</span>
+                  <span class="cd-prof-val">{{ getSpecialization(comp.specialization) }}</span>
+                </div>
+                <div class="cd-prof-item">
+                  <span class="cd-prof-label">Hourly Rate</span>
+                  <span class="cd-prof-val cd-prof-highlight">{{ comp.hourlyRate || '—' }} EGP / hr</span>
+                </div>
+                <div class="cd-prof-item">
+                  <span class="cd-prof-label">Total Work Hours</span>
+                  <span class="cd-prof-val">{{ safeNum(comp.totalWorkHours) }} hours</span>
+                </div>
+                <div class="cd-prof-item">
+                  <span class="cd-prof-label">Reviews</span>
+                  <span class="cd-prof-val">{{ comp.reviewCount }}</span>
+                </div>
+                <div class="cd-prof-item">
+                  <span class="cd-prof-label">Status</span>
+                  <span class="cd-status-badge cd-status-badge-sm" [class]="getStatusClass(comp.verificationStatus)">
+                    {{ getStatusLabel(comp.verificationStatus) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Stats cards grid -->
+            <div class="cd-stats-grid">
+              <div class="cd-mini-stat">
+                <div class="cd-mini-stat-icon" style="background:rgba(0,103,103,0.1); color:var(--color-primary)">
+                  <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">task_alt</span>
+                </div>
+                <div class="cd-mini-stat-body">
+                  <span class="cd-mini-stat-label">Completed Jobs</span>
+                  <span class="cd-mini-stat-val">{{ bookingsTotal() }}</span>
+                </div>
+              </div>
+              <div class="cd-mini-stat">
+                <div class="cd-mini-stat-icon" style="background:rgba(245,158,11,0.1); color:#f59e0b">
+                  <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">schedule</span>
+                </div>
+                <div class="cd-mini-stat-body">
+                  <span class="cd-mini-stat-label">Work Hours</span>
+                  <span class="cd-mini-stat-val">{{ safeNum(comp.totalWorkHours) }}h</span>
+                </div>
+              </div>
+              <div class="cd-mini-stat">
+                <div class="cd-mini-stat-icon" style="background:rgba(44,105,86,0.1); color:var(--color-secondary)">
+                  <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">star</span>
+                </div>
+                <div class="cd-mini-stat-body">
+                  <span class="cd-mini-stat-label">Avg Rating</span>
+                  <span class="cd-mini-stat-val">{{ safeRating(comp.rating) }}</span>
+                </div>
+              </div>
+              <div class="cd-mini-stat">
+                <div class="cd-mini-stat-icon" style="background:rgba(139,92,246,0.1); color:#8b5cf6">
+                  <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">reviews</span>
+                </div>
+                <div class="cd-mini-stat-body">
+                  <span class="cd-mini-stat-label">Total Reviews</span>
+                  <span class="cd-mini-stat-val">{{ comp.reviewCount }}</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      }
+
+      <!-- ════════ SERVICE HISTORY TAB ════════ -->
+      @if (activeTab() === 'history') {
+        <div class="cd-history-wrap">
+
+          <!-- Summary row -->
+          <div class="cd-history-header">
+            <div>
+              <h3 class="cd-section-title">Service History</h3>
+              <p class="cd-section-sub">{{ bookingsTotal() }} total bookings for this caregiver</p>
+            </div>
+          </div>
+
+          @if (bookingsLoading()) {
+            <div class="cd-loading-inline">
+              <div class="cd-spinner-sm"></div>
+              <span>Loading service history…</span>
+            </div>
+          } @else if (bookings().length === 0) {
+            <app-empty-state icon="history" title="No Service History"
+              subtitle="No completed services found for this caregiver." />
+          } @else {
+            <!-- Booking cards -->
+            <div class="cd-bookings-list">
+              @for (booking of bookings(); track booking._id) {
+                <div class="cd-booking-card">
+                  <div class="cd-booking-header">
+                    <div class="cd-booking-id">#{{ booking._id.slice(-8).toUpperCase() }}</div>
+                    <span class="cd-booking-status" [class]="getBookingStatusClass(booking.status)">
+                      {{ getBookingStatusLabel(booking.status) }}
+                    </span>
+                  </div>
+                  <div class="cd-booking-body">
+                    <div class="cd-booking-field">
+                      <span class="cd-booking-field-label">Family</span>
+                      <span class="cd-booking-field-val">{{ booking.familyId?.name ?? '—' }}</span>
+                    </div>
+                    <div class="cd-booking-field">
+                      <span class="cd-booking-field-label">Service</span>
+                      <span class="cd-booking-field-val">{{ getServiceTypeLabel(booking.jobPostId?.serviceType) }}</span>
+                    </div>
+                    <div class="cd-booking-field">
+                      <span class="cd-booking-field-label">Duration</span>
+                      <span class="cd-booking-field-val">{{ booking.totalHours || '—' }} hrs</span>
+                    </div>
+                    <div class="cd-booking-field">
+                      <span class="cd-booking-field-label">Start Date</span>
+                      <span class="cd-booking-field-val">{{ booking.startDate | date:'mediumDate' }}</span>
+                    </div>
+                    <div class="cd-booking-field">
+                      <span class="cd-booking-field-label">Total Price</span>
+                      <span class="cd-booking-field-val cd-booking-price">{{ formatCurrency(booking.totalPrice) }} EGP</span>
+                    </div>
+                    <div class="cd-booking-field">
+                      <span class="cd-booking-field-label">Payment</span>
+                      <span class="cd-pay-badge" [class]="getPaymentStatusClass(booking.paymentStatus)">
+                        {{ booking.paymentStatus | titlecase }}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="cd-booking-footer">
+                    <span class="cd-booking-date">{{ booking.createdAt | date:'medium' }}</span>
+                    <button class="cd-btn-view" (click)="selectedBookingId.set(booking._id)">
+                      <span class="material-symbols-outlined" style="font-size:15px;">open_in_new</span>
+                      View Details
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <!-- Pagination -->
+            @if (bookingsPages() > 1) {
+              <div class="cd-pagination">
+                <button class="cd-page-btn" [disabled]="bookingsPage() === 1" (click)="loadBookings(bookingsPage() - 1)">
+                  <span class="material-symbols-outlined">chevron_left</span> Prev
+                </button>
+                <span class="cd-page-info">Page {{ bookingsPage() }} of {{ bookingsPages() }}</span>
+                <button class="cd-page-btn" [disabled]="bookingsPage() === bookingsPages()" (click)="loadBookings(bookingsPage() + 1)">
+                  Next <span class="material-symbols-outlined">chevron_right</span>
+                </button>
+              </div>
+            }
+          }
+        </div>
+      }
+
+      <!-- Booking detail modal -->
+      <app-booking-detail-modal
+        [bookingId]="selectedBookingId()"
+        (closed)="selectedBookingId.set(null)"
+      />
+
+      <!-- ════════ REVIEWS TAB ════════ -->
+      @if (activeTab() === 'reviews') {
+        <div class="cd-reviews-wrap">
+
+          <!-- Reviews summary -->
+          <div class="cd-reviews-summary">
+            <div class="cd-reviews-score">
+              <div class="cd-big-rating">{{ reviewsAvg().toFixed(1) }}</div>
+              <div class="cd-stars-lg">
+                @for (filled of getStarArray(reviewsAvg()); track $index) {
+                  <span class="material-symbols-outlined cd-star-lg" [class.cd-star-filled]="filled" style="font-variation-settings:'FILL' 1;">star</span>
+                }
+              </div>
+              <div class="cd-reviews-count-label">{{ reviewsTotal() }} reviews total</div>
+            </div>
+            <div class="cd-rating-bars">
+              @for (row of ratingDistribution(); track row.star) {
+                <div class="cd-rating-row">
+                  <span class="cd-rating-row-label">{{ row.star }} ★</span>
+                  <div class="cd-rating-bar-bg">
+                    <div class="cd-rating-bar-fill" [style.width]="row.barPct + '%'"></div>
+                  </div>
+                  <span class="cd-rating-row-count">{{ row.count }}</span>
+                </div>
+              }
+            </div>
+          </div>
+
+          @if (reviewsLoading()) {
+            <div class="cd-loading-inline">
+              <div class="cd-spinner-sm"></div>
+              <span>Loading reviews…</span>
+            </div>
+          } @else if (reviews().length === 0) {
+            <app-empty-state icon="reviews" title="No Reviews Yet" subtitle="This caregiver has not received any reviews." />
+          } @else {
+            <div class="cd-reviews-list">
+              @for (review of reviews(); track review._id) {
+                <div class="cd-review-card">
+                  <div class="cd-review-header">
+                    <div class="cd-reviewer-info">
+                      @if (review.familyId?.avatar?.url) {
+                        <img [src]="review.familyId!.avatar!.url" class="cd-reviewer-avatar" />
+                      } @else {
+                        <div class="cd-reviewer-initials">{{ getInitials(review.familyId?.name) }}</div>
+                      }
+                      <div>
+                        <p class="cd-reviewer-name">{{ review.familyId?.name ?? 'Anonymous Family' }}</p>
+                        <p class="cd-review-date">{{ review.createdAt | date:'mediumDate' }}</p>
+                      </div>
+                    </div>
+                    <div class="cd-review-stars">
+                      @for (filled of getStarArray(review.rating); track $index) {
+                        <span class="material-symbols-outlined cd-star-sm" [class.cd-star-filled]="filled" style="font-variation-settings:'FILL' 1;">star</span>
+                      }
+                      <span class="cd-review-rating-num">{{ review.rating }}/5</span>
+                    </div>
+                  </div>
+                  @if (review.comment) {
+                    <p class="cd-review-comment">"{{ review.comment }}"</p>
+                  }
+                </div>
+              }
+            </div>
+
+            @if (reviewsPages() > 1) {
+              <div class="cd-pagination">
+                <button class="cd-page-btn" [disabled]="reviewsPage() === 1" (click)="loadReviews(reviewsPage() - 1)">
+                  <span class="material-symbols-outlined">chevron_left</span> Prev
+                </button>
+                <span class="cd-page-info">Page {{ reviewsPage() }} of {{ reviewsPages() }}</span>
+                <button class="cd-page-btn" [disabled]="reviewsPage() === reviewsPages()" (click)="loadReviews(reviewsPage() + 1)">
+                  Next <span class="material-symbols-outlined">chevron_right</span>
+                </button>
+              </div>
+            }
+          }
+        </div>
+      }
+
+      <!-- ════════ DOCUMENTS TAB ════════ -->
+      @if (activeTab() === 'documents') {
+        <div class="cd-docs-wrap">
+          <div class="cd-docs-header">
+            <h3 class="cd-section-title">Documents</h3>
+            <span class="cd-docs-count">{{ getCompletedDocsCount() }} / {{ getTotalDocsCount() }} uploaded</span>
+          </div>
+
+          <div class="cd-docs-grid">
+
+            <!-- National ID -->
+            <div class="cd-doc-card" [class.cd-doc-verified]="comp.documents.nationalIdCard?.url && comp.documents.nationalIdCard!.url !== 'placeholder_national_id.jpg'">
+              <div class="cd-doc-icon-wrap">
+                <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1; color:var(--color-primary)">badge</span>
+              </div>
+              <div class="cd-doc-info">
+                <p class="cd-doc-name">National ID</p>
+                <p class="cd-doc-type">Required · Identity</p>
+              </div>
+              <div class="cd-doc-right">
+                @if (comp.documents.nationalIdCard?.url && comp.documents.nationalIdCard!.url !== 'placeholder_national_id.jpg') {
+                  <span class="cd-doc-status cd-doc-status-ok">Uploaded</span>
+                  <button class="cd-doc-preview-btn" (click)="openDoc('National ID', comp.documents.nationalIdCard!.url)">
+                    <span class="material-symbols-outlined">visibility</span>
+                  </button>
+                } @else {
+                  <span class="cd-doc-status cd-doc-status-miss">Missing</span>
+                }
+              </div>
+            </div>
+
+            <!-- Criminal Record -->
+            <div class="cd-doc-card" [class.cd-doc-verified]="comp.documents.criminalRecord?.url && comp.documents.criminalRecord!.url !== 'placeholder_criminal_record.jpg'">
+              <div class="cd-doc-icon-wrap">
+                <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1; color:var(--color-primary)">description</span>
+              </div>
+              <div class="cd-doc-info">
+                <p class="cd-doc-name">Criminal Record</p>
+                <p class="cd-doc-type">Required · Background</p>
+              </div>
+              <div class="cd-doc-right">
+                @if (comp.documents.criminalRecord?.url && comp.documents.criminalRecord!.url !== 'placeholder_criminal_record.jpg') {
+                  <span class="cd-doc-status cd-doc-status-ok">Clear</span>
+                  <button class="cd-doc-preview-btn" (click)="openDoc('Criminal Record', comp.documents.criminalRecord!.url)">
+                    <span class="material-symbols-outlined">visibility</span>
+                  </button>
+                } @else {
+                  <span class="cd-doc-status cd-doc-status-miss">Missing</span>
+                }
+              </div>
+            </div>
+
+            <!-- Syndicate Card (specialized only) -->
+            @if (comp.companionType === 'specialized') {
+              <div class="cd-doc-card" [class.cd-doc-verified]="comp.documents.syndicateCard?.url">
+                <div class="cd-doc-icon-wrap">
+                  <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1; color:var(--color-primary)">clinical_notes</span>
+                </div>
+                <div class="cd-doc-info">
+                  <p class="cd-doc-name">Syndicate License</p>
+                  <p class="cd-doc-type">Specialists only · License</p>
+                </div>
+                <div class="cd-doc-right">
+                  @if (comp.documents.syndicateCard?.url) {
+                    <span class="cd-doc-status cd-doc-status-ok">Verified</span>
+                    <button class="cd-doc-preview-btn" (click)="openDoc('Syndicate Card', comp.documents.syndicateCard!.url)">
+                      <span class="material-symbols-outlined">visibility</span>
+                    </button>
+                  } @else {
+                    <span class="cd-doc-status cd-doc-status-miss">Missing</span>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Certificates -->
+            @for (cert of comp.documents.Certificates; track cert.public_id) {
+              @if (cert.url) {
+                <div class="cd-doc-card cd-doc-verified">
+                  <div class="cd-doc-icon-wrap">
+                    <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1; color:#8b5cf6">workspace_premium</span>
+                  </div>
+                  <div class="cd-doc-info">
+                    <p class="cd-doc-name">{{ cert.name || 'Certificate' }}</p>
+                    <p class="cd-doc-type">Certification · Optional</p>
+                  </div>
+                  <div class="cd-doc-right">
+                    <span class="cd-doc-status cd-doc-status-ok">Uploaded</span>
+                    <button class="cd-doc-preview-btn" (click)="openDoc(cert.name || 'Certificate', cert.url)">
+                      <span class="material-symbols-outlined">visibility</span>
+                    </button>
+                  </div>
+                </div>
+              }
+            }
+
+          </div>
+        </div>
+      }
+
+      <!-- ════════ AVAILABILITY TAB ════════ -->
+      @if (activeTab() === 'availability') {
+        <div class="cd-avail-wrap">
+          <h3 class="cd-section-title">Weekly Availability</h3>
+
+          <!-- Day indicators -->
+          <div class="cd-days-row">
+            @for (day of ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']; track day) {
+              @let fullDay = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][$index];
+              @let active = comp.availability?.find(a => a.day === fullDay);
+              <div class="cd-day-card" [class.cd-day-active]="active && active.slots.length">
+                <span class="cd-day-abbr">{{ day }}</span>
+                <span class="material-symbols-outlined cd-day-icon" style="font-variation-settings:'FILL' 1;">
+                  {{ active && active.slots.length ? 'check_circle' : 'remove_circle' }}
+                </span>
+              </div>
+            }
+          </div>
+
+          <!-- Slot details -->
+          @if (comp.availability && comp.availability.length > 0) {
+            <div class="cd-slots-grid">
+              @for (slot of comp.availability; track slot.day) {
+                @if (slot.slots.length > 0) {
+                  <div class="cd-slot-card">
+                    <div class="cd-slot-day">{{ slot.day }}</div>
+                    <div class="cd-slot-times">
+                      @for (s of slot.slots; track s) {
+                        <span class="cd-slot-badge">{{ s }}</span>
+                      }
+                    </div>
+                  </div>
+                }
+              }
+            </div>
+          } @else {
+            <app-empty-state icon="calendar_month" title="No Availability Set" subtitle="This caregiver has not set their weekly schedule." />
+          }
+        </div>
+      }
+
+      <!-- ════════ WALLET TAB ════════ -->
+      @if (activeTab() === 'wallet') {
+        <div class="cd-wallet-wrap">
+          <h3 class="cd-section-title">Wallet Overview</h3>
+
+          @if (walletLoading()) {
+            <div class="cd-loading-inline">
+              <div class="cd-spinner-sm"></div>
+              <span>Loading wallet…</span>
+            </div>
+          } @else if (!wallet()) {
+            <app-empty-state icon="account_balance_wallet" title="No Wallet Data" subtitle="Wallet information is not available for this caregiver." />
+          } @else {
+            @let w = wallet()!;
+            <!-- Big balance card -->
+            <div class="cd-wallet-hero">
+              <div class="cd-wallet-hero-left">
+                <span class="material-symbols-outlined cd-wallet-hero-icon" style="font-variation-settings:'FILL' 1;">account_balance_wallet</span>
+                <div>
+                  <p class="cd-wallet-hero-label">Current Balance</p>
+                  <p class="cd-wallet-hero-val">EGP {{ formatCurrency(w.currentBalance) }}</p>
+                </div>
+              </div>
+              <span class="cd-wallet-status-badge" [class.cd-wallet-active]="w.walletStatus === 'active'" [class.cd-wallet-frozen]="w.walletStatus !== 'active'">
+                <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1; font-size:14px;">
+                  {{ w.walletStatus === 'active' ? 'check_circle' : 'lock' }}
+                </span>
+                {{ w.walletStatus === 'active' ? 'Active' : 'Frozen' }}
+              </span>
+            </div>
+
+            <!-- Wallet stats -->
+            <div class="cd-wallet-stats">
+              <div class="cd-wallet-stat">
+                <span class="material-symbols-outlined cd-wallet-stat-icon" style="color:var(--color-secondary);font-variation-settings:'FILL' 1;">payments</span>
+                <div>
+                  <p class="cd-wallet-stat-label">Total Earnings</p>
+                  <p class="cd-wallet-stat-val">EGP {{ formatCurrency(w.totalEarnings) }}</p>
+                </div>
+              </div>
+              @if (w.pendingBalance > 0) {
+                <div class="cd-wallet-stat">
+                  <span class="material-symbols-outlined cd-wallet-stat-icon" style="color:#f59e0b;font-variation-settings:'FILL' 1;">pending</span>
+                  <div>
+                    <p class="cd-wallet-stat-label">Pending Payout</p>
+                    <p class="cd-wallet-stat-val">EGP {{ formatCurrency(w.pendingBalance) }}</p>
+                  </div>
+                </div>
+              }
+              <div class="cd-wallet-stat">
+                <span class="material-symbols-outlined cd-wallet-stat-icon" style="color:#6366f1;font-variation-settings:'FILL' 1;">event</span>
+                <div>
+                  <p class="cd-wallet-stat-label">Last Withdrawal</p>
+                  <p class="cd-wallet-stat-val">{{ w.lastWithdrawalDate ? (w.lastWithdrawalDate | date:'mediumDate') : 'Never' }}</p>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+    </div><!-- /cd-tab-content -->
+  }
+</div>
+
+<!-- ═══ MODALS ════════════════════════════════════════════════════════════ -->
+@if (activeModal() && activeModal() !== 'doc_preview') {
+  <div class="cd-modal-backdrop" (click)="closeModal()">
+    <div class="cd-modal" (click)="$event.stopPropagation()">
+
+      @if (activeModal() === 'approve') {
+        <div class="cd-modal-header cd-modal-header-success">
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">check_circle</span>
+          <h3>Approve Caregiver</h3>
+        </div>
+        <p class="cd-modal-body">
+          Are you sure you want to approve <strong>{{ companion()?.userId?.name }}</strong>?
+          Their profile will become active on the Sanad platform.
+        </p>
+        <div class="cd-modal-actions">
+          <button class="cd-btn-ghost" (click)="closeModal()" [disabled]="isSubmitting()">Cancel</button>
+          <button class="cd-btn-primary" (click)="approveCaregiver()" [disabled]="isSubmitting()">
+            @if (isSubmitting()) { <div class="cd-spinner-xs"></div> } Yes, Approve
+          </button>
+        </div>
+      }
+
+      @if (activeModal() === 'reject') {
+        <div class="cd-modal-header cd-modal-header-danger">
+          <span class="material-symbols-outlined">cancel</span>
+          <h3>Reject Application</h3>
+        </div>
+        <p class="cd-modal-body">Provide a rejection reason for <strong>{{ companion()?.userId?.name }}</strong>.</p>
+        <label class="cd-field-label">Reason <span class="cd-required">*</span></label>
+        <textarea [(ngModel)]="rejectionReason" class="cd-textarea" rows="4" placeholder="e.g. Invalid documents, expired license…"></textarea>
+        <div class="cd-modal-actions">
+          <button class="cd-btn-ghost" (click)="closeModal()" [disabled]="isSubmitting()">Cancel</button>
+          <button class="cd-btn-danger" (click)="rejectCaregiver()" [disabled]="!rejectionReason.trim() || isSubmitting()">
+            @if (isSubmitting()) { <div class="cd-spinner-xs"></div> } Reject
+          </button>
+        </div>
+      }
+
+      @if (activeModal() === 'request_info') {
+        <div class="cd-modal-header cd-modal-header-info">
+          <span class="material-symbols-outlined">help</span>
+          <h3>Request Additional Information</h3>
+        </div>
+        <p class="cd-modal-body">
+          Send a request to <strong>{{ companion()?.userId?.name }}</strong>.
+          Their status will update to <em>Needs Info</em>.
+        </p>
+        <label class="cd-field-label">Category</label>
+        <select [(ngModel)]="requestInfoCategory" class="cd-select">
+          <option value="">Select category (optional)</option>
+          <option value="Missing Document">Missing Document</option>
+          <option value="Identity Verification">Identity Verification</option>
+          <option value="License Verification">License Verification</option>
+          <option value="Background Check">Background Check</option>
+          <option value="Other">Other</option>
+        </select>
+        <label class="cd-field-label cd-mt-2">Message <span class="cd-required">*</span></label>
+        <textarea [(ngModel)]="requestInfoMessage" class="cd-textarea" rows="4" placeholder="Describe what is missing or needs re-uploading…"></textarea>
+        <div class="cd-modal-actions">
+          <button class="cd-btn-ghost" (click)="closeModal()" [disabled]="isSubmitting()">Cancel</button>
+          <button class="cd-btn-primary" (click)="requestMoreInfo()" [disabled]="!requestInfoMessage.trim() || isSubmitting()">
+            @if (isSubmitting()) { <div class="cd-spinner-xs"></div> } Send Request
+          </button>
+        </div>
+      }
+
+    </div>
+  </div>
+}
+
+<!-- Doc preview modal -->
+@if (activeModal() === 'doc_preview') {
+  <div class="cd-preview-backdrop" (click)="closeModal()">
+    <div class="cd-preview-container">
+      <div class="cd-preview-toolbar">
+        <span class="cd-preview-title">
+          <span class="material-symbols-outlined">description</span>
+          {{ previewTitle() }}
+        </span>
+        <button class="cd-preview-close" (click)="closeModal()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <div class="cd-preview-body">
+        @if (previewType() === 'pdf') {
+          <iframe [src]="previewSafeUrl()" class="cd-preview-iframe"></iframe>
+        } @else {
+          <img [src]="previewUrl()" [alt]="previewTitle()" class="cd-preview-img" />
+        }
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Toast -->
+<app-toast [toast]="toast()" />

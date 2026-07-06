@@ -1,0 +1,64 @@
+/* Reports page — additional styles beyond Tailwind */
+
+/* ── Progress bar fill animation ──────────────────────────────────────────── */
+.progress-fill {
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── SVG chart line ────────────────────────────────────────────────────────── */
+.chart-line {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Draw-on animation for chart lines */
+.chart-line--animate {
+  stroke-dasharray: 2000;
+  stroke-dashoffset: 2000;
+  animation: drawLine 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes drawLine {
+  to { stroke-dashoffset: 0; }
+}
+
+/* Dot markers on data points */
+.chart-dot {
+  transition: r 0.15s ease, filter 0.15s ease;
+  cursor: pointer;
+}
+.chart-dot:hover {
+  r: 7;
+  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.25));
+}
+
+/* ── KPI card hover lift ───────────────────────────────────────────────────── */
+.kpi-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.kpi-card:hover {
+  transform: translateY(-2px);
+}
+
+/* ── Period dropdown animation ─────────────────────────────────────────────── */
+.animate-slide-in-top {
+  animation: slideInTop 0.15s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes slideInTop {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Geographic Insights card ──────────────────────────────────────────────── */
+/* Hard clip: nothing from the map can escape the card boundary */
+.geo-card {
+  overflow: hidden;
+}

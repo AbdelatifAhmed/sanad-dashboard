@@ -1,0 +1,426 @@
+<div class="msg-layout" [class.panel-open]="showInfoPanel()">
+
+  <!-- ══════════════════════════════════════════
+       SIDEBAR — Conversations List
+  ═══════════════════════════════════════════ -->
+  <aside class="msg-sidebar">
+
+    <!-- Sidebar Header -->
+    <div class="sidebar-head">
+      <div class="sidebar-head__top">
+        <div class="sidebar-head__title">
+          <span class="material-symbols-outlined sidebar-head__icon">forum</span>
+          <h2>Messages</h2>
+        </div>
+        @if (totalUnread() > 0) {
+          <span class="badge-total">{{ totalUnread() > 99 ? '99+' : totalUnread() }}</span>
+        }
+      </div>
+
+      <!-- Search -->
+      <div class="search-wrap">
+        <span class="material-symbols-outlined search-icon">search</span>
+        <input
+          class="search-input"
+          type="text"
+          placeholder="Search conversations…"
+          [value]="searchQuery()"
+          (input)="onSearchChange($any($event.target).value)"
+        />
+        @if (searchQuery()) {
+          <button class="search-clear" (click)="onSearchChange('')">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        }
+      </div>
+
+      <!-- Filter chips -->
+      <div class="filter-strip">
+        @for (f of filters; track f.key) {
+          <button
+            class="chip"
+            [class.chip--active]="activeFilter() === f.key"
+            (click)="setFilter(f.key)"
+          >
+            {{ f.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Conversations -->
+    <div class="conv-list">
+      @if (loadingConvs()) {
+        @for (n of [1,2,3,4,5]; track n) {
+          <div class="conv-item conv-item--skeleton">
+            <div class="skel-avatar"></div>
+            <div class="skel-body">
+              <div class="skel-line skel-line--wide"></div>
+              <div class="skel-line skel-line--narrow"></div>
+            </div>
+          </div>
+        }
+      } @else if (conversations().length === 0) {
+        <div class="empty-sidebar">
+          <span class="material-symbols-outlined empty-sidebar__icon">mark_chat_unread</span>
+          <p>{{ searchQuery() ? 'No results found' : 'No conversations yet' }}</p>
+        </div>
+      } @else {
+        @for (conv of conversations(); track trackByConv($index, conv)) {
+          <div
+            class="conv-item"
+            [class.conv-item--active]="selectedConv()?._id === conv._id"
+            [class.conv-item--unread]="conv.unreadByAdmin > 0"
+            (click)="selectConversation(conv)"
+          >
+            <!-- Avatar -->
+            <div class="ci-avatar-wrap">
+              @if (getAvatarUrl(conv.user)) {
+                <img class="ci-avatar" [src]="getAvatarUrl(conv.user)" [alt]="conv.user?.name" />
+              } @else {
+                <div class="ci-avatar ci-avatar--fallback">{{ getInitials(conv.user?.name || '') }}</div>
+              }
+              @if (isOnline(conv.userId)) {
+                <span class="ci-online"></span>
+              }
+            </div>
+
+            <!-- Body -->
+            <div class="ci-body">
+              <div class="ci-row1">
+                <span class="ci-name">{{ conv.user?.name || 'Unknown User' }}</span>
+                <span class="ci-time">{{ conv.lastMessageTime | timeAgo }}</span>
+              </div>
+              <div class="ci-row2">
+                <span class="ci-preview">{{ conv.lastMessage || 'No messages yet' | truncate:38 }}</span>
+                <div class="ci-badges">
+                  @if (conv.unreadByAdmin > 0) {
+                    <span class="badge-unread">{{ conv.unreadByAdmin }}</span>
+                  }
+                  @if (conv.status === 'resolved') {
+                    <span class="badge-resolved" title="Resolved">
+                      <span class="material-symbols-outlined">check_circle</span>
+                    </span>
+                  }
+                </div>
+              </div>
+              <span class="ci-role" [class.ci-role--family]="conv.userRole === 'family'" [class.ci-role--caregiver]="conv.userRole === 'companion'">
+                {{ getRoleLabel(conv.userRole) }}
+              </span>
+            </div>
+          </div>
+        }
+      }
+    </div>
+  </aside>
+
+  <!-- ══════════════════════════════════════════
+       CHAT PANEL
+  ═══════════════════════════════════════════ -->
+  <section class="chat-panel">
+
+    @if (!selectedConv()) {
+      <!-- Empty state -->
+      <div class="chat-empty">
+        <div class="chat-empty__graphic">
+          <span class="material-symbols-outlined chat-empty__icon">chat_bubble</span>
+        </div>
+        <h3>Select a conversation</h3>
+        <p>Choose a conversation from the sidebar to start messaging with a user.</p>
+      </div>
+
+    } @else {
+
+      <!-- Chat Header -->
+      <header class="chat-header">
+        <div class="chat-header__user">
+          <div class="ch-avatar-wrap">
+            @if (getAvatarUrl(selectedConv()!.user)) {
+              <img class="ch-avatar" [src]="getAvatarUrl(selectedConv()!.user)" [alt]="selectedConv()!.user?.name" />
+            } @else {
+              <div class="ch-avatar ch-avatar--fallback">{{ getInitials(selectedConv()!.user?.name || '') }}</div>
+            }
+            @if (isOnline(selectedConv()!.userId)) {
+              <span class="ch-online"></span>
+            }
+          </div>
+          <div class="ch-info">
+            <span class="ch-name">{{ selectedConv()!.user?.name || 'Unknown User' }}</span>
+            <div class="ch-status">
+              <span class="ch-role" [class.ch-role--family]="selectedConv()!.userRole === 'family'" [class.ch-role--caregiver]="selectedConv()!.userRole === 'companion'">
+                {{ getRoleLabel(selectedConv()!.userRole) }}
+              </span>
+              <span class="ch-dot">·</span>
+              @if (isOnline(selectedConv()!.userId)) {
+                <span class="ch-presence ch-presence--online">
+                  <span class="ch-presence-dot"></span>Online
+                </span>
+              } @else {
+                <span class="ch-presence ch-presence--offline">Offline</span>
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-header__actions">
+          <a
+            class="hdr-btn hdr-btn--ghost"
+            title="View Profile"
+            [routerLink]="selectedConv()!.userRole === 'family' ? ['/families', selectedConv()!.userId] : ['/caregivers', selectedConv()!.userId]"
+          >
+            <span class="material-symbols-outlined">person</span>
+          </a>
+
+          @if (selectedConv()!.status === 'open') {
+            <button class="hdr-btn hdr-btn--resolve" (click)="resolveConversation()">
+              <span class="material-symbols-outlined">check_circle</span>
+              <span class="hdr-btn__label">Resolve</span>
+            </button>
+          } @else {
+            <button class="hdr-btn hdr-btn--reopen" (click)="reopenConversation()">
+              <span class="material-symbols-outlined">restart_alt</span>
+              <span class="hdr-btn__label">Reopen</span>
+            </button>
+          }
+
+          <button
+            class="hdr-btn hdr-btn--ghost"
+            [class.hdr-btn--active]="showInfoPanel()"
+            title="User Info"
+            (click)="showInfoPanel.set(!showInfoPanel())"
+          >
+            <span class="material-symbols-outlined">info</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Resolved banner -->
+      @if (selectedConv()!.status === 'resolved') {
+        <div class="resolved-bar">
+          <span class="material-symbols-outlined">check_circle</span>
+          <span>This conversation has been marked as resolved.</span>
+          <button class="resolved-bar__btn" (click)="reopenConversation()">Reopen</button>
+        </div>
+      }
+
+      <!-- Messages Area -->
+      <div class="messages-area">
+
+        @if (hasMoreMsgs) {
+          <div class="load-more-row">
+            <button class="load-more-btn" (click)="loadMoreMessages()" [disabled]="loadingMsgs()">
+              @if (loadingMsgs()) {
+                <span class="material-symbols-outlined spin">autorenew</span>
+              } @else {
+                <span class="material-symbols-outlined">expand_less</span>
+                Load older messages
+              }
+            </button>
+          </div>
+        }
+
+        <!-- Message skeletons -->
+        @if (loadingMsgs() && messages().length === 0) {
+          @for (n of [1,2,3]; track n) {
+            <div class="msg-skel" [class.msg-skel--right]="n % 2 === 0">
+              <div class="msg-skel__bubble"></div>
+            </div>
+          }
+        }
+
+        <!-- No messages -->
+        @if (!loadingMsgs() && visibleMessages().length === 0) {
+          <div class="msgs-empty">
+            <span class="material-symbols-outlined msgs-empty__icon">chat_bubble_outline</span>
+            <p>No messages yet — start the conversation!</p>
+          </div>
+        }
+
+        <!-- Messages -->
+        @for (msg of visibleMessages(); track trackByMsg($index, msg)) {
+          <div class="msg-row" [class.msg-row--own]="isOwnMessage(msg)">
+
+            @if (!isOwnMessage(msg)) {
+              <div class="msg-avatar-wrap">
+                @if (getSenderAvatar(msg)) {
+                  <img class="msg-avatar" [src]="getSenderAvatar(msg)" [alt]="getSenderName(msg)" />
+                } @else {
+                  <div class="msg-avatar msg-avatar--fallback">{{ getInitials(getSenderName(msg)) }}</div>
+                }
+              </div>
+            }
+
+            <div class="msg-col">
+              @if (!isOwnMessage(msg)) {
+                <span class="msg-label">{{ getSenderName(msg) }}</span>
+              }
+
+              <div class="msg-bubble" [class.msg-bubble--own]="isOwnMessage(msg)">
+                @if (msg.messageType === 'text' && msg.text) {
+                  <p class="msg-text">{{ msg.text }}</p>
+                }
+                @if (msg.messageType === 'image' && msg.attachment?.url) {
+                  <a [href]="msg.attachment!.url" target="_blank" rel="noopener">
+                    <img class="msg-img" [src]="msg.attachment!.url" [alt]="msg.attachment!.fileName || 'image'" loading="lazy" />
+                  </a>
+                }
+                @if ((msg.messageType === 'pdf' || msg.messageType === 'document') && msg.attachment?.url) {
+                  <a class="msg-file" [href]="msg.attachment!.url" target="_blank" rel="noopener" download>
+                    <span class="material-symbols-outlined msg-file__icon">{{ msg.messageType === 'pdf' ? 'picture_as_pdf' : 'description' }}</span>
+                    <div class="msg-file__info">
+                      <span class="msg-file__name">{{ msg.attachment!.fileName || 'Attachment' }}</span>
+                      @if (msg.attachment!.fileSize) {
+                        <span class="msg-file__size">{{ formatFileSize(msg.attachment!.fileSize!) }}</span>
+                      }
+                    </div>
+                    <span class="material-symbols-outlined msg-file__dl">download</span>
+                  </a>
+                }
+                @if (msg.isDeleted) {
+                  <p class="msg-deleted">
+                    <span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px">block</span>
+                    Message deleted
+                  </p>
+                }
+              </div>
+
+              <div class="msg-meta" [class.msg-meta--own]="isOwnMessage(msg)">
+                <span class="msg-time">{{ msg.createdAt | timeAgo }}</span>
+                @if (isOwnMessage(msg)) {
+                  <span class="material-symbols-outlined msg-tick" [class.msg-tick--read]="msg.isRead">
+                    {{ msg.isRead ? 'done_all' : 'done' }}
+                  </span>
+                }
+                @if (isOwnMessage(msg) && !msg.isDeleted) {
+                  <button class="msg-del-btn" (click)="deleteMessage(msg._id)" title="Delete">
+                    <span class="material-symbols-outlined">delete</span>
+                  </button>
+                }
+              </div>
+            </div>
+          </div>
+        }
+
+        <div #messagesEnd></div>
+      </div>
+
+      <!-- Typing Indicator -->
+      @if (typingLabel()) {
+        <div class="typing-bar">
+          <div class="typing-dots">
+            <span></span><span></span><span></span>
+          </div>
+          <span class="typing-text">{{ typingLabel() }}</span>
+        </div>
+      }
+
+      <!-- Composer -->
+      <div class="composer" [class.composer--disabled]="selectedConv()!.status === 'resolved'">
+        <button
+          class="composer-btn"
+          title="Attach file"
+          [disabled]="uploadingFile() || selectedConv()!.status === 'resolved'"
+          (click)="triggerFileUpload()"
+        >
+          @if (uploadingFile()) {
+            <span class="material-symbols-outlined spin">autorenew</span>
+          } @else {
+            <span class="material-symbols-outlined">attach_file</span>
+          }
+        </button>
+
+        <input
+          #fileInput
+          type="file"
+          accept="image/jpeg,image/png,image/jpg,application/pdf"
+          class="hidden"
+          (change)="onFileSelected($event)"
+        />
+
+        <textarea
+          #messageTextarea
+          class="composer-input"
+          rows="1"
+          [value]="newMessage()"
+          [disabled]="selectedConv()!.status === 'resolved'"
+          placeholder="{{ selectedConv()!.status === 'resolved' ? 'Conversation resolved — reopen to reply' : 'Write a message…' }}"
+          (input)="onInputChange($any($event.target).value)"
+          (keydown)="onKeydown($event)"
+        ></textarea>
+
+        <button
+          class="composer-send"
+          [disabled]="!newMessage().trim() || sendingMsg() || selectedConv()!.status === 'resolved'"
+          (click)="sendMessage()"
+          title="Send"
+        >
+          @if (sendingMsg()) {
+            <span class="material-symbols-outlined spin">autorenew</span>
+          } @else {
+            <span class="material-symbols-outlined">send</span>
+          }
+        </button>
+      </div>
+    }
+  </section>
+
+  <!-- ══════════════════════════════════════════
+       RIGHT INFO PANEL
+  ═══════════════════════════════════════════ -->
+  @if (showInfoPanel() && selectedConv()) {
+    <aside class="info-panel">
+      <div class="info-panel__head">
+        <h3>User Info</h3>
+        <button class="hdr-btn hdr-btn--ghost" (click)="showInfoPanel.set(false)">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <div class="info-panel__body">
+        <!-- Avatar block -->
+        <div class="ip-avatar-block">
+          @if (getAvatarUrl(selectedConv()!.user)) {
+            <img class="ip-avatar" [src]="getAvatarUrl(selectedConv()!.user)" [alt]="selectedConv()!.user?.name" />
+          } @else {
+            <div class="ip-avatar ip-avatar--fallback">{{ getInitials(selectedConv()!.user?.name || '') }}</div>
+          }
+          <h4 class="ip-name">{{ selectedConv()!.user?.name }}</h4>
+          <span class="ci-role" [class.ci-role--family]="selectedConv()!.userRole === 'family'" [class.ci-role--caregiver]="selectedConv()!.userRole === 'companion'">
+            {{ getRoleLabel(selectedConv()!.userRole) }}
+          </span>
+        </div>
+
+        <!-- Details -->
+        <ul class="ip-details">
+          <li class="ip-row">
+            <span class="ip-label"><span class="material-symbols-outlined">mail</span>Email</span>
+            <span class="ip-val">{{ selectedConv()!.user?.email || '—' }}</span>
+          </li>
+          <li class="ip-row">
+            <span class="ip-label"><span class="material-symbols-outlined">call</span>Phone</span>
+            <span class="ip-val">{{ selectedConv()!.user?.phone || '—' }}</span>
+          </li>
+          <li class="ip-row">
+            <span class="ip-label"><span class="material-symbols-outlined">calendar_today</span>Joined</span>
+            <span class="ip-val">{{ selectedConv()!.user?.createdAt ? (selectedConv()!.user!.createdAt | timeAgo) : '—' }}</span>
+          </li>
+          <li class="ip-row">
+            <span class="ip-label"><span class="material-symbols-outlined">forum</span>Status</span>
+            <span class="ip-chip" [class.ip-chip--resolved]="selectedConv()!.status === 'resolved'">
+              {{ selectedConv()!.status }}
+            </span>
+          </li>
+        </ul>
+
+        <a
+          class="ip-profile-btn"
+          [routerLink]="selectedConv()!.userRole === 'family' ? ['/families', selectedConv()!.userId] : ['/caregivers', selectedConv()!.userId]"
+        >
+          <span class="material-symbols-outlined">open_in_new</span>
+          Open Full Profile
+        </a>
+      </div>
+    </aside>
+  }
+
+</div>

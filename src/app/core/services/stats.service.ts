@@ -1,6 +1,6 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { forkJoin, switchMap } from 'rxjs';
+import { forkJoin } from 'rxjs';
 import { Router } from '@angular/router';
 import { AuthService } from './auth.service';
 
@@ -41,7 +41,8 @@ export interface CaregiverCandidate {
   id: string;
   name: string;
   role: string;
-  avatar: string;
+  avatar: string;       // real Cloudinary URL or fallback generated avatar
+  hasRealAvatar: boolean;
   details?: string;
 }
 
@@ -66,6 +67,7 @@ export interface DashboardStatsResponse {
     companionsBreakdown: {
       verified: number;
       pendingOnboarding: number;
+      underReview: number;
       rejected: number;
     };
     bookingsBreakdown: {
@@ -107,6 +109,7 @@ export interface ApiPendingCompanion {
     name: string;
     email: string;
     phone: string;
+    avatar?: { url?: string; public_id?: string } | null;
   };
   companionType: string;
   specialization: string;
@@ -170,10 +173,9 @@ export class StatsService {
   private readonly BASE = 'http://localhost:5000/api';
 
   // ── Loading & Error Signals ────────────────────────────────────────────────
-  readonly isLoading    = signal<boolean>(true);
-  readonly usersLoading = signal<boolean>(true);
+  readonly isLoading      = signal<boolean>(true);
   readonly pendingLoading = signal<boolean>(true);
-  readonly statsError   = signal<string | null>(null);
+  readonly statsError     = signal<string | null>(null);
 
   // ── Raw API Data Signals ───────────────────────────────────────────────────
   readonly statsData = signal<DashboardStatsResponse['data'] | null>(null);
@@ -229,8 +231,7 @@ export class StatsService {
       icon: 'task_alt',
       iconBg: 'bg-secondary-container/20',
       iconColor: 'text-secondary'
-    }
-  ]);
+    }  ]);
 
   // ── Distribution Chart Computed Signals ────────────────────────────────────
   readonly totalUsersCount = computed(() => {
@@ -306,7 +307,6 @@ export class StatsService {
 
     this._loading = true;
     this.isLoading.set(true);
-    this.usersLoading.set(true);
     this.pendingLoading.set(true);
     this.statsError.set(null);
 
@@ -336,7 +336,7 @@ export class StatsService {
               case 'active-requests':
                 return { ...k, value: kpi.activeServices.toLocaleString(), change: `${bd.pendingApproval} Pending`, trend: 'neutral' as const };
               case 'completed-bookings':
-                return { ...k, value: kpi.completedServices.toLocaleString(), change: `${bd.totalRequests} Total`, trend: 'up' as const };
+                return { ...k, value: bd.completed.toLocaleString(), change: '', trend: 'up' as const };
               default:
                 return k;
             }
@@ -452,39 +452,39 @@ export class StatsService {
         // ── Pending Companions ─────────────────────────────────────────────
         if (pending.status === 'success') {
           this.pendingVerifications.set(
-            pending.data.pendingCompanions.map(c => ({
-              id: c._id,
-              name: c.userId ? c.userId.name : 'Unknown User',
-              role: c.specialization && c.specialization !== 'none' ? c.specialization : c.companionType,
-              avatar: c.userId
+            pending.data.pendingCompanions.map(c => {
+              const realAvatarUrl = c.userId?.avatar?.url ?? null;
+              const fallbackUrl = c.userId
                 ? `https://ui-avatars.com/api/?name=${encodeURIComponent(c.userId.name)}&background=006767&color=fff&size=128`
-                : `https://ui-avatars.com/api/?name=U&background=006767&color=fff&size=128`,
-              details: c.bio
-            }))
+                : `https://ui-avatars.com/api/?name=U&background=006767&color=fff&size=128`;
+              return {
+                id: c._id,
+                name: c.userId ? c.userId.name : 'Unknown User',
+                role: c.specialization && c.specialization !== 'none' ? c.specialization : c.companionType,
+                avatar: realAvatarUrl ?? fallbackUrl,
+                hasRealAvatar: !!realAvatarUrl,
+                details: c.bio
+              };
+            })
           );
         }
 
         this._loading = false;
         this.isLoading.set(false);
-        this.usersLoading.set(false);
         this.pendingLoading.set(false);
       },
       error: (err) => {
         console.error('Dashboard load error:', err);
 
         if (err?.status === 401 && !isRetry) {
-          // Access token expired — try to silently refresh using the httpOnly cookie
           this.authService.refreshToken().subscribe({
             next: () => {
-              // Got a new token — retry the full load once
               this._loading = false;
               this.loadAll(true);
             },
             error: () => {
-              // Refresh also failed — session is truly dead, logout handled inside refreshToken()
               this._loading = false;
               this.isLoading.set(false);
-              this.usersLoading.set(false);
               this.pendingLoading.set(false);
             }
           });
@@ -497,7 +497,6 @@ export class StatsService {
         this.statsError.set(msg);
         this._loading = false;
         this.isLoading.set(false);
-        this.usersLoading.set(false);
         this.pendingLoading.set(false);
       }
     });
@@ -518,7 +517,7 @@ export class StatsService {
               case 'total-families':    return { ...k, value: kpi.totalFamilies.toLocaleString() };
               case 'total-caregivers':  return { ...k, value: kpi.totalCompanions.toLocaleString() };
               case 'active-requests':   return { ...k, value: kpi.activeServices.toLocaleString(), change: `${bd.pendingApproval} Pending` };
-              case 'completed-bookings':return { ...k, value: kpi.completedServices.toLocaleString(), change: `${bd.totalRequests} Total` };
+              case 'completed-bookings':return { ...k, value: bd.completed.toLocaleString(), change: '' };
               default: return k;
             }
           }));
@@ -599,24 +598,6 @@ export class StatsService {
     });
   }
 
-  // ── Legacy: kept for "New Booking" button (now triggers a full reload) ─────
-  addNewBooking(): void {
-    const newAct: Activity = {
-      id: `act-${Date.now()}`,
-      title: 'New Booking Created',
-      description: 'Pending caregiver assignment',
-      time: 'Just now',
-      type: 'booking_ok',
-      icon: 'event_note',
-      iconBg: 'bg-primary-container/20',
-      iconColor: 'text-primary'
-    };
-    this.recentActivities.set([newAct, ...this.recentActivities()]);
-    this.refreshStats();
-  }
-
-  // ── Kept for backward compat (used by topbar search) ──────────────────────
+  // ── Backward compat alias ──────────────────────────────────────────────────
   loadDashboardStats(): void { this.refreshStats(); }
-  loadRecentUsers(): void { /* handled in loadAll() */ }
-  loadPendingCompanions(): void { /* handled in loadAll() */ }
 }

@@ -1,27 +1,146 @@
-/* Custom Scrollbar */
-.sidebar-scroll::-webkit-scrollbar {
-  width: 4px;
+/* Family Details — builds on shared pp-* system from _profile-page.css */
+
+/* ── Beneficiary grid ──────────────────────────────────────────────────── */
+.fam-bene-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
 }
-.sidebar-scroll::-webkit-scrollbar-thumb {
-  background: var(--color-outline-variant, #bdc9c8);
-  border-radius: 10px;
+.fam-bene-card {
+  display: flex; gap: 12px;
+  background: var(--color-surface-container-low);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 14px; padding: 14px;
+  transition: border-color 150ms;
+}
+.fam-bene-card:hover { border-color: var(--color-primary); }
+.fam-bene-icon {
+  width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
+  background: rgba(44,105,86,0.1); color: var(--color-secondary);
+  display: flex; align-items: center; justify-content: center;
 }
 
-/* Animations */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+/* ── Booking cards ─────────────────────────────────────────────────────── */
+.fam-bookings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+  gap: 14px;
+}
+.fam-booking-card {
+  background: #fff; border-radius: 14px;
+  border: 1.5px solid var(--color-outline-variant);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  padding: 16px 18px; cursor: pointer;
+  display: flex; flex-direction: column; gap: 12px;
+  transition: box-shadow 180ms, border-color 180ms, transform 180ms;
+}
+.fam-booking-card:hover {
+  box-shadow: 0 6px 20px rgba(0,103,103,0.11);
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
+}
+.fam-booking-header { display: flex; align-items: center; justify-content: space-between; }
+.fam-booking-id {
+  font-size: 11px; font-weight: 700; color: var(--color-on-surface-variant);
+  font-family: 'JetBrains Mono', monospace;
+}
+.fam-booking-body {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px;
+  border-top: 1px solid var(--color-outline-variant); padding-top: 10px;
+}
+.fam-bfield { display: flex; flex-direction: column; gap: 2px; }
+.fam-bfield-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--color-on-surface-variant); }
+.fam-bfield-val { font-size: 13px; font-weight: 600; color: var(--color-on-surface); }
+.fam-price { color: var(--color-primary); }
+.fam-pay-badge {
+  display: inline-block; font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.4px;
+  padding: 2px 8px; border-radius: 10px;
+}
+.fam-pay-paid     { background: #ecfdf5; color: #065f46; }
+.fam-pay-unpaid   { background: #fff0f0; color: var(--color-error); }
+.fam-pay-refunded { background: #eff6ff; color: #1e40af; }
+.fam-booking-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  border-top: 1px solid var(--color-outline-variant); padding-top: 10px;
+}
+.fam-view-cta {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 12px; font-weight: 700; color: var(--color-primary);
+  opacity: 0; transition: opacity 200ms; white-space: nowrap;
+}
+.fam-booking-card:hover .fam-view-cta,
+.fam-cg-card:hover .fam-view-cta { opacity: 1; }
+
+/* ── Caregiver cards ───────────────────────────────────────────────────── */
+.fam-cg-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 12px;
+}
+.fam-cg-card {
+  display: flex; align-items: center; gap: 12px;
+  background: #fff; border-radius: 14px;
+  border: 1.5px solid var(--color-outline-variant);
+  padding: 14px 16px; cursor: pointer;
+  transition: box-shadow 180ms, border-color 180ms, transform 180ms;
+}
+.fam-cg-card:hover {
+  box-shadow: 0 4px 16px rgba(0,103,103,0.1);
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
+}
+.fam-cg-avatar {
+  width: 44px; height: 44px; border-radius: 50%; object-fit: cover;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1); flex-shrink: 0;
+}
+.fam-cg-placeholder {
+  width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+  background: rgba(0,103,103,0.1); color: var(--color-primary);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 700;
 }
 
-@keyframes slideIn {
-  from { transform: translateY(-20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+/* pp-btn-success (not in shared CSS, add here) */
+.pp-btn-success {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 8px 18px; border-radius: 10px;
+  background: #16a34a; color: #fff;
+  font-size: 13px; font-weight: 600; border: none; cursor: pointer;
+  transition: opacity 150ms;
 }
+.pp-btn-success:hover:not(:disabled) { opacity: 0.88; }
+.pp-btn-success:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.animate-fade-in {
-  animation: fadeIn 0.25s ease-out forwards;
+/* ── Clickable request card ────────────────────────────────────────── */
+.req-card {
+  display: flex; align-items: center; gap: 14px; flex-wrap: nowrap;
+  background: #fff; border-radius: 14px;
+  border: 1.5px solid var(--color-outline-variant);
+  padding: 14px 16px; cursor: pointer; outline: none;
+  transition: box-shadow 180ms, border-color 180ms, transform 180ms;
 }
-
-.animate-slide-in {
-  animation: slideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+.req-card:hover {
+  box-shadow: 0 4px 16px rgba(0,103,103,0.1);
+  border-color: var(--color-primary);
+  transform: translateY(-1px);
 }
+.req-card:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.req-card-icon {
+  width: 42px; height: 42px; border-radius: 10px; flex-shrink: 0;
+  background: rgba(0,103,103,0.08);
+  display: flex; align-items: center; justify-content: center;
+}
+.req-card-icon .material-symbols-outlined { font-size: 22px; }
+.req-card-body { flex: 1; min-width: 0; }
+.req-card-title {
+  font-size: 14px; font-weight: 700; color: var(--color-on-surface);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0 0 2px;
+}
+.req-card-service { font-size: 12px; color: var(--color-primary); font-weight: 600; margin: 0; }
+.req-card-meta {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0;
+}
+.req-card-date { font-size: 11px; color: var(--color-on-surface-variant); white-space: nowrap; }
+.req-card-cta { opacity: 0; transition: opacity 180ms; flex-shrink: 0; }
+.req-card:hover .req-card-cta { opacity: 1; }

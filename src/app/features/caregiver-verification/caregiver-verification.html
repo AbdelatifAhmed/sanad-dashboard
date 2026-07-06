@@ -1,871 +1,263 @@
-<!-- Main Container -->
-<div class="min-h-[calc(100vh-112px)] flex flex-col bg-background">
-  <!-- Header Section -->
-  <div class="py-4 flex flex-wrap items-end justify-between gap-3 border-b border-outline-variant/30 mb-4">
-    <div>
-      <h2 class="font-headline-md text-headline-md text-on-surface">Caregiver Verification</h2>
-      <p class="font-body-md text-body-md text-on-surface-variant mt-1">Review and approve healthcare professional applications</p>
+<!-- ═══════════════════════════════════════════════════════════════════════
+     Caregivers Directory — Modern SaaS Grid Layout
+════════════════════════════════════════════════════════════════════════ -->
+<div class="dir-page">
+
+  <!-- ── Page Header ──────────────────────────────────────────────────────── -->
+  <div class="dir-page-header">
+    <div class="dir-page-title-group">
+      <h1 class="dir-page-title">
+        <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">medical_services</span>
+        Caregivers
+      </h1>
+      <p class="dir-page-subtitle">Search, filter, and manage all registered caregivers on the platform</p>
     </div>
 
-    <!-- Action Required Badge -->
-    @if (statusFilter() === 'pending' && totalResults() > 0) {
-      <div class="bg-error-container text-on-error-container px-4 py-1.5 rounded-full flex items-center gap-2 animate-pulse">
-        <span class="material-symbols-outlined text-[18px]">priority_high</span>
-        <span class="font-label-md text-label-md">{{ totalResults() }} Action Required</span>
-      </div>
+    <!-- Total count badge -->
+    <div class="dir-count-badge">
+      <span class="material-symbols-outlined" style="font-size:16px; font-variation-settings:'FILL' 1;">group</span>
+      @if (isLoading()) { — } @else { {{ total() }} }
+      caregivers
+    </div>
+  </div>
+
+  <!-- ── Filter Bar ────────────────────────────────────────────────────────── -->
+  <div class="dir-filter-bar">
+
+    <!-- Search -->
+    <div class="dir-search-wrap">
+      <span class="material-symbols-outlined dir-search-icon">search</span>
+      <input
+        type="text" id="dir-search" name="dir-search"
+        [value]="searchQuery"
+        (input)="onSearchInput($event)"
+        class="dir-search-input"
+        placeholder="Search by name, email, or phone…"
+        autocomplete="off"
+      />
+      @if (searchQuery) {
+        <button class="dir-search-clear" (click)="searchQuery=''; page.set(1); load()">
+          <span class="material-symbols-outlined" style="font-size:16px;">close</span>
+        </button>
+      }
+    </div>
+
+    <!-- Specialization -->
+    <select id="dir-spec" name="dir-spec" class="dir-select" [value]="specializationFilter" (change)="setSpecialization($any($event.target).value)">
+      @for (s of specializations; track s.value) {
+        <option [value]="s.value">{{ s.label }}</option>
+      }
+    </select>
+
+    <!-- Sort -->
+    <select id="dir-sort" name="dir-sort" class="dir-select" [value]="sortBy" (change)="setSort($any($event.target).value)">
+      <option value="createdAt">Sort: Newest</option>
+      <option value="rating">Sort: Rating</option>
+      <option value="totalWorkHours">Sort: Work Hours</option>
+      <option value="hourlyRate">Sort: Rate</option>
+    </select>
+
+    <!-- Clear filters -->
+    @if (hasActiveFilters) {
+      <button class="dir-clear-btn" (click)="clearFilters()">
+        <span class="material-symbols-outlined" style="font-size:15px;">filter_list_off</span>
+        Clear
+      </button>
     }
   </div>
 
-  <!-- Content Workspace -->
-  <div class="flex-1 min-h-0 flex flex-col lg:flex-row gap-4 lg:gap-6 overflow-hidden">
-
-    <!-- Left Column: Verification Queue & Filters -->
-    <section class="w-full lg:w-[340px] xl:w-[380px] flex flex-col bg-surface-container-lowest rounded-2xl border border-outline-variant/30 p-4 shadow-sm min-h-0 lg:max-h-full max-h-[45vh]">
-
-      <!-- Filters and Search -->
-      <div class="space-y-3 mb-4 flex-none">
-        <!-- Search Input -->
-        <div class="relative">
-          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary text-[20px]">search</span>
-          <input
-            type="text"
-            [value]="searchQuery()"
-            (input)="onSearch($event)"
-            class="w-full h-[40px] pl-10 pr-4 bg-surface-container-low border border-outline-variant rounded-lg font-body-sm text-[13px] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
-            placeholder="Search caregivers by name..."
-          />
-        </div>
-
-        <!-- Status Filter tabs -->
-        <div class="grid grid-cols-4 gap-1 p-1 bg-surface-container rounded-lg">
-          <button
-            (click)="setStatus('pending')"
-            [class.bg-white]="statusFilter() === 'pending'"
-            [class.text-primary]="statusFilter() === 'pending'"
-            [class.font-bold]="statusFilter() === 'pending'"
-            class="text-[11px] py-1.5 rounded text-center text-on-surface-variant hover:bg-white/50 transition-colors"
-          >
-            Pending
-          </button>
-          <button
-            (click)="setStatus('verified')"
-            [class.bg-white]="statusFilter() === 'verified'"
-            [class.text-primary]="statusFilter() === 'verified'"
-            [class.font-bold]="statusFilter() === 'verified'"
-            class="text-[11px] py-1.5 rounded text-center text-on-surface-variant hover:bg-white/50 transition-colors"
-          >
-            Verified
-          </button>
-          <button
-            (click)="setStatus('under_review')"
-            [class.bg-white]="statusFilter() === 'under_review'"
-            [class.text-primary]="statusFilter() === 'under_review'"
-            [class.font-bold]="statusFilter() === 'under_review'"
-            class="text-[11px] py-1.5 rounded text-center text-on-surface-variant hover:bg-white/50 transition-colors"
-          >
-            Review
-          </button>
-          <button
-            (click)="setStatus('rejected')"
-            [class.bg-white]="statusFilter() === 'rejected'"
-            [class.text-primary]="statusFilter() === 'rejected'"
-            [class.font-bold]="statusFilter() === 'rejected'"
-            class="text-[11px] py-1.5 rounded text-center text-on-surface-variant hover:bg-white/50 transition-colors"
-          >
-            Rejected
-          </button>
-        </div>
-
-        <!-- Sorting bar -->
-        <div class="flex items-center justify-between text-[12px] text-on-surface-variant px-1 border-b border-outline-variant/30 pb-2">
-          <span class="font-medium">Total: {{ totalResults() }} applicants</span>
-          <div class="flex items-center gap-1.5">
-            <select
-              (change)="changeSort($any($event.target).value)"
-              [value]="sortBy()"
-              class="bg-transparent border-none py-0.5 pr-8 pl-1 text-[11px] font-bold text-primary focus:ring-0 outline-none cursor-pointer"
-            >
-              <option value="createdAt">Newest</option>
-              <option value="experience">Experience</option>
-              <option value="status">Status</option>
-            </select>
-            <button (click)="toggleSort()" class="p-1 hover:bg-surface-container rounded transition-colors" title="Toggle Sort Order">
-              <span class="material-symbols-outlined text-[16px]">
-                {{ sortOrder() === 'desc' ? 'arrow_downward' : 'arrow_upward' }}
-              </span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Queue list -->
-      <div class="flex-1 overflow-y-auto pr-1 space-y-3 relative min-h-0 sidebar-scroll">
-        @if (isLoading()) {
-          <div class="absolute inset-0 bg-white/70 flex items-center justify-center z-10 rounded-xl">
-            <div class="flex flex-col items-center gap-2">
-              <div class="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-              <p class="text-xs text-on-surface-variant font-medium">Fetching caregivers...</p>
-            </div>
-          </div>
-        }
-
-        @if (!isLoading() && companions().length === 0) {
-          <div class="py-12 text-center">
-            <span class="material-symbols-outlined text-[48px] text-outline opacity-40">clinical_notes</span>
-            <p class="font-label-md text-label-md font-bold text-on-surface mt-2">No applications found</p>
-            <p class="text-xs text-on-surface-variant mt-1">Try modifying your search or filters.</p>
-          </div>
-        } @else {
-          @for (c of companions(); track c._id) {
-            <div
-              (click)="selectCompanion(c)"
-              [class.border-primary]="selectedCompanion()?._id === c._id"
-              [class.border-2]="selectedCompanion()?._id === c._id"
-              [class.bg-primary/5]="selectedCompanion()?._id === c._id"
-              [class.border-outline-variant]="selectedCompanion()?._id !== c._id"
-              [class.border]="selectedCompanion()?._id !== c._id"
-              [class.shadow-sm]="selectedCompanion()?._id === c._id"
-              class="bg-white p-4 rounded-xl cursor-pointer hover:bg-surface-container-low transition-all duration-200"
-            >
-              <div class="flex items-center gap-3 mb-2">
-                <!-- Avatar -->
-                @if (c.userId.avatar?.url) {
-                  <img
-                    [src]="c.userId.avatar!.url"
-                    [alt]="c.userId.name || 'Caregiver'"
-                    class="w-10 h-10 rounded-full object-cover bg-surface-container flex-none"
-                  />
-                } @else {
-                  <div class="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm flex-none">
-                    {{ getInitials(c.userId.name || '') }}
-                  </div>
-                }
-                <!-- Details -->
-                <div class="flex-1 min-w-0">
-                  <p class="font-label-md text-label-md font-bold text-on-surface truncate">{{ c.userId.name || 'Unknown' }}</p>
-                  <p class="text-[11px] text-on-surface-variant truncate">{{ getFormattedSpecialization(c.specialization) }}</p>
-                </div>
-
-                <!-- Status Badge -->
-                @if (c.verificationStatus === 'pending') {
-                  <span class="text-[9px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded uppercase flex-none">NEW</span>
-                } @else if (c.verificationStatus === 'under_review') {
-                  <span class="text-[9px] font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded uppercase flex-none">REVIEW</span>
-                } @else if (c.verificationStatus === 'verified') {
-                  <span class="text-[9px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded uppercase flex-none">OK</span>
-                } @else if (c.verificationStatus === 'rejected') {
-                  <span class="text-[9px] font-bold bg-red-100 text-red-700 px-2 py-0.5 rounded uppercase flex-none">REJECTED</span>
-                }
-              </div>
-
-              <!-- Metrics -->
-              <div class="flex items-center justify-between text-on-surface-variant text-[11px]">
-                <div class="flex items-center gap-1">
-                  <span class="material-symbols-outlined text-[14px]">schedule</span>
-                  <span>{{ getTimeAgo(c.createdAt) }}</span>
-                </div>
-                <div class="flex items-center gap-1" [class.text-secondary]="getCompletedDocsCount(c) === getTotalDocsCount(c)">
-                  <span class="material-symbols-outlined text-[14px]">description</span>
-                  <span>Docs {{ getCompletedDocsCount(c) }}/{{ getTotalDocsCount(c) }}</span>
-                </div>
-              </div>
-
-              <!-- Inline Quick Actions (shown when card is selected and status is actionable) -->
-              @if (selectedCompanion()?._id === c._id && c.verificationStatus !== 'verified') {
-                <div class="flex items-center gap-1.5 mt-3 pt-3 border-t border-outline-variant/30" (click)="$event.stopPropagation()">
-                  @if (c.verificationStatus !== 'rejected') {
-                    <button
-                      (click)="openModal('approve')"
-                      class="flex-1 h-[30px] bg-primary text-white text-[11px] font-bold rounded-lg hover:opacity-90 transition-all flex items-center justify-center gap-1"
-                      title="Approve Caregiver"
-                    >
-                      <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
-                      Approve
-                    </button>
-                  }
-                  @if (c.verificationStatus !== 'under_review') {
-                    <button
-                      (click)="openModal('request_info')"
-                      class="flex-1 h-[30px] border border-primary text-primary text-[11px] font-bold rounded-lg hover:bg-primary/5 transition-all flex items-center justify-center gap-1"
-                      title="Request More Info"
-                    >
-                      <span class="material-symbols-outlined text-[14px]">help</span>
-                      More Info
-                    </button>
-                  }
-                  <button
-                    (click)="openModal('reject')"
-                    class="h-[30px] px-2 border border-error text-error text-[11px] font-bold rounded-lg hover:bg-error/5 transition-all flex items-center justify-center"
-                    title="Reject Application"
-                  >
-                    <span class="material-symbols-outlined text-[14px]">cancel</span>
-                  </button>
-                </div>
-              }
-            </div>
-          }
-        }
-      </div>
-
-      <!-- Pagination Footer -->
-      @if (totalPages() > 1) {
-        <div class="flex items-center justify-between border-t border-outline-variant/30 pt-3 mt-3 flex-none">
-          <button
-            (click)="prevPage()"
-            [disabled]="page() === 1"
-            class="p-1 px-3 border border-outline-variant hover:bg-surface-container rounded text-xs font-bold transition-all disabled:opacity-40 disabled:hover:bg-transparent"
-          >
-            Previous
-          </button>
-          <span class="text-xs text-on-surface-variant">Page {{ page() }} of {{ totalPages() }}</span>
-          <button
-            (click)="nextPage()"
-            [disabled]="page() === totalPages()"
-            class="p-1 px-3 border border-outline-variant hover:bg-surface-container rounded text-xs font-bold transition-all disabled:opacity-40 disabled:hover:bg-transparent"
-          >
-            Next
-          </button>
-        </div>
-      }
-    </section>
-
-    <!-- Right Column: Detailed Review Pane -->
-    <section class="flex-1 flex flex-col bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm overflow-hidden min-h-0 relative">
-      @if (selectedCompanion(); as comp) {
-        <!-- Profile Header -->
-        <div class="bg-primary/5 p-4 md:p-6 lg:p-8 border-b border-outline-variant/50 flex-none">
-          <div class="flex flex-col sm:flex-row items-start justify-between gap-4">
-            <div class="flex flex-col sm:flex-row gap-4 sm:gap-6">
-              <!-- Profile Image and Status Check -->
-              <div class="relative flex-none">
-                @if (comp.userId.avatar?.url) {
-                  <img
-                    [src]="comp.userId.avatar!.url"
-                    [alt]="comp.userId.name || 'Caregiver'"
-                    class="w-20 h-20 lg:w-24 lg:h-24 rounded-2xl object-cover ring-4 ring-white shadow-md bg-surface-container"
-                  />
-                } @else {
-                  <div class="w-20 h-20 lg:w-24 lg:h-24 rounded-2xl bg-primary/10 text-primary ring-4 ring-white shadow-md flex items-center justify-center font-bold text-3xl">
-                    {{ getInitials(comp.userId.name || '') }}
-                  </div>
-                }
-
-                <div class="absolute -bottom-2 -right-2 p-1 rounded-lg text-white shadow-sm"
-                  [class.bg-primary]="comp.verificationStatus === 'verified'"
-                  [class.bg-amber-500]="comp.verificationStatus === 'under_review' || comp.verificationStatus === 'pending'"
-                  [class.bg-error]="comp.verificationStatus === 'rejected'"
-                >
-                  <span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">
-                    {{ comp.verificationStatus === 'verified' ? 'verified' : (comp.verificationStatus === 'rejected' ? 'cancel' : 'pending') }}
-                  </span>
-                </div>
-              </div>
-
-              <!-- Profile Details -->
-              <div>
-                <h3 class="font-headline-sm text-headline-sm text-on-surface font-bold">{{ comp.userId.name || 'Unknown Caregiver' }}</h3>
-                <p class="text-primary font-label-md text-label-md mb-3 font-semibold">
-                  {{ getFormattedSpecialization(comp.specialization) }} • {{ comp.companionType === 'specialized' ? 'Specialized Care' : 'General Care' }}
-                </p>
-                <div class="flex flex-wrap gap-x-4 gap-y-2">
-                  @if (comp.userId.email) {
-                    <div class="flex items-center gap-1.5 text-on-surface-variant">
-                      <span class="material-symbols-outlined text-[18px] text-primary/70">mail</span>
-                      <span class="font-body-sm text-body-sm text-sm">{{ comp.userId.email }}</span>
-                    </div>
-                  }
-                  @if (comp.userId.phone) {
-                    <div class="flex items-center gap-1.5 text-on-surface-variant">
-                      <span class="material-symbols-outlined text-[18px] text-primary/70">call</span>
-                      <span class="font-body-sm text-body-sm text-sm">{{ comp.userId.phone }}</span>
-                    </div>
-                  }
-                  <div class="flex items-center gap-1.5 text-on-surface-variant">
-                    <span class="material-symbols-outlined text-[18px] text-primary/70">location_on</span>
-                    <span class="font-body-sm text-body-sm text-sm">
-                      {{ comp.userId.location?.readableAddress || comp.userId.location?.city || 'No address' }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Internal Registry ID -->
-            <div class="text-left sm:text-right flex-none">
-              <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-1">Registration Date</p>
-              <p class="font-body-sm text-body-sm text-on-surface font-semibold mb-2">{{ comp.createdAt | date:'mediumDate' }}</p>
-              <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-1">Internal ID</p>
-              <p class="font-headline-sm text-headline-sm font-bold text-on-surface-variant">#CR-{{ comp._id.slice(-4).toUpperCase() }}</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Detail content scroll area -->
-        <div class="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 space-y-6 lg:space-y-8 min-h-0 sidebar-scroll">
-
-          <!-- Alert Box for rejected/under-review status -->
-          @if (comp.verificationStatus === 'rejected') {
-            <div class="bg-red-50 text-red-800 p-4 rounded-xl border border-red-200 flex gap-3 items-start animate-fade-in">
-              <span class="material-symbols-outlined text-red-600 flex-none">error</span>
-              <div>
-                <h5 class="font-bold text-xs uppercase tracking-wider text-red-600">Application Declined</h5>
-                <p class="text-sm mt-1 font-medium">Rejection Reason: {{ comp.rejectionReason || 'None specified' }}</p>
-              </div>
-            </div>
-          } @else if (comp.verificationStatus === 'under_review') {
-            <div class="bg-amber-50 text-amber-800 p-4 rounded-xl border border-amber-200 flex gap-3 items-start animate-fade-in">
-              <span class="material-symbols-outlined text-amber-600 flex-none">pending</span>
-              <div>
-                <h5 class="font-bold text-xs uppercase tracking-wider text-amber-700">Additional Info Requested</h5>
-                <p class="text-sm mt-1 font-medium">Message: {{ comp.requestMoreInfoMessage || 'None specified' }}</p>
-              </div>
-            </div>
-          }
-
-          <!-- Background check parameters -->
-          <div class="bg-surface-container-low p-4 lg:p-5 rounded-2xl border border-secondary/20">
-            <div class="flex items-center gap-3 mb-4">
-              <span class="material-symbols-outlined text-secondary">security</span>
-              <h4 class="font-title-lg text-title-lg font-bold">Automated Background Check</h4>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <!-- Criminal check — safe access -->
-              <div class="bg-white p-4 rounded-xl flex items-center justify-between border border-outline-variant/30">
-                <div>
-                  <p class="font-label-sm text-label-sm text-on-surface-variant">Criminal Record</p>
-                  <p class="font-body-md text-body-md font-bold"
-                    [class.text-secondary]="comp.documents.criminalRecord?.url"
-                    [class.text-outline]="!comp.documents.criminalRecord?.url"
-                  >
-                    {{ comp.documents.criminalRecord?.url ? 'CLEAR' : 'MISSING' }}
-                  </p>
-                </div>
-                <span class="material-symbols-outlined"
-                  [class.text-secondary]="comp.documents.criminalRecord?.url"
-                  [class.text-outline]="!comp.documents.criminalRecord?.url"
-                  style="font-variation-settings: 'FILL' 1;"
-                >
-                  {{ comp.documents.criminalRecord?.url ? 'check_circle' : 'cancel' }}
-                </span>
-              </div>
-
-              <!-- Identity check -->
-              <div class="bg-white p-4 rounded-xl flex items-center justify-between border border-outline-variant/30">
-                <div>
-                  <p class="font-label-sm text-label-sm text-on-surface-variant">Identity Check</p>
-                  <p class="font-body-md text-body-md font-bold"
-                    [class.text-secondary]="comp.documents.nationalIdCard?.url"
-                    [class.text-outline]="!comp.documents.nationalIdCard?.url"
-                  >
-                    {{ comp.documents.nationalIdCard?.url ? 'VERIFIED' : 'MISSING' }}
-                  </p>
-                </div>
-                <span class="material-symbols-outlined"
-                  [class.text-secondary]="comp.documents.nationalIdCard?.url"
-                  [class.text-outline]="!comp.documents.nationalIdCard?.url"
-                  style="font-variation-settings: 'FILL' 1;"
-                >
-                  {{ comp.documents.nationalIdCard?.url ? 'check_circle' : 'cancel' }}
-                </span>
-              </div>
-
-              <!-- Sanctions Check -->
-              <div class="bg-white p-4 rounded-xl flex items-center justify-between border border-outline-variant/30">
-                <div>
-                  <p class="font-label-sm text-label-sm text-on-surface-variant">Sanctions List</p>
-                  <p class="font-body-md text-body-md font-bold text-secondary">NO MATCHES</p>
-                </div>
-                <span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Mid section grid: Documents / Info -->
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-
-            <!-- Documents column -->
-            <div class="space-y-4">
-              <div class="flex items-center justify-between">
-                <h4 class="font-title-lg text-title-lg font-bold">Credentials & Documents</h4>
-                <span class="font-label-sm text-label-sm text-on-surface-variant">{{ getCompletedDocsCount(comp) }} Uploaded</span>
-              </div>
-
-              <!-- National ID Card — safe access -->
-              @if (comp.documents.nationalIdCard; as idDoc) {
-                <div class="group border border-outline-variant p-4 rounded-xl hover:border-primary transition-all flex items-center gap-4 bg-white">
-                  <div class="bg-surface-container-high p-2.5 rounded-lg text-primary flex-none">
-                    <span class="material-symbols-outlined">badge</span>
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <p class="font-label-md text-label-md font-bold truncate">National ID Card / Passport</p>
-                    <p class="text-[11px] text-on-surface-variant">Required Document</p>
-                  </div>
-                  <div class="flex flex-col items-end gap-1.5 flex-none">
-                    @if (idDoc.url && idDoc.url !== 'placeholder_national_id.jpg') {
-                      <span class="text-[9px] px-2 py-0.5 rounded bg-secondary-container text-on-secondary-container font-bold">VERIFIED</span>
-                      <button
-                        (click)="openDocPreview('National ID Card', idDoc.url)"
-                        class="text-primary font-label-sm text-label-sm font-bold opacity-0 group-hover:opacity-100 transition-all hover:underline"
-                      >
-                        VIEW DOC
-                      </button>
-                    } @else {
-                      <span class="text-[9px] px-2 py-0.5 rounded bg-error-container text-on-error-container font-bold">MISSING</span>
-                    }
-                  </div>
-                </div>
-              } @else {
-                <div class="border border-dashed border-outline-variant p-4 rounded-xl flex items-center gap-4 bg-white opacity-60">
-                  <div class="bg-surface-container-high p-2.5 rounded-lg text-outline flex-none">
-                    <span class="material-symbols-outlined">badge</span>
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <p class="font-label-md text-label-md font-bold truncate">National ID Card / Passport</p>
-                    <p class="text-[11px] text-on-surface-variant">Not uploaded</p>
-                  </div>
-                  <span class="text-[9px] px-2 py-0.5 rounded bg-error-container text-on-error-container font-bold flex-none">MISSING</span>
-                </div>
-              }
-
-              <!-- Criminal Record Certificate — safe access -->
-              @if (comp.documents.criminalRecord; as crDoc) {
-                <div class="group border border-outline-variant p-4 rounded-xl hover:border-primary transition-all flex items-center gap-4 bg-white">
-                  <div class="bg-surface-container-high p-2.5 rounded-lg text-primary flex-none">
-                    <span class="material-symbols-outlined">description</span>
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <p class="font-label-md text-label-md font-bold truncate">Criminal Record Clearance</p>
-                    <p class="text-[11px] text-on-surface-variant">Required Background Check</p>
-                  </div>
-                  <div class="flex flex-col items-end gap-1.5 flex-none">
-                    @if (crDoc.url && crDoc.url !== 'placeholder_criminal_record.jpg') {
-                      <span class="text-[9px] px-2 py-0.5 rounded bg-secondary-container text-on-secondary-container font-bold">VERIFIED</span>
-                      <button
-                        (click)="openDocPreview('Criminal Record Clearance', crDoc.url)"
-                        class="text-primary font-label-sm text-label-sm font-bold opacity-0 group-hover:opacity-100 transition-all hover:underline"
-                      >
-                        VIEW DOC
-                      </button>
-                    } @else {
-                      <span class="text-[9px] px-2 py-0.5 rounded bg-error-container text-on-error-container font-bold">MISSING</span>
-                    }
-                  </div>
-                </div>
-              } @else {
-                <div class="border border-dashed border-outline-variant p-4 rounded-xl flex items-center gap-4 bg-white opacity-60">
-                  <div class="bg-surface-container-high p-2.5 rounded-lg text-outline flex-none">
-                    <span class="material-symbols-outlined">description</span>
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <p class="font-label-md text-label-md font-bold truncate">Criminal Record Clearance</p>
-                    <p class="text-[11px] text-on-surface-variant">Required Background Check</p>
-                  </div>
-                  <span class="text-[9px] px-2 py-0.5 rounded bg-error-container text-on-error-container font-bold flex-none">MISSING</span>
-                </div>
-              }
-
-              <!-- Professional Syndicate Card (Specialized only) -->
-              @if (comp.companionType === 'specialized') {
-                <div class="group border border-outline-variant p-4 rounded-xl hover:border-primary transition-all flex items-center gap-4 bg-white">
-                  <div class="bg-surface-container-high p-2.5 rounded-lg text-primary flex-none">
-                    <span class="material-symbols-outlined">clinical_notes</span>
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <p class="font-label-md text-label-md font-bold truncate">Medical Syndicate License</p>
-                    <p class="text-[11px] text-on-surface-variant">Required for Specialists</p>
-                  </div>
-                  <div class="flex flex-col items-end gap-1.5 flex-none">
-                    @if (comp.documents.syndicateCard?.url) {
-                      <span class="text-[9px] px-2 py-0.5 rounded bg-secondary-container text-on-secondary-container font-bold">VERIFIED</span>
-                      <button
-                        (click)="openDocPreview('Syndicate Card', comp.documents.syndicateCard!.url)"
-                        class="text-primary font-label-sm text-label-sm font-bold opacity-0 group-hover:opacity-100 transition-all hover:underline"
-                      >
-                        VIEW DOC
-                      </button>
-                    } @else {
-                      <span class="text-[9px] px-2 py-0.5 rounded bg-error-container text-on-error-container font-bold">MISSING</span>
-                    }
-                  </div>
-                </div>
-              }
-
-              <!-- Uploaded Certificates -->
-              @if (comp.documents.Certificates?.length) {
-                @for (cert of comp.documents.Certificates; track cert.public_id) {
-                  @if (cert?.url) {
-                    <div class="group border border-outline-variant p-4 rounded-xl hover:border-primary transition-all flex items-center gap-4 bg-white">
-                      <div class="bg-surface-container-high p-2.5 rounded-lg text-primary flex-none">
-                        <span class="material-symbols-outlined">workspace_premium</span>
-                      </div>
-                      <div class="flex-1 min-w-0">
-                        <p class="font-label-md text-label-md font-bold truncate">{{ cert.name || 'Certificate' }}</p>
-                        <p class="text-[11px] text-on-surface-variant">Professional Certification</p>
-                      </div>
-                      <div class="flex flex-col items-end gap-1.5 flex-none">
-                        <span class="text-[9px] px-2 py-0.5 rounded bg-secondary-container text-on-secondary-container font-bold">VERIFIED</span>
-                        <button
-                          (click)="openDocPreview(cert.name || 'Certificate', cert.url)"
-                          class="text-primary font-label-sm text-label-sm font-bold opacity-0 group-hover:opacity-100 transition-all hover:underline"
-                        >
-                          VIEW DOC
-                        </button>
-                      </div>
-                    </div>
-                  }
-                }
-              }
-            </div>
-
-            <!-- Professional details & Experience -->
-            <div class="space-y-4">
-              <h4 class="font-title-lg text-title-lg font-bold">Professional Experience</h4>
-
-              <!-- Key Stats Row -->
-              <div class="grid grid-cols-2 gap-3">
-                <div class="bg-surface-container-low p-3.5 rounded-xl border border-outline-variant/20">
-                  <p class="font-label-sm text-label-sm text-on-surface-variant">Hourly Rate</p>
-                  <p class="font-headline-sm text-headline-sm font-bold text-primary mt-1">{{ comp.hourlyRate || '—' }} EGP/hr</p>
-                </div>
-                <div class="bg-surface-container-low p-3.5 rounded-xl border border-outline-variant/20">
-                  <p class="font-label-sm text-label-sm text-on-surface-variant">Experience</p>
-                  <p class="font-headline-sm text-headline-sm font-bold text-primary mt-1">
-                    {{ getExperienceYears(comp.totalWorkHours) }} Yrs
-                  </p>
-                </div>
-              </div>
-
-              <!-- Biography -->
-              @if (comp.bio) {
-                <div class="bg-surface-container-low p-4 rounded-xl border border-outline-variant/20">
-                  <p class="font-label-sm text-label-sm text-on-surface-variant font-bold mb-2">Biography & Motivation</p>
-                  <p class="font-body-sm text-body-sm text-on-surface opacity-90 leading-relaxed italic">
-                    "{{ comp.bio }}"
-                  </p>
-                </div>
-              }
-
-              <!-- Skills & Specializations -->
-              @if (comp.skills?.length) {
-                <div>
-                  <p class="font-label-sm text-label-sm text-on-surface-variant font-bold mb-2">Skills & Specializations</p>
-                  <div class="flex flex-wrap gap-1.5">
-                    @for (skill of comp.skills; track skill._id) {
-                      <span class="text-[11px] bg-secondary-container/30 text-on-secondary-container font-medium px-2.5 py-1 rounded-full border border-secondary/10">
-                        {{ skill.nameEn }}
-                      </span>
-                    }
-                  </div>
-                </div>
-              } @else {
-                <p class="text-xs text-on-surface-variant italic">No skills listed</p>
-              }
-
-              <!-- Hobbies -->
-              @if (comp.hobbies?.length) {
-                <div>
-                  <p class="font-label-sm text-label-sm text-on-surface-variant font-bold mb-2">Hobbies & Interests</p>
-                  <div class="flex flex-wrap gap-1.5">
-                    @for (hobby of comp.hobbies; track hobby) {
-                      <span class="text-[11px] bg-amber-50 text-amber-800 font-medium px-2.5 py-1 rounded-full border border-amber-100">
-                        {{ hobby }}
-                      </span>
-                    }
-                  </div>
-                </div>
-              }
-            </div>
-          </div>
-
-          <!-- Availability Calendar Matrix -->
-          <div class="pt-4">
-            <h4 class="font-title-lg text-title-lg font-bold mb-3">Weekly Availability</h4>
-            <div class="grid grid-cols-4 sm:grid-cols-7 gap-2">
-              @for (day of ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']; track day) {
-                @let activeDaySlots = comp.availability?.find(a => a.day === day);
-                <div class="border border-outline-variant/30 rounded-xl bg-white p-2 lg:p-3 flex flex-col items-center">
-                  <span class="text-xs font-bold text-on-surface-variant">{{ day.slice(0,3) }}</span>
-                  <div class="w-full mt-2 flex flex-col gap-1">
-                    @if (activeDaySlots && activeDaySlots.slots.length > 0) {
-                      @for (slot of activeDaySlots.slots; track slot) {
-                        <span class="text-[9px] text-center bg-primary-container/10 text-primary py-0.5 rounded font-bold uppercase truncate">
-                          {{ slot }}
-                        </span>
-                      }
-                    } @else {
-                      <span class="text-[9px] text-center text-outline italic py-1">Off</span>
-                    }
-                  </div>
-                </div>
-              }
-            </div>
-          </div>
-
-          <!-- Internal private Notes -->
-          <div class="pt-4 border-t border-outline-variant/20">
-            <label class="block font-body-sm text-body-sm font-bold mb-2">Internal Admin Notes (Saved Locally)</label>
-            <textarea
-              [value]="getAdminNote(comp._id)"
-              (input)="updateAdminNote(comp._id, $event)"
-              class="w-full h-24 p-4 rounded-xl border border-outline-variant bg-surface-container-low font-body-md text-body-md focus:ring-1 focus:ring-primary focus:outline-none resize-none"
-              placeholder="Add private notes for the team regarding this application..."
-            ></textarea>
-          </div>
-        </div>
-
-        <!-- Action Bar Footer -->
-        <div class="p-4 lg:p-6 bg-white border-t border-outline-variant flex flex-wrap items-center justify-between gap-3 flex-none">
-          <div class="flex flex-wrap items-center gap-2">
-            @if (comp.verificationStatus !== 'rejected') {
-              <button
-                (click)="openModal('reject')"
-                class="px-4 h-[40px] border border-error text-error font-label-md text-label-md rounded-lg hover:bg-error/5 transition-all font-bold cursor-pointer text-sm"
-              >
-                Reject Application
-              </button>
-            }
-            @if (comp.verificationStatus !== 'under_review') {
-              <button
-                (click)="openModal('request_info')"
-                class="px-4 h-[40px] border border-primary text-primary font-label-md text-label-md rounded-lg hover:bg-primary/5 transition-all font-bold cursor-pointer text-sm"
-              >
-                Request More Info
-              </button>
-            }
-          </div>
-          <div class="flex items-center gap-4">
-            @if (comp.verificationStatus !== 'verified') {
-              <button
-                (click)="openModal('approve')"
-                class="px-6 h-[40px] bg-primary text-white font-label-md text-label-md rounded-lg shadow-md hover:opacity-90 transition-all flex items-center gap-2 font-bold cursor-pointer text-sm"
-              >
-                <span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
-                Approve Caregiver
-              </button>
-            } @else {
-              <div class="flex items-center gap-2 text-secondary font-bold text-sm">
-                <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
-                Application Verified & Active
-              </div>
-            }
-          </div>
-        </div>
-      } @else {
-        <!-- Empty Selection Details State -->
-        <div class="flex-1 flex flex-col items-center justify-center p-8 bg-surface-container-low text-center">
-          <span class="material-symbols-outlined text-[64px] text-outline opacity-40">medical_services</span>
-          <h4 class="font-headline-sm text-headline-sm text-on-surface font-bold mt-4">No Applicant Selected</h4>
-          <p class="text-sm text-on-surface-variant max-w-md mt-2">
-            Select a healthcare worker application from the queue to inspect details, background check status, and credentials.
-          </p>
-        </div>
-      }
-    </section>
-
+  <!-- ── Status Filter Chips ──────────────────────────────────────────────── -->
+  <div class="dir-chips">
+    @for (s of statuses; track s.value) {
+      <button class="dir-chip" [class]="s.colorClass" [class.dir-chip-active]="statusFilter === s.value"
+        (click)="setStatus(s.value)">
+        {{ s.label }}
+      </button>
+    }
   </div>
+
+  <!-- ── Results info ─────────────────────────────────────────────────────── -->
+  @if (!isLoading()) {
+    <div class="dir-results-row">
+      <span class="dir-results-text">
+        Showing {{ companions().length }} of {{ total() }} caregivers
+        @if (hasActiveFilters) { <span class="dir-results-filtered">(filtered)</span> }
+      </span>
+      <div class="dir-sort-toggle">
+        <button class="dir-sort-dir-btn" (click)="sortOrder = sortOrder === 'desc' ? 'asc' : 'desc'; load()">
+          <span class="material-symbols-outlined" style="font-size:16px;">
+            {{ sortOrder === 'desc' ? 'arrow_downward' : 'arrow_upward' }}
+          </span>
+          {{ sortOrder === 'desc' ? 'Descending' : 'Ascending' }}
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- ── Grid / Loading / Empty ────────────────────────────────────────────── -->
+  @if (isLoading()) {
+    <!-- Skeleton grid -->
+    <div class="dir-grid">
+      @for (i of [1,2,3,4,5,6,7,8,9,10,11,12]; track i) {
+        <div class="dir-skeleton-card">
+          <div class="dir-sk-avatar"></div>
+          <div class="dir-sk-lines">
+            <div class="dir-sk-line dir-sk-line-lg"></div>
+            <div class="dir-sk-line dir-sk-line-sm"></div>
+            <div class="dir-sk-line dir-sk-line-md"></div>
+          </div>
+          <div class="dir-sk-footer">
+            <div class="dir-sk-badge"></div>
+            <div class="dir-sk-badge"></div>
+          </div>
+        </div>
+      }
+    </div>
+
+  } @else if (error()) {
+    <div class="dir-error-state">
+      <span class="material-symbols-outlined">error</span>
+      <p>{{ error() }}</p>
+      <button class="dir-retry-btn" (click)="load()">Try Again</button>
+    </div>
+
+  } @else if (companions().length === 0) {
+    <div class="dir-empty-state">
+      <app-empty-state icon="search_off" title="No Caregivers Found"
+        subtitle="Try adjusting your search or filters to see more results." />
+      @if (hasActiveFilters) {
+        <button class="dir-clear-btn dir-clear-btn-lg" (click)="clearFilters()">Clear all filters</button>
+      }
+    </div>
+
+  } @else {
+    <!-- ── Caregiver Cards Grid ────────────────────────────────────────── -->
+    <div class="dir-grid">
+      @for (comp of companions(); track trackById($index, comp)) {
+        <div class="dir-card" role="button" tabindex="0"
+          (click)="openProfile(comp._id)"
+          (keydown.enter)="openProfile(comp._id)">
+
+          <!-- Card top: avatar + status badge + action hint -->
+          <div class="dir-card-top">
+            <div class="dir-card-avatar-wrap">
+              @if (comp.userId.avatar?.url) {
+                <img [src]="comp.userId.avatar!.url" [alt]="comp.userId.name" class="dir-card-avatar" />
+              } @else {
+                <div class="dir-card-avatar-placeholder">{{ getInitials(comp.userId.name) }}</div>
+              }
+              <!-- Status dot -->
+              <span class="dir-card-status-dot" [class]="getStatusClass(comp.verificationStatus)"
+                [title]="getStatusLabel(comp.verificationStatus)"></span>
+            </div>
+
+            <!-- Status badge -->
+            <span class="dir-card-badge" [class]="getStatusClass(comp.verificationStatus)">
+              <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1; font-size:12px;">
+                {{ getStatusIcon(comp.verificationStatus) }}
+              </span>
+              {{ getStatusLabel(comp.verificationStatus) }}
+            </span>
+          </div>
+
+          <!-- Card identity -->
+          <div class="dir-card-identity">
+            <h3 class="dir-card-name">{{ comp.userId.name || 'Unknown' }}</h3>
+            <p class="dir-card-role">{{ getSpecializationLabel(comp.specialization) }}</p>
+
+            <!-- Stars -->
+            <div class="dir-card-rating">
+              @if (comp.reviewCount && comp.reviewCount > 0) {
+                <div class="dir-stars">
+                  @for (filled of getRatingStars(comp.rating); track $index) {
+                    <span class="material-symbols-outlined dir-star"
+                      [class.dir-star-filled]="filled"
+                      style="font-variation-settings:'FILL' 1;">star</span>
+                  }
+                </div>
+                <span class="dir-rating-val">{{ comp.rating.toFixed(1) }}</span>
+                <span class="dir-rating-count">({{ comp.reviewCount }})</span>
+              } @else {
+                <span class="dir-no-rating">No ratings yet</span>
+              }
+            </div>
+          </div>
+
+          <!-- Card meta grid -->
+          <div class="dir-card-meta">
+            @if (comp.userId.location?.city || comp.userId.location?.governorate) {
+              <div class="dir-meta-item">
+                <span class="material-symbols-outlined dir-meta-icon">location_on</span>
+                <span>{{ comp.userId.location?.city || comp.userId.location?.governorate }}</span>
+              </div>
+            }
+            <div class="dir-meta-item">
+              <span class="material-symbols-outlined dir-meta-icon">schedule</span>
+              <span>{{ comp.totalWorkHours || 0 }}h worked</span>
+            </div>
+            <div class="dir-meta-item">
+              <span class="material-symbols-outlined dir-meta-icon">payments</span>
+              <span>{{ comp.hourlyRate || '—' }} EGP/hr</span>
+            </div>
+            <div class="dir-meta-item">
+              <span class="material-symbols-outlined dir-meta-icon">calendar_today</span>
+              <span>{{ comp.createdAt | date:'MMM y' }}</span>
+            </div>
+          </div>
+
+          <!-- Card footer: docs progress + view cta -->
+          <div class="dir-card-footer">
+            @let docs = getDocsProgress(comp);
+            <div class="dir-docs-bar">
+              <div class="dir-docs-track">
+                <div class="dir-docs-fill" [style.width]="(docs.done / docs.total * 100) + '%'"
+                  [class.dir-docs-complete]="docs.done === docs.total"></div>
+              </div>
+              <span class="dir-docs-label">
+                {{ docs.done }}/{{ docs.total }} docs
+              </span>
+            </div>
+            <span class="dir-card-cta">
+              View Profile
+              <span class="material-symbols-outlined" style="font-size:14px;">arrow_forward</span>
+            </span>
+          </div>
+
+        </div>
+      }
+    </div>
+
+    <!-- ── Pagination ────────────────────────────────────────────────────── -->
+    @if (totalPages() > 1) {
+      <div class="dir-pagination">
+        <button class="dir-pg-btn" [disabled]="page() === 1" (click)="goToPage(page() - 1)">
+          <span class="material-symbols-outlined">chevron_left</span>
+        </button>
+
+        @if (pageNumbers()[0] > 1) {
+          <button class="dir-pg-num" (click)="goToPage(1)">1</button>
+          @if (pageNumbers()[0] > 2) {
+            <span class="dir-pg-ellipsis">…</span>
+          }
+        }
+
+        @for (n of pageNumbers(); track n) {
+          <button class="dir-pg-num" [class.dir-pg-active]="n === page()" (click)="goToPage(n)">{{ n }}</button>
+        }
+
+        @if (pageNumbers()[pageNumbers().length - 1] < totalPages()) {
+          @if (pageNumbers()[pageNumbers().length - 1] < totalPages() - 1) {
+            <span class="dir-pg-ellipsis">…</span>
+          }
+          <button class="dir-pg-num" (click)="goToPage(totalPages())">{{ totalPages() }}</button>
+        }
+
+        <button class="dir-pg-btn" [disabled]="page() === totalPages()" (click)="goToPage(page() + 1)">
+          <span class="material-symbols-outlined">chevron_right</span>
+        </button>
+      </div>
+    }
+  }
 </div>
 
-<!-- ─── Action Modals (Approve / Reject / Request More Info) ───────────────── -->
-
-<!-- Single backdrop overlay containing ALL three modals — fixes Reject/RequestInfo invisibility bug -->
-@if (activeModal() && activeModal() !== 'document_preview') {
-  <div
-    class="fixed inset-0 bg-black/50 z-[1060] flex items-center justify-center p-4 animate-fade-in"
-    (click)="closeModal()"
-  >
-    <!-- Approve confirmation dialog -->
-    @if (activeModal() === 'approve') {
-      <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl border border-outline-variant/30 animate-scale-in" (click)="$event.stopPropagation()">
-        <div class="flex items-center gap-3 text-primary mb-4">
-          <span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
-          <h3 class="text-lg font-bold">Approve Caregiver</h3>
-        </div>
-        <p class="text-sm text-on-surface-variant leading-relaxed">
-          Are you sure you want to approve <strong class="text-on-surface">{{ selectedCompanion()?.userId?.name }}</strong>?
-          This will activate their profile on the Sanad platform and allow families to book their services.
-        </p>
-        <div class="flex justify-end gap-3 mt-6">
-          <button
-            (click)="closeModal()"
-            [disabled]="isSubmitting()"
-            class="px-4 py-2 border border-outline-variant rounded-lg font-semibold text-xs text-on-surface hover:bg-surface-container transition-all disabled:opacity-50"
-          >
-            Cancel
-          </button>
-          <button
-            (click)="approveCaregiver()"
-            [disabled]="isSubmitting()"
-            class="px-5 py-2 bg-primary text-white rounded-lg font-semibold text-xs hover:opacity-90 shadow-md transition-all flex items-center gap-2 disabled:opacity-50"
-          >
-            @if (isSubmitting()) {
-              <div class="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-            }
-            Yes, Approve
-          </button>
-        </div>
-      </div>
-    }
-
-    <!-- Reject confirmation dialog -->
-    @if (activeModal() === 'reject') {
-      <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl border border-outline-variant/30 animate-scale-in" (click)="$event.stopPropagation()">
-        <div class="flex items-center gap-3 text-error mb-4">
-          <span class="material-symbols-outlined text-[28px]">cancel</span>
-          <h3 class="text-lg font-bold">Reject Application</h3>
-        </div>
-        <p class="text-sm text-on-surface-variant mb-4 leading-relaxed">
-          Please provide a clear rejection reason for <strong class="text-on-surface">{{ selectedCompanion()?.userId?.name }}</strong>.
-          This will be stored and communicated to the caregiver.
-        </p>
-        <div>
-          <label class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-1.5 block">
-            Rejection Reason <span class="text-error">*</span>
-          </label>
-          <textarea
-            [(ngModel)]="rejectionReason"
-            class="w-full h-28 p-3 border border-outline-variant rounded-lg text-xs focus:ring-1 focus:ring-error focus:border-error focus:outline-none resize-none"
-            placeholder="Enter a clear rejection reason (e.g. Invalid document files, expired medical card...)"
-          ></textarea>
-        </div>
-        <div class="flex justify-end gap-3 mt-5">
-          <button
-            (click)="closeModal()"
-            [disabled]="isSubmitting()"
-            class="px-4 py-2 border border-outline-variant rounded-lg font-semibold text-xs text-on-surface hover:bg-surface-container transition-all disabled:opacity-50"
-          >
-            Cancel
-          </button>
-          <button
-            (click)="rejectCaregiver()"
-            [disabled]="!rejectionReason.trim() || isSubmitting()"
-            class="px-5 py-2 bg-error text-white rounded-lg font-semibold text-xs hover:opacity-90 disabled:opacity-40 shadow-md transition-all flex items-center gap-2"
-          >
-            @if (isSubmitting()) {
-              <div class="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-            }
-            Reject Caregiver
-          </button>
-        </div>
-      </div>
-    }
-
-    <!-- Request info dialog -->
-    @if (activeModal() === 'request_info') {
-      <div class="bg-white rounded-2xl w-full max-w-lg p-6 shadow-xl border border-outline-variant/30 animate-scale-in" (click)="$event.stopPropagation()">
-        <div class="flex items-center gap-3 text-primary mb-4">
-          <span class="material-symbols-outlined text-[28px]">help</span>
-          <h3 class="text-lg font-bold">Request More Information</h3>
-        </div>
-        <p class="text-sm text-on-surface-variant mb-4 leading-relaxed">
-          Send a request to <strong class="text-on-surface">{{ selectedCompanion()?.userId?.name }}</strong> asking them to upload or update specific documents.
-        </p>
-        <div class="space-y-3">
-          <div>
-            <label class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-1.5 block">Subject</label>
-            <input
-              type="text"
-              [(ngModel)]="requestInfoSubject"
-              class="w-full h-[38px] px-3 border border-outline-variant rounded-lg text-xs focus:ring-1 focus:ring-primary focus:border-primary focus:outline-none"
-              placeholder="e.g. Missing Criminal Record Certificate"
-            />
-          </div>
-          <div>
-            <label class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-1.5 block">
-              Message <span class="text-error">*</span>
-            </label>
-            <textarea
-              [(ngModel)]="requestInfoMessage"
-              class="w-full h-24 p-3 border border-outline-variant rounded-lg text-xs focus:ring-1 focus:ring-primary focus:border-primary focus:outline-none resize-none"
-              placeholder="Specify what document is missing or requires re-upload..."
-            ></textarea>
-          </div>
-        </div>
-        <div class="flex justify-end gap-3 mt-5">
-          <button
-            (click)="closeModal()"
-            [disabled]="isSubmitting()"
-            class="px-4 py-2 border border-outline-variant rounded-lg font-semibold text-xs text-on-surface hover:bg-surface-container transition-all disabled:opacity-50"
-          >
-            Cancel
-          </button>
-          <button
-            (click)="requestMoreInfo()"
-            [disabled]="!requestInfoMessage.trim() || isSubmitting()"
-            class="px-5 py-2 bg-primary text-white rounded-lg font-semibold text-xs hover:opacity-90 disabled:opacity-40 shadow-md transition-all flex items-center gap-2"
-          >
-            @if (isSubmitting()) {
-              <div class="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-            }
-            Send Request
-          </button>
-        </div>
-      </div>
-    }
-  </div>
-}
-
-<!-- ─── Document Preview Modal Overlay ────────────────────────────────────── -->
-@if (activeModal() === 'document_preview') {
-  <div class="fixed inset-0 bg-black/80 z-[1070] flex flex-col items-center justify-center p-4 lg:p-6 animate-fade-in">
-    <!-- Header -->
-    <div class="max-w-4xl w-full flex justify-between items-center text-white mb-3">
-      <h3 class="text-base font-bold flex items-center gap-2">
-        <span class="material-symbols-outlined text-primary-fixed">description</span>
-        {{ previewDocTitle() }} — Document Preview
-      </h3>
-      <button
-        (click)="closeModal()"
-        class="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-all text-white flex items-center justify-center"
-      >
-        <span class="material-symbols-outlined text-[20px]">close</span>
-      </button>
-    </div>
-
-    <!-- Viewer Pane -->
-    <div class="max-w-4xl w-full flex-1 bg-neutral-900 rounded-2xl overflow-hidden shadow-2xl flex items-center justify-center border border-white/10 relative p-4">
-      @if (previewDocType() === 'pdf') {
-        <iframe
-          [src]="previewDocSafeUrl()"
-          class="w-full h-full border-none rounded-xl"
-        ></iframe>
-      } @else {
-        @if (previewDocUrl() === 'placeholder_national_id.jpg' || previewDocUrl() === 'placeholder_criminal_record.jpg') {
-          <div class="flex flex-col items-center justify-center text-center p-8 bg-white text-on-surface rounded-xl max-w-md w-full shadow-lg border border-outline-variant/30 animate-scale-in">
-            <span class="material-symbols-outlined text-[56px] text-primary">badge</span>
-            <h4 class="font-bold text-lg mt-3">{{ previewDocTitle() }} Reference</h4>
-            <p class="text-xs text-on-surface-variant mt-2 leading-relaxed">
-              Caregiver: <strong>{{ selectedCompanion()?.userId?.name }}</strong><br>
-              Status: <span class="text-secondary font-bold">SECURE ENCRYPTED FILE</span><br>
-              Reference ID: CR-{{ selectedCompanion()?._id?.slice(-8) }}
-            </p>
-            <div class="w-full h-32 bg-surface-container-low border border-dashed border-outline-variant rounded-lg mt-4 flex items-center justify-center text-outline">
-              <span class="material-symbols-outlined text-[36px] opacity-40">lock</span>
-            </div>
-          </div>
-        } @else {
-          <img
-            [src]="previewDocUrl()"
-            [alt]="previewDocTitle()"
-            class="max-w-full max-h-full object-contain rounded-xl shadow-md"
-          />
-        }
-      }
-    </div>
-  </div>
-}
-
-<!-- ─── Toast Notifications ────────────────────────────────────────────────── -->
-@if (toast(); as t) {
-  <div class="fixed top-6 right-4 lg:right-6 z-[1090] animate-slide-in flex items-center gap-3 p-4 rounded-xl shadow-xl border text-white max-w-[90vw]"
-    [class.bg-secondary]="t.type === 'success'"
-    [class.border-secondary-fixed/30]="t.type === 'success'"
-    [class.bg-error]="t.type === 'error'"
-    [class.border-error-container/30]="t.type === 'error'"
-  >
-    <span class="material-symbols-outlined text-[20px] flex-none" style="font-variation-settings: 'FILL' 1;">
-      {{ t.type === 'success' ? 'check_circle' : 'error' }}
-    </span>
-    <span class="font-label-md text-label-md font-semibold">{{ t.message }}</span>
-  </div>
-}
+<app-toast [toast]="toast()" />

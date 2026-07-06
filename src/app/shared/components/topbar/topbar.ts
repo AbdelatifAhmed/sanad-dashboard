@@ -1,26 +1,20 @@
 import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { StatsService } from '../../../core/services/stats.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { LayoutService } from '../../../core/services/layout.service';
 
 @Component({
   selector: 'app-topbar',
   standalone: true,
   imports: [],
   templateUrl: './topbar.html',
-  styleUrl: './topbar.css'
+  styleUrl: './topbar.css',
 })
 export class TopbarComponent {
-  statsService = inject(StatsService);
-  authService = inject(AuthService);
-  router = inject(Router);
-  showLogoutModal = signal<boolean>(false);
-
-  // Bind keyup to search query signal
-  onSearch(event: Event): void {
-    const target = event.target as HTMLInputElement;
-    this.statsService.searchQuery.set(target.value);
-  }
+  readonly authService  = inject(AuthService);
+  readonly layout       = inject(LayoutService);
+  readonly router       = inject(Router);
+  readonly showLogoutModal = signal<boolean>(false);
 
   openLogoutModal(event: Event): void {
     event.preventDefault();
