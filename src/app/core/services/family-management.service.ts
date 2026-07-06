@@ -30,6 +30,13 @@ export interface FamiliesResponse {
     totalPages: number;
     hasMore: boolean;
   };
+  stats?: {
+    total: number;
+    totalActive: number;
+    totalSuspended: number;
+    totalElderly: number;
+    totalActiveRequests: number;
+  };
 }
 
 export interface Beneficiary {

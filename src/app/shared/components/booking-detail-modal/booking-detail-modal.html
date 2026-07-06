@@ -1,0 +1,208 @@
+@if (bookingId) {
+  <!-- Backdrop -->
+  <div
+    class="fixed inset-0 bg-black/50 z-[1060] flex items-center justify-center p-4"
+    (click)="close()"
+  >
+    <!-- Dialog panel -->
+    <div
+      class="bg-white rounded-2xl w-full max-w-2xl shadow-xl border border-outline-variant/30 max-h-[90vh] overflow-y-auto"
+      (click)="$event.stopPropagation()"
+    >
+      <!-- Header -->
+      <div class="flex items-center justify-between p-5 border-b border-outline-variant/20 sticky top-0 bg-white z-10">
+        <h3 class="font-title-lg text-title-lg font-bold text-on-surface">Booking Details</h3>
+        <button (click)="close()" class="p-1.5 rounded-lg hover:bg-surface-container cursor-pointer">
+          <span class="material-symbols-outlined text-[20px] text-on-surface-variant">close</span>
+        </button>
+      </div>
+
+      <!-- Loading -->
+      @if (detailLoading()) {
+        <div class="p-8">
+          <app-loading-spinner message="Loading details…" />
+        </div>
+      }
+
+      <!-- Error -->
+      @else if (detailError()) {
+        <div class="p-5">
+          <app-error-banner [message]="detailError()" (retry)="retry()" />
+        </div>
+      }
+
+      <!-- Content -->
+      @else if (booking(); as b) {
+        <div class="p-5 space-y-5">
+
+          <!-- Status badge + meta -->
+          <div class="flex items-center justify-between flex-wrap gap-3">
+            <span
+              class="text-[11px] font-bold px-3 py-1 rounded-full border uppercase"
+              [class]="getStatusClass(b.status)"
+            >{{ b.status }}</span>
+            <span class="text-xs text-on-surface-variant">{{ b.createdAt | date:'medium' }}</span>
+          </div>
+
+          <!-- Parties -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Family -->
+            <div class="bg-surface-container-low rounded-xl p-4">
+              <p class="text-[10px] font-bold text-outline uppercase tracking-wider mb-2">Family</p>
+              <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-full bg-secondary/10 text-secondary flex items-center justify-center font-bold text-xs shrink-0">
+                  {{ getInitials(b.familyId?.name) }}
+                </div>
+                <div>
+                  <p class="font-semibold text-sm text-on-surface">{{ b.familyId?.name ?? '—' }}</p>
+                  <p class="text-xs text-on-surface-variant">{{ b.familyId?.email ?? '' }}</p>
+                </div>
+              </div>
+              @if (b.familyId?._id) {
+                <button
+                  (click)="viewFamily(b.familyId!._id)"
+                  class="mt-2 text-xs text-primary font-semibold hover:underline cursor-pointer"
+                >View Profile →</button>
+              }
+            </div>
+
+            <!-- Caregiver -->
+            <div class="bg-surface-container-low rounded-xl p-4">
+              <p class="text-[10px] font-bold text-outline uppercase tracking-wider mb-2">Caregiver</p>
+              <div class="flex items-center gap-2.5">
+                @if (b.companionId?.avatar?.url) {
+                  <img [src]="b.companionId!.avatar!.url" class="w-9 h-9 rounded-full object-cover shrink-0" />
+                } @else {
+                  <div class="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0">
+                    {{ getInitials(b.companionId?.name) }}
+                  </div>
+                }
+                <div>
+                  <p class="font-semibold text-sm text-on-surface">{{ b.companionId?.name ?? '—' }}</p>
+                  <p class="text-xs text-on-surface-variant">{{ b.companionId?.email ?? '' }}</p>
+                </div>
+              </div>
+              @if (b.companionId?._id) {
+                <button
+                  (click)="viewCaregiver(b.companionId!._id)"
+                  class="mt-2 text-xs text-primary font-semibold hover:underline cursor-pointer"
+                >View Profile →</button>
+              }
+            </div>
+          </div>
+
+          <!-- Service & Schedule -->
+          <div class="bg-surface-container-low rounded-xl p-4">
+            <p class="text-[10px] font-bold text-outline uppercase tracking-wider mb-3">Service Information</p>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+              <div>
+                <p class="text-outline font-bold uppercase tracking-wider mb-0.5">Service</p>
+                <p class="font-semibold text-on-surface">{{ getServiceLabel(b.jobPostId?.serviceType) }}</p>
+              </div>
+              <div>
+                <p class="text-outline font-bold uppercase tracking-wider mb-0.5">Total Hours</p>
+                <p class="font-semibold text-on-surface">{{ b.totalHours }}h</p>
+              </div>
+              <div>
+                <p class="text-outline font-bold uppercase tracking-wider mb-0.5">Rate/hr</p>
+                <p class="font-semibold text-on-surface">{{ b.hourlyRateAtBooking | currency:'EGP':'symbol':'1.0-2' }}</p>
+              </div>
+              <div>
+                <p class="text-outline font-bold uppercase tracking-wider mb-0.5">Total Price</p>
+                <p class="font-bold text-primary">{{ b.totalPrice | currency:'EGP':'symbol':'1.0-2' }}</p>
+              </div>
+              <div>
+                <p class="text-outline font-bold uppercase tracking-wider mb-0.5">Payment</p>
+                <p class="font-semibold text-on-surface capitalize">{{ b.paymentStatus }}</p>
+              </div>
+              <div>
+                <p class="text-outline font-bold uppercase tracking-wider mb-0.5">Location</p>
+                <p class="font-semibold text-on-surface">{{ b.location?.city ?? b.jobPostId?.location?.city ?? '—' }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Date range -->
+          @if (b.startDate) {
+            <div class="flex items-center gap-3 text-xs text-on-surface-variant">
+              <span class="material-symbols-outlined text-primary text-[16px]">date_range</span>
+              <span>{{ b.startDate | date:'mediumDate' }} → {{ b.endDate | date:'mediumDate' }}</span>
+            </div>
+          }
+
+          <!-- Notes -->
+          @if (b.notes) {
+            <div class="bg-surface-container-low rounded-xl p-3.5">
+              <p class="text-[10px] font-bold text-outline uppercase tracking-wider mb-1">Notes</p>
+              <p class="text-sm text-on-surface">{{ b.notes }}</p>
+            </div>
+          }
+
+          <!-- Proposals -->
+          @if (proposals().length > 0) {
+            <div>
+              <p class="text-[11px] font-bold text-outline uppercase tracking-wider mb-3">
+                Applications ({{ proposals().length }})
+              </p>
+              <div class="space-y-2.5">
+                @for (p of proposals(); track p._id) {
+                  <div class="flex items-center justify-between gap-3 p-3 rounded-xl border border-outline-variant/25 bg-surface-container-low">
+                    <div class="flex items-center gap-2.5">
+                      @if (p.companionId?.avatar?.url) {
+                        <img [src]="p.companionId!.avatar!.url" class="w-8 h-8 rounded-full object-cover shrink-0" />
+                      } @else {
+                        <div class="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0">
+                          {{ getInitials(p.companionId?.name) }}
+                        </div>
+                      }
+                      <div>
+                        <p class="text-xs font-semibold text-on-surface">{{ p.companionId?.name ?? '—' }}</p>
+                        <p class="text-[10px] text-on-surface-variant">{{ p.proposedRate | currency:'EGP':'symbol':'1.0-0' }}/hr</p>
+                      </div>
+                    </div>
+                    <span
+                      class="text-[9px] font-bold px-2 py-0.5 rounded-full border uppercase"
+                      [class]="p.status === 'accepted' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' :
+                               p.status === 'rejected' ? 'bg-red-100 text-red-700 border-red-200' :
+                               'bg-amber-100 text-amber-700 border-amber-200'"
+                    >{{ p.status }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Status actions -->
+          @if (allowedNextStatuses(b.status).length > 0) {
+            <div class="flex flex-wrap gap-3 pt-2 border-t border-outline-variant/20">
+              @for (action of allowedNextStatuses(b.status); track action.value) {
+                <button
+                  (click)="requestStatusChange(action.value)"
+                  class="flex-1 h-[38px] text-sm font-bold rounded-lg border cursor-pointer transition-all"
+                  [class]="action.value === 'cancelled'
+                    ? 'border-error text-error hover:bg-error/5'
+                    : 'bg-primary text-white hover:opacity-90 border-primary'"
+                >{{ action.label }}</button>
+              }
+            </div>
+          }
+
+        </div>
+      }
+    </div>
+  </div>
+}
+
+<!-- Confirm status-change dialog -->
+<app-confirm-dialog
+  [visible]="!!confirmStatus()"
+  [title]="getConfirmLabel()"
+  [message]="'Are you sure you want to ' + (confirmStatus()?.status === 'cancelled' ? 'cancel' : 'update') + ' this booking?'"
+  [confirmLabel]="getConfirmLabel()"
+  [confirmClass]="getConfirmClass()"
+  icon="swap_horiz"
+  iconColorClass="text-primary"
+  [isSubmitting]="isSubmittingStatus()"
+  (confirmed)="executeStatusChange()"
+  (cancelled)="cancelStatusChange()"
+/>

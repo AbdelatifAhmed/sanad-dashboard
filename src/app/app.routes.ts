@@ -3,21 +3,17 @@ import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   // Redirect root to dashboard
-  {
-    path: '',
-    redirectTo: 'dashboard',
-    pathMatch: 'full'
-  },
+  { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
 
-  // Login page (public)
+  // Public: Login
   {
     path: 'login',
     loadComponent: () =>
       import('./features/auth/login/login').then((m) => m.LoginComponent),
-    title: 'Sanad Admin — Sign In'
+    title: 'Sanad Admin — Sign In',
   },
 
-  // Admin layout shell (protected)
+  // Protected shell — all admin pages live here
   {
     path: '',
     loadComponent: () =>
@@ -32,16 +28,7 @@ export const routes: Routes = [
           import('./features/dashboard/dashboard').then(
             (m) => m.DashboardComponent
           ),
-        title: 'Sanad Admin — Dashboard'
-      },
-      // Placeholder routes for future pages (match sidebar nav items)
-      {
-        path: 'users',
-        loadComponent: () =>
-          import('./features/dashboard/dashboard').then(
-            (m) => m.DashboardComponent
-          ),
-        title: 'Sanad Admin — Users'
+        title: 'Sanad Admin — Dashboard',
       },
       {
         path: 'caregivers',
@@ -49,7 +36,15 @@ export const routes: Routes = [
           import('./features/caregiver-verification/caregiver-verification').then(
             (m) => m.CaregiverVerificationComponent
           ),
-        title: 'Sanad Admin — Caregivers Verification'
+        title: 'Sanad Admin — Caregiver Verification',
+      },
+      {
+        path: 'caregivers/:id',
+        loadComponent: () =>
+          import('./features/caregiver-details/caregiver-details.component').then(
+            (m) => m.CaregiverDetailsComponent
+          ),
+        title: 'Sanad Admin — Caregiver Details',
       },
       {
         path: 'families',
@@ -57,7 +52,7 @@ export const routes: Routes = [
           import('./features/family-management/family-list/family-list.component').then(
             (m) => m.FamilyListComponent
           ),
-        title: 'Sanad Admin — Family Management'
+        title: 'Sanad Admin — Family Management',
       },
       {
         path: 'families/:id',
@@ -65,31 +60,15 @@ export const routes: Routes = [
           import('./features/family-management/family-details/family-details.component').then(
             (m) => m.FamilyDetailsComponent
           ),
-        title: 'Sanad Admin — Family Details'
+        title: 'Sanad Admin — Family Details',
       },
       {
-        path: 'bookings',
+        path: 'activity',
         loadComponent: () =>
-          import('./features/dashboard/dashboard').then(
-            (m) => m.DashboardComponent
+          import('./features/activity-history/activity-history.component').then(
+            (m) => m.ActivityHistoryComponent
           ),
-        title: 'Sanad Admin — Bookings'
-      },
-      {
-        path: 'reports',
-        loadComponent: () =>
-          import('./features/dashboard/dashboard').then(
-            (m) => m.DashboardComponent
-          ),
-        title: 'Sanad Admin — Reports'
-      },
-      {
-        path: 'messages',
-        loadComponent: () =>
-          import('./features/dashboard/dashboard').then(
-            (m) => m.DashboardComponent
-          ),
-        title: 'Sanad Admin — Messages'
+        title: 'Sanad Admin — Activity History',
       },
       {
         path: 'settings',
@@ -97,14 +76,61 @@ export const routes: Routes = [
           import('./features/settings/settings.component').then(
             (m) => m.SettingsComponent
           ),
-        title: 'Sanad Admin — Settings'
-      }
-    ]
+        title: 'Sanad Admin — Settings',
+      },
+      {
+        path: 'reports',
+        loadComponent: () =>
+          import('./features/reports/reports.component').then(
+            (m) => m.ReportsComponent
+          ),
+        title: 'Sanad Admin — Reports & Analytics',
+      },
+      {
+        path: 'reviews',
+        loadComponent: () =>
+          import('./features/reviews/reviews.component').then(
+            (m) => m.ReviewsComponent
+          ),
+        title: 'Sanad Admin — Reviews Management',
+      },
+      {
+        path: 'security',
+        loadComponent: () =>
+          import('./features/security/security.component').then(
+            (m) => m.SecurityComponent
+          ),
+        title: 'Sanad Admin — Security & AI Monitoring',
+      },
+      {
+        path: 'bookings',
+        loadComponent: () =>
+          import('./features/bookings/bookings.component').then(
+            (m) => m.BookingsComponent
+          ),
+        title: 'Sanad Admin — Requests & Bookings',
+      },
+      {
+        path: 'bookings/:id',
+        loadComponent: () =>
+          import('./features/bookings/booking-details/booking-details.component').then(
+            (m) => m.BookingDetailsComponent
+          ),
+        title: 'Sanad Admin — Booking Details',
+      },
+      {
+        path: 'messages',
+        loadComponent: () =>
+          import('./features/messages/messages.component').then(
+            (m) => m.MessagesComponent
+          ),
+        title: 'Sanad Admin — Messages',
+      },
+      // ── Routes not yet implemented ────────────────────────────────────────
+      { path: 'users', redirectTo: 'dashboard', pathMatch: 'full' },
+    ],
   },
 
-  // Wildcard — redirect unknown paths to login
-  {
-    path: '**',
-    redirectTo: 'login'
-  }
+  // Wildcard
+  { path: '**', redirectTo: 'login' },
 ];

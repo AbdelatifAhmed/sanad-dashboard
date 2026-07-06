@@ -1,0 +1,169 @@
+<!-- ── AI Insights Section ─────────────────────────────────────────────────── -->
+<section class="mb-8">
+
+  <!-- Section Header -->
+  <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+    <div class="flex items-center gap-3">
+      <div class="p-2 rounded-xl bg-purple-100 text-purple-600">
+        <span class="material-symbols-outlined text-[20px]">smart_toy</span>
+      </div>
+      <div>
+        <h4 class="font-title-lg text-title-lg font-bold text-on-surface flex items-center gap-2">
+          AI Insights
+          @if (stats()?.systemStatus === 'active') {
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-bold rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200 uppercase">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              Live
+            </span>
+          } @else {
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-bold rounded-full bg-surface-container text-on-surface-variant border border-outline-variant/30 uppercase">
+              Offline
+            </span>
+          }
+        </h4>
+        <p class="font-body-sm text-body-sm text-on-surface-variant text-[11px]">
+          Real-time AI monitoring • Reviews & Security
+        </p>
+      </div>
+    </div>
+    <button (click)="openAiCenter()"
+      class="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white text-xs font-bold rounded-xl hover:bg-purple-700 active:scale-95 transition-all cursor-pointer shadow-sm">
+      <span class="material-symbols-outlined text-[16px]">shield</span>
+      Open AI Center
+    </button>
+  </div>
+
+  <!-- AI Stat Cards -->
+  @if (isLoading()) {
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-5">
+      @for (i of [1,2,3,4,5,6]; track i) {
+        <div class="bg-white rounded-2xl card-shadow p-4 animate-pulse h-[90px]"></div>
+      }
+    </div>
+  } @else if (stats(); as s) {
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-5">
+
+      <!-- Fraud Attempts Today -->
+      <div class="bg-white rounded-2xl card-shadow border border-white p-4 ai-mini-card">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="material-symbols-outlined text-[18px] text-red-500">security</span>
+        </div>
+        <p class="font-label-sm text-label-sm text-on-surface-variant text-[10px] uppercase tracking-wider leading-tight">Fraud Today</p>
+        <p class="font-headline-sm text-headline-sm font-bold text-red-600">{{ s.fraudAttemptsToday }}</p>
+      </div>
+
+      <!-- High Risk Conversations -->
+      <div class="bg-white rounded-2xl card-shadow border border-white p-4 ai-mini-card">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="material-symbols-outlined text-[18px] text-orange-500">gpp_bad</span>
+        </div>
+        <p class="font-label-sm text-label-sm text-on-surface-variant text-[10px] uppercase tracking-wider leading-tight">High Risk</p>
+        <p class="font-headline-sm text-headline-sm font-bold text-orange-600">{{ s.highRiskConversations }}</p>
+      </div>
+
+      <!-- Critical Complaints -->
+      <div class="bg-white rounded-2xl card-shadow border border-white p-4 ai-mini-card">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="material-symbols-outlined text-[18px] text-amber-500">warning</span>
+        </div>
+        <p class="font-label-sm text-label-sm text-on-surface-variant text-[10px] uppercase tracking-wider leading-tight">Critical</p>
+        <p class="font-headline-sm text-headline-sm font-bold text-amber-600">{{ s.criticalComplaints }}</p>
+      </div>
+
+      <!-- Positive Review % -->
+      <div class="bg-white rounded-2xl card-shadow border border-white p-4 ai-mini-card">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="material-symbols-outlined text-[18px] text-emerald-500">sentiment_satisfied</span>
+        </div>
+        <p class="font-label-sm text-label-sm text-on-surface-variant text-[10px] uppercase tracking-wider leading-tight">Positive</p>
+        <p class="font-headline-sm text-headline-sm font-bold text-emerald-600">{{ s.positiveReviewPercent }}%</p>
+      </div>
+
+      <!-- Last Scan -->
+      <div class="bg-white rounded-2xl card-shadow border border-white p-4 ai-mini-card">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="material-symbols-outlined text-[18px] text-blue-500">schedule</span>
+        </div>
+        <p class="font-label-sm text-label-sm text-on-surface-variant text-[10px] uppercase tracking-wider leading-tight">Last Scan</p>
+        <p class="text-[11px] font-bold text-on-surface">
+          @if (s.lastScanTime) {
+            {{ s.lastScanTime | date:'shortTime' }}
+          } @else {
+            Never
+          }
+        </p>
+      </div>
+
+      <!-- AI Status -->
+      <div class="bg-white rounded-2xl card-shadow border border-white p-4 ai-mini-card">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="material-symbols-outlined text-[18px]"
+            [class]="s.systemStatus === 'active' ? 'text-emerald-500' : 'text-outline/50'">smart_toy</span>
+        </div>
+        <p class="font-label-sm text-label-sm text-on-surface-variant text-[10px] uppercase tracking-wider leading-tight">AI Status</p>
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase"
+          [class]="s.systemStatus === 'active' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-surface-container text-on-surface-variant border-outline-variant/30'">
+          {{ s.systemStatus === 'active' ? 'Active' : 'Offline' }}
+        </span>
+      </div>
+    </div>
+  }
+
+  <!-- Recent AI Alerts -->
+  <div class="bg-white rounded-2xl card-shadow border border-white p-5">
+    <div class="flex items-center justify-between mb-4">
+      <h5 class="font-body-md text-body-md font-bold text-on-surface flex items-center gap-2">
+        <span class="material-symbols-outlined text-[18px] text-red-500">notifications_active</span>
+        Recent AI Alerts
+      </h5>
+      <a routerLink="/security" class="text-primary font-label-sm text-label-sm font-semibold hover:underline cursor-pointer text-xs">
+        View All
+      </a>
+    </div>
+
+    @if (isLoading()) {
+      <div class="space-y-3">
+        @for (i of [1,2,3]; track i) {
+          <div class="flex gap-3 p-3 rounded-xl bg-surface-container-low animate-pulse">
+            <div class="w-8 h-8 rounded-full bg-surface-container shrink-0"></div>
+            <div class="flex-1 space-y-1.5">
+              <div class="h-3 w-2/3 rounded bg-surface-container"></div>
+              <div class="h-2.5 w-full rounded bg-surface-container"></div>
+            </div>
+          </div>
+        }
+      </div>
+    } @else if (hasAlerts()) {
+      <div class="space-y-2">
+        @for (alert of alerts(); track alert.id) {
+          <div class="flex items-start gap-3 p-3 rounded-xl border border-outline-variant/15 hover:bg-surface-container-lowest transition-colors ai-alert-row">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0" [class]="getPriorityIconBg(alert.priority)">
+              <span class="material-symbols-outlined text-[16px]">{{ getAlertIcon(alert.type) }}</span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-start justify-between gap-2 mb-0.5">
+                <p class="font-body-sm text-body-sm font-semibold text-on-surface text-sm truncate">{{ alert.title }}</p>
+                <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full border uppercase shrink-0 whitespace-nowrap"
+                  [class]="getPriorityBadgeClass(alert.priority)">
+                  {{ alert.priority }}
+                </span>
+              </div>
+              <p class="text-[11px] text-on-surface-variant line-clamp-1 mb-1">{{ alert.description }}</p>
+              <p class="text-[10px] text-outline/60">{{ alert.timestamp | date:'MMM d, h:mm a' }}</p>
+            </div>
+            <button (click)="navigateToAlert(alert)"
+              class="shrink-0 px-3 py-1.5 text-[10px] font-bold rounded-lg bg-primary/5 text-primary border border-primary/20 hover:bg-primary/10 cursor-pointer transition-all whitespace-nowrap">
+              View Details
+            </button>
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="py-6 text-center">
+        <span class="material-symbols-outlined text-[36px] text-emerald-300 block mb-2">verified_user</span>
+        <p class="font-body-sm text-body-sm text-on-surface-variant text-sm">No active AI alerts. All systems normal.</p>
+      </div>
+    }
+  </div>
+
+</section>

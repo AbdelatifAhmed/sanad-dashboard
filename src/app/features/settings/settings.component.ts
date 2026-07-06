@@ -2,13 +2,15 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { SettingsService, PlatformSettings } from '../../core/services/settings.service';
+import { ToastNotificationComponent } from '../../shared/components/toast-notification/toast-notification';
+import { LoadingSpinnerComponent } from '../../shared/components/loading-spinner/loading-spinner';
 
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, ToastNotificationComponent, LoadingSpinnerComponent],
   templateUrl: './settings.component.html',
-  styleUrl: './settings.component.css'
+  styleUrl: './settings.component.css',
 })
 export class SettingsComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
@@ -64,7 +66,7 @@ export class SettingsComponent implements OnInit {
       // Payments Settings
       platformFee: [15, [Validators.required, Validators.min(0), Validators.max(100)]],
       payoutSchedule: ['Bi-Weekly', [Validators.required]],
-      baseCurrency: ['SAR - Saudi Riyal', [Validators.required]]
+      baseCurrency: ['EGP - Egyptian Pound', [Validators.required]]
     });
   }
 

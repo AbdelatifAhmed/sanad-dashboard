@@ -1,0 +1,1307 @@
+<div class="min-h-[calc(100vh-112px)] bg-background p-4 md:p-6 lg:p-8 animate-fade-in">
+
+  <!-- ═══════════════════════════════════════════════════════ PAGE HEADER ═══ -->
+  <div class="pb-5 mb-6 border-b border-outline-variant/30 flex items-start justify-between gap-4 flex-wrap">
+    <div>
+      <div class="flex items-center gap-3 mb-1">
+        <div class="p-2 rounded-xl bg-primary/10 text-primary">
+          <span class="material-symbols-outlined text-[22px]">shield_person</span>
+        </div>
+        <h2 class="font-headline-md text-headline-md text-on-surface font-bold">AI Moderation & Investigation</h2>
+      </div>
+      <p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+        Trust &amp; Safety Dashboard — Powered by Guardian AI
+      </p>
+    </div>
+    <button (click)="loadAiAnalysis()" [disabled]="aiLoading()"
+      class="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-bold rounded-xl hover:opacity-90 cursor-pointer disabled:opacity-60 transition-all shadow-md">
+      @if (aiLoading()) {
+        <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+        Analyzing…
+      } @else {
+        <span class="material-symbols-outlined text-[18px]">refresh</span>
+        Re-Analyze
+      }
+    </button>
+  </div>
+
+  <!-- Error -->
+  <app-error-banner [message]="error()" (retry)="load()" />
+
+
+  <!-- ═══════════════════════════════════════════════════ SECTION 1: AI OVERVIEW ═══ -->
+  @if (aiLoading()) {
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+      @for (i of [1,2,3,4,5]; track i) {
+        <div class="bg-white rounded-2xl card-shadow p-4 animate-pulse h-[100px]"></div>
+      }
+    </div>
+  } @else if (aiSummary(); as s) {
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+      <!-- Total -->
+      <div class="rvw-stat-card group bg-white rounded-2xl card-shadow border border-transparent hover:border-primary/20 p-4 flex flex-col gap-2 transition-all hover:-translate-y-0.5 hover:shadow-lg cursor-default">
+        <div class="flex items-center justify-between">
+          <div class="p-2 rounded-xl bg-primary/10 text-primary">
+            <span class="material-symbols-outlined text-[20px]" style="font-variation-settings:'FILL' 1;">reviews</span>
+          </div>
+          <span class="text-[10px] font-bold text-on-surface-variant bg-surface-container px-2 py-0.5 rounded-full">Total</span>
+        </div>
+        <div>
+          <p class="text-2xl font-bold text-on-surface leading-none">{{ s.total }}</p>
+          <p class="text-[11px] text-on-surface-variant mt-0.5">Reviews analyzed</p>
+        </div>
+      </div>
+      <!-- Positive -->
+      <div class="rvw-stat-card group bg-white rounded-2xl card-shadow border border-transparent hover:border-emerald-200 p-4 flex flex-col gap-2 transition-all hover:-translate-y-0.5 hover:shadow-lg cursor-default">
+        <div class="flex items-center justify-between">
+          <div class="p-2 rounded-xl bg-emerald-100 text-emerald-600">
+            <span class="material-symbols-outlined text-[20px]" style="font-variation-settings:'FILL' 1;">sentiment_satisfied</span>
+          </div>
+          <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+            {{ s.total > 0 ? ((s.positive / s.total) * 100 | number:'1.0-0') : 0 }}%
+          </span>
+        </div>
+        <div>
+          <p class="text-2xl font-bold text-emerald-600 leading-none">{{ s.positive }}</p>
+          <p class="text-[11px] text-on-surface-variant mt-0.5">Positive reviews</p>
+        </div>
+      </div>
+      <!-- Neutral -->
+      <div class="rvw-stat-card group bg-white rounded-2xl card-shadow border border-transparent hover:border-blue-200 p-4 flex flex-col gap-2 transition-all hover:-translate-y-0.5 hover:shadow-lg cursor-default">
+        <div class="flex items-center justify-between">
+          <div class="p-2 rounded-xl bg-blue-100 text-blue-600">
+            <span class="material-symbols-outlined text-[20px]" style="font-variation-settings:'FILL' 1;">sentiment_neutral</span>
+          </div>
+          <span class="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">
+            {{ s.total > 0 ? ((s.neutral / s.total) * 100 | number:'1.0-0') : 0 }}%
+          </span>
+        </div>
+        <div>
+          <p class="text-2xl font-bold text-blue-600 leading-none">{{ s.neutral }}</p>
+          <p class="text-[11px] text-on-surface-variant mt-0.5">Neutral reviews</p>
+        </div>
+      </div>
+      <!-- Negative -->
+      <div class="rvw-stat-card group bg-white rounded-2xl card-shadow border border-transparent hover:border-amber-200 p-4 flex flex-col gap-2 transition-all hover:-translate-y-0.5 hover:shadow-lg cursor-default">
+        <div class="flex items-center justify-between">
+          <div class="p-2 rounded-xl bg-amber-100 text-amber-600">
+            <span class="material-symbols-outlined text-[20px]" style="font-variation-settings:'FILL' 1;">sentiment_dissatisfied</span>
+          </div>
+          <span class="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+            {{ s.total > 0 ? ((s.negative / s.total) * 100 | number:'1.0-0') : 0 }}%
+          </span>
+        </div>
+        <div>
+          <p class="text-2xl font-bold text-amber-600 leading-none">{{ s.negative }}</p>
+          <p class="text-[11px] text-on-surface-variant mt-0.5">Negative reviews</p>
+        </div>
+      </div>
+      <!-- Critical -->
+      <div class="rvw-stat-card group bg-white rounded-2xl card-shadow border border-transparent p-4 flex flex-col gap-2 transition-all hover:-translate-y-0.5 hover:shadow-lg cursor-default"
+        [class]="s.critical > 0 ? 'hover:border-red-200' : 'hover:border-surface-container'">
+        <div class="flex items-center justify-between">
+          <div class="p-2 rounded-xl" [class]="s.critical > 0 ? 'bg-red-100 text-red-600' : 'bg-surface-container text-on-surface-variant'">
+            <span class="material-symbols-outlined text-[20px]" style="font-variation-settings:'FILL' 1;">crisis_alert</span>
+          </div>
+          @if (s.critical > 0) {
+            <span class="text-[10px] font-bold text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full animate-pulse">URGENT</span>
+          }
+        </div>
+        <div>
+          <p class="text-2xl font-bold leading-none" [class]="s.critical > 0 ? 'text-red-600' : 'text-on-surface-variant'">{{ s.critical }}</p>
+          <p class="text-[11px] text-on-surface-variant mt-0.5">Critical cases</p>
+        </div>
+      </div>
+    </div>
+  }
+
+
+  <!-- ════════════════════════════════════════════ SECTION 2: SENTIMENT ANALYTICS ═══ -->
+  @if (!aiLoading() && aiSummary(); as s) {
+    @if (s.total > 0) {
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+
+        <!-- Sentiment Distribution Chart (visual bar) -->
+        <div class="lg:col-span-2 bg-white rounded-2xl card-shadow border border-white p-5">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-[18px] text-purple-500" style="font-variation-settings:'FILL' 1;">donut_large</span>
+              <h3 class="font-title-lg text-title-lg font-bold text-on-surface">Sentiment Distribution</h3>
+            </div>
+            <span class="text-[11px] text-on-surface-variant bg-surface-container px-2.5 py-1 rounded-full">{{ s.total }} reviews</span>
+          </div>
+          <!-- Segmented bar chart -->
+          <div class="flex h-8 rounded-xl overflow-hidden gap-0.5 mb-4">
+            @if (s.positive > 0) {
+              <div class="bg-emerald-500 flex items-center justify-center text-white text-[10px] font-bold transition-all duration-700 ease-out min-w-[30px]"
+                [style.flex]="s.positive" [title]="s.positive + ' positive'">
+                @if ((s.positive / s.total) > 0.12) { {{ (s.positive / s.total) * 100 | number:'1.0-0' }}% }
+              </div>
+            }
+            @if (s.neutral > 0) {
+              <div class="bg-blue-400 flex items-center justify-center text-white text-[10px] font-bold transition-all duration-700 ease-out min-w-[30px]"
+                [style.flex]="s.neutral" [title]="s.neutral + ' neutral'">
+                @if ((s.neutral / s.total) > 0.12) { {{ (s.neutral / s.total) * 100 | number:'1.0-0' }}% }
+              </div>
+            }
+            @if (s.negative > 0) {
+              <div class="bg-amber-400 flex items-center justify-center text-white text-[10px] font-bold transition-all duration-700 ease-out min-w-[30px]"
+                [style.flex]="s.negative" [title]="s.negative + ' negative'">
+                @if ((s.negative / s.total) > 0.12) { {{ (s.negative / s.total) * 100 | number:'1.0-0' }}% }
+              </div>
+            }
+            @if (s.critical > 0) {
+              <div class="bg-red-500 flex items-center justify-center text-white text-[10px] font-bold transition-all duration-700 ease-out min-w-[30px]"
+                [style.flex]="s.critical" [title]="s.critical + ' critical'">
+                @if ((s.critical / s.total) > 0.12) { {{ (s.critical / s.total) * 100 | number:'1.0-0' }}% }
+              </div>
+            }
+          </div>
+          <!-- Legend -->
+          <div class="grid grid-cols-2 gap-2">
+            <div class="flex items-center justify-between bg-emerald-50 rounded-xl px-3 py-2.5">
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-sm bg-emerald-500 shrink-0"></span>
+                <span class="text-[12px] font-semibold text-emerald-700">Positive</span>
+              </div>
+              <div class="text-right">
+                <span class="text-[13px] font-bold text-emerald-700">{{ s.positive }}</span>
+                <span class="text-[10px] text-emerald-600 ml-1">({{ s.total > 0 ? ((s.positive / s.total) * 100 | number:'1.0-0') : 0 }}%)</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between bg-blue-50 rounded-xl px-3 py-2.5">
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-sm bg-blue-400 shrink-0"></span>
+                <span class="text-[12px] font-semibold text-blue-700">Neutral</span>
+              </div>
+              <div class="text-right">
+                <span class="text-[13px] font-bold text-blue-700">{{ s.neutral }}</span>
+                <span class="text-[10px] text-blue-600 ml-1">({{ s.total > 0 ? ((s.neutral / s.total) * 100 | number:'1.0-0') : 0 }}%)</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between bg-amber-50 rounded-xl px-3 py-2.5">
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-sm bg-amber-400 shrink-0"></span>
+                <span class="text-[12px] font-semibold text-amber-700">Negative</span>
+              </div>
+              <div class="text-right">
+                <span class="text-[13px] font-bold text-amber-700">{{ s.negative }}</span>
+                <span class="text-[10px] text-amber-600 ml-1">({{ s.total > 0 ? ((s.negative / s.total) * 100 | number:'1.0-0') : 0 }}%)</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between bg-red-50 rounded-xl px-3 py-2.5">
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-sm bg-red-500 shrink-0"></span>
+                <span class="text-[12px] font-semibold text-red-700">Critical</span>
+              </div>
+              <div class="text-right">
+                <span class="text-[13px] font-bold text-red-700">{{ s.critical }}</span>
+                <span class="text-[10px] text-red-600 ml-1">({{ s.total > 0 ? ((s.critical / s.total) * 100 | number:'1.0-0') : 0 }}%)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Generated Summary -->
+        <div class="bg-gradient-to-br from-purple-600 to-indigo-700 rounded-2xl p-5 text-white flex flex-col justify-between shadow-lg">
+          <div class="flex items-center gap-2 mb-3">
+            <div class="p-2 rounded-xl bg-white/20">
+              <span class="material-symbols-outlined text-[18px]" style="font-variation-settings:'FILL' 1;">psychology</span>
+            </div>
+            <div>
+              <p class="font-bold text-sm">Guardian AI</p>
+              <p class="text-[10px] text-white/70">Generated Summary</p>
+            </div>
+          </div>
+          <p class="text-[13px] text-white/90 leading-relaxed flex-1">
+            {{ getAiGeneratedSummary() }}
+          </p>
+          <div class="mt-4 pt-3 border-t border-white/20 flex items-center justify-between">
+            <span class="text-[10px] text-white/60">{{ aiReviews().length }} reviews analyzed</span>
+            <span class="text-[10px] text-white/70 bg-white/10 px-2 py-0.5 rounded-full flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              AI Active
+            </span>
+          </div>
+        </div>
+      </div>
+    }
+  }
+
+
+  <!-- ══════════════════════════════════════════════════ SECTION 3: CRITICAL ALERTS ═══ -->
+  @if (hasCriticalReviews()) {
+    <div class="mb-6 bg-red-50 border border-red-200 rounded-2xl overflow-hidden">
+      <div class="flex items-center justify-between px-5 py-3.5 bg-red-100 border-b border-red-200">
+        <div class="flex items-center gap-2.5">
+          <span class="material-symbols-outlined text-red-600 text-[22px]" style="font-variation-settings:'FILL' 1;">crisis_alert</span>
+          <h4 class="font-bold text-red-800 text-sm">Critical AI Alerts — Immediate Attention Required</h4>
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-600 text-white animate-pulse">{{ criticalReviews().length }}</span>
+        </div>
+        <button (click)="toggleCriticalAlerts()" class="text-red-600 hover:text-red-800 cursor-pointer transition-colors">
+          <span class="material-symbols-outlined text-[20px]">{{ showCriticalAlerts() ? 'expand_less' : 'expand_more' }}</span>
+        </button>
+      </div>
+      @if (showCriticalAlerts()) {
+        <div class="p-4 space-y-2">
+          @for (rv of criticalReviews(); track rv._id) {
+            <div class="flex items-start gap-3 bg-white border border-red-200 rounded-xl p-3.5 hover:border-red-300 transition-colors">
+              <!-- Avatar -->
+              <div class="w-9 h-9 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-xs font-bold shrink-0">
+                {{ getInitials(rv.familyId?.name) }}
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-start justify-between gap-2 flex-wrap">
+                  <div>
+                    <p class="text-sm font-bold text-red-800">{{ rv.familyId?.name ?? '—' }} → {{ rv.companionId?.userId?.name ?? '—' }}</p>
+                    <p class="text-[11px] text-red-600 mt-0.5">
+                      {{ getAiCategoryLabel(rv) }} · {{ rv.createdAt | date:'mediumDate' }}
+                    </p>
+                  </div>
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200 uppercase">
+                      {{ getAiPriorityLabel(rv) }}
+                    </span>
+                    <span class="text-[10px] text-red-600 bg-red-50 px-2 py-0.5 rounded-full border border-red-100">
+                      AI: {{ getAiConfidenceScore(rv) }}%
+                    </span>
+                  </div>
+                </div>
+                <p class="text-[12px] text-red-700 mt-1.5 line-clamp-1">
+                  {{ rv.auditSummary ?? (rv.comment ? rv.comment.slice(0, 120) : 'This review requires immediate administrator review.') }}
+                </p>
+              </div>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <button (click)="openInvestigation(rv, 'ai_analysis')"
+                  class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-red-600 text-white hover:bg-red-700 cursor-pointer transition-all">
+                  <span class="material-symbols-outlined text-[14px]">manage_search</span>
+                  Investigate
+                </button>
+                <button (click)="markReviewedQuick(rv)"
+                  class="px-3 py-1.5 text-xs font-bold rounded-lg bg-white text-red-700 border border-red-200 hover:bg-red-50 cursor-pointer transition-all">
+                  Mark Reviewed
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+
+  <!-- ═════════════════════════════════════ SECTION 4: UNIFIED REVIEWS TABLE ═══ -->
+  <div class="bg-white rounded-2xl card-shadow border border-white overflow-hidden">
+
+    <!-- Table header + search + filters -->
+    <div class="p-4 border-b border-outline-variant/20">
+      <!-- Title row -->
+      <div class="flex items-center justify-between gap-4 mb-4 flex-wrap">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-[18px] text-primary">table_view</span>
+          <h3 class="font-bold text-on-surface text-sm">Reviews Management</h3>
+          @if (!isLoading()) {
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary">{{ total() }}</span>
+          }
+        </div>
+        <!-- Search -->
+        <div class="relative flex-1 min-w-[200px] max-w-sm">
+          <span class="material-symbols-outlined text-[16px] text-outline absolute left-3 top-1/2 -translate-y-1/2">search</span>
+          <input type="search" [(ngModel)]="searchQuery" (ngModelChange)="onSearchChange($event)"
+            placeholder="Search reviewer, caregiver, review text…"
+            class="w-full pl-9 pr-3 py-2 bg-surface-container-low border border-outline-variant/40 rounded-xl text-[12px] text-on-surface placeholder:text-outline/60 focus:ring-1 focus:ring-primary outline-none" />
+        </div>
+      </div>
+      <!-- Filter chips -->
+      <div class="flex flex-wrap gap-1.5">
+        @for (chip of filterChips; track chip.value) {
+          <button (click)="toggleFilterChip(chip.value)"
+            class="px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all cursor-pointer border"
+            [class]="isChipActive(chip.value) ? chip.activeClass : 'bg-surface-container text-on-surface-variant border-outline-variant/30 hover:bg-surface-container-high'">
+            {{ chip.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Loading skeleton -->
+    @if (isLoading()) {
+      <div class="divide-y divide-outline-variant/10">
+        @for (i of [1,2,3,4,5,6,7]; track i) {
+          <div class="px-5 py-3.5 flex items-center gap-4 animate-pulse">
+            <div class="w-8 h-8 rounded-full bg-surface-container-high shrink-0"></div>
+            <div class="flex-1 space-y-1.5">
+              <div class="h-3 bg-surface-container-high rounded-full w-32"></div>
+              <div class="h-2.5 bg-surface-container-high rounded-full w-48"></div>
+            </div>
+            <div class="h-5 w-16 bg-surface-container-high rounded-full"></div>
+            <div class="h-5 w-14 bg-surface-container-high rounded-full"></div>
+            <div class="h-5 w-20 bg-surface-container-high rounded-full"></div>
+          </div>
+        }
+      </div>
+
+    <!-- Empty -->
+    } @else if (filteredReviews().length === 0) {
+      <div class="flex flex-col items-center justify-center py-16 text-center">
+        <span class="material-symbols-outlined text-[48px] text-outline/40 mb-3">reviews</span>
+        <p class="font-semibold text-on-surface-variant">No reviews match your filters</p>
+        <p class="text-xs text-outline mt-1">Try adjusting your search or filter chips</p>
+        <button (click)="resetFilters()" class="mt-3 px-4 py-2 text-xs font-bold text-primary border border-primary/30 rounded-xl hover:bg-primary/5 cursor-pointer">
+          Reset Filters
+        </button>
+      </div>
+
+    <!-- Desktop Table -->
+    } @else {
+      <div class="hidden md:block overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead class="bg-surface-container-low border-b border-outline-variant/25 sticky top-0 z-10">
+            <tr class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">
+              <th class="px-5 py-3 cursor-pointer hover:text-on-surface select-none" (click)="sortBy('reviewer')">
+                Reviewer <span class="material-symbols-outlined text-[12px] align-middle">{{ getSortIcon('reviewer') }}</span>
+              </th>
+              <th class="px-4 py-3">Caregiver</th>
+              <th class="px-4 py-3 cursor-pointer hover:text-on-surface select-none" (click)="sortBy('rating')">
+                Rating <span class="material-symbols-outlined text-[12px] align-middle">{{ getSortIcon('rating') }}</span>
+              </th>
+              <th class="px-4 py-3 hidden xl:table-cell">Review Preview</th>
+              <th class="px-4 py-3">Sentiment</th>
+              <th class="px-4 py-3 hidden lg:table-cell">AI Confidence</th>
+              <th class="px-4 py-3 hidden lg:table-cell">Category</th>
+              <th class="px-4 py-3">Priority</th>
+              <th class="px-4 py-3">Status</th>
+              <th class="px-4 py-3 cursor-pointer hover:text-on-surface select-none hidden xl:table-cell" (click)="sortBy('date')">
+                Date <span class="material-symbols-outlined text-[12px] align-middle">{{ getSortIcon('date') }}</span>
+              </th>
+              <th class="px-4 py-3 pr-5 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (rv of pagedReviews(); track rv._id) {
+              <!-- Main row -->
+              <tr class="border-b border-outline-variant/10 hover:bg-surface-container-lowest transition-colors text-[13px] group"
+                [class]="getRowHighlightClass(rv)"
+                [class.rvw-expanded-row]="expandedRowId() === rv._id">
+                <!-- Reviewer -->
+                <td class="px-5 py-3">
+                  <div class="flex items-center gap-2.5">
+                    @if (rv.familyId?.avatar?.url) {
+                      <img [src]="rv.familyId!.avatar!.url" class="w-8 h-8 rounded-full object-cover shrink-0" />
+                    } @else {
+                      <div class="w-8 h-8 rounded-full bg-secondary/10 text-secondary flex items-center justify-center text-xs font-bold shrink-0">
+                        {{ getInitials(rv.familyId?.name) }}
+                      </div>
+                    }
+                    <span class="font-semibold text-on-surface truncate max-w-[100px]">{{ rv.familyId?.name ?? '—' }}</span>
+                  </div>
+                </td>
+                <!-- Caregiver -->
+                <td class="px-4 py-3">
+                  <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold shrink-0">
+                      {{ getInitials(getCompanionName(rv)) }}
+                    </div>
+                    <span class="font-medium text-on-surface text-xs truncate max-w-[100px]">{{ getCompanionName(rv) }}</span>
+                  </div>
+                </td>
+                <!-- Rating -->
+                <td class="px-4 py-3">
+                  <div class="flex items-center gap-0.5">
+                    @for (s of getStars(rv.rating); track s) {
+                      <span class="material-symbols-outlined text-[13px]"
+                        [class]="s <= rv.rating ? 'text-amber-400' : 'text-outline/20'"
+                        style="font-variation-settings:'FILL' 1;">star</span>
+                    }
+                    <span class="ml-1 text-[11px] font-bold text-on-surface-variant">{{ rv.rating }}</span>
+                  </div>
+                </td>
+                <!-- Preview -->
+                <td class="px-4 py-3 hidden xl:table-cell max-w-[180px]">
+                  <p class="text-[12px] text-on-surface-variant truncate">{{ rv.comment || '—' }}</p>
+                </td>
+                <!-- Sentiment -->
+                <td class="px-4 py-3">
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase" [class]="getAiSentimentBadgeForReview(rv)">
+                    {{ getAiSentimentLabelForReview(rv) }}
+                  </span>
+                </td>
+                <!-- AI Confidence -->
+                <td class="px-4 py-3 hidden lg:table-cell">
+                  <div class="flex items-center gap-1.5">
+                    <div class="w-16 h-1.5 bg-surface-container rounded-full overflow-hidden">
+                      <div class="h-full rounded-full transition-all" [class]="getConfidenceBarColor(rv)" [style.width]="getAiConfidenceScore(rv) + '%'"></div>
+                    </div>
+                    <span class="text-[10px] font-semibold text-on-surface-variant">{{ getAiConfidenceScore(rv) }}%</span>
+                  </div>
+                </td>
+                <!-- Category -->
+                <td class="px-4 py-3 hidden lg:table-cell">
+                  <span class="text-[11px] text-on-surface-variant">{{ getAiCategoryLabelForReview(rv) }}</span>
+                </td>
+                <!-- Priority -->
+                <td class="px-4 py-3">
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase" [class]="getAiPriorityBadgeForReview(rv)">
+                    {{ getAiPriorityLabelForReview(rv) }}
+                  </span>
+                </td>
+                <!-- Status -->
+                <td class="px-4 py-3">
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase" [class]="getStatusClass(rv.isVisible)">
+                    {{ rv.isVisible ? 'Published' : 'Hidden' }}
+                  </span>
+                </td>
+                <!-- Date -->
+                <td class="px-4 py-3 text-[11px] text-on-surface-variant hidden xl:table-cell">{{ rv.createdAt | date:'mediumDate' }}</td>
+                <!-- Actions -->
+                <td class="px-4 py-3 pr-5 text-right">
+                  <div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button (click)="openInvestigation(getAiItemForReview(rv), getSmartTab(rv))" title="Investigate"
+                      class="p-1.5 rounded-lg hover:bg-purple-50 text-purple-600 transition-colors cursor-pointer" title="Open Investigation">
+                      <span class="material-symbols-outlined text-[16px]">manage_search</span>
+                    </button>
+                    <button (click)="toggleVisibility(rv)" [disabled]="isTogglingId() === rv._id" title="Toggle visibility"
+                      class="p-1.5 rounded-lg hover:bg-surface-container text-on-surface-variant transition-colors cursor-pointer disabled:opacity-40">
+                      <span class="material-symbols-outlined text-[16px]">{{ rv.isVisible ? 'visibility_off' : 'visibility' }}</span>
+                    </button>
+                    <button (click)="toggleExpandRow(rv._id)" title="Expand"
+                      class="p-1.5 rounded-lg hover:bg-surface-container text-on-surface-variant transition-colors cursor-pointer">
+                      <span class="material-symbols-outlined text-[16px]">{{ expandedRowId() === rv._id ? 'expand_less' : 'expand_more' }}</span>
+                    </button>
+                    <button (click)="confirmDeleteReview(rv)" title="Delete"
+                      class="p-1.5 rounded-lg hover:bg-error/5 text-error transition-colors cursor-pointer">
+                      <span class="material-symbols-outlined text-[16px]">delete</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <!-- Expanded row content -->
+              @if (expandedRowId() === rv._id) {
+                <tr class="border-b border-outline-variant/10 bg-surface-container-lowest">
+                  <td colspan="11" class="px-5 py-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <!-- Full Review -->
+                      <div class="bg-white rounded-xl border border-outline-variant/20 p-4">
+                        <p class="text-[10px] font-bold text-outline uppercase tracking-wider mb-2">Full Review</p>
+                        <div class="flex items-center gap-0.5 mb-2">
+                          @for (s of getStars(rv.rating); track s) {
+                            <span class="material-symbols-outlined text-[14px]" [class]="s <= rv.rating ? 'text-amber-400' : 'text-outline/20'" style="font-variation-settings:'FILL' 1;">star</span>
+                          }
+                        </div>
+                        <p class="text-[12px] text-on-surface leading-relaxed">{{ rv.comment || 'No comment provided.' }}</p>
+                        @if (rv.bookingId?._id) {
+                          <p class="text-[10px] text-outline mt-2 font-mono">Booking: {{ rv.bookingId!['_id'] }}</p>
+                        }
+                      </div>
+                      <!-- AI Summary -->
+                      <div class="bg-purple-50 rounded-xl border border-purple-200 p-4">
+                        <p class="text-[10px] font-bold text-purple-700 uppercase tracking-wider mb-2 flex items-center gap-1">
+                          <span class="material-symbols-outlined text-[12px]">psychology</span>
+                          AI Analysis
+                        </p>
+                        <p class="text-[12px] text-purple-900 leading-relaxed">{{ getAiSummaryForReview(rv) }}</p>
+                        @if (getAiKeywordsForReview(rv).length > 0) {
+                          <div class="flex flex-wrap gap-1 mt-2">
+                            @for (kw of getAiKeywordsForReview(rv); track kw) {
+                              <span class="text-[9px] font-bold px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded border border-purple-200">{{ kw }}</span>
+                            }
+                          </div>
+                        }
+                      </div>
+                      <!-- Quick Actions -->
+                      <div class="bg-white rounded-xl border border-outline-variant/20 p-4">
+                        <p class="text-[10px] font-bold text-outline uppercase tracking-wider mb-3">Quick Actions</p>
+                        <div class="space-y-2">
+                          <button (click)="openInvestigation(getAiItemForReview(rv), getSmartTab(rv))"
+                            class="w-full flex items-center gap-2 px-3 py-2 text-[12px] font-bold rounded-lg bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 cursor-pointer transition-all">
+                            <span class="material-symbols-outlined text-[14px]">manage_search</span>
+                            Open Investigation
+                          </button>
+                          <button (click)="toggleVisibility(rv)"
+                            class="w-full flex items-center gap-2 px-3 py-2 text-[12px] font-semibold rounded-lg bg-surface-container text-on-surface-variant border border-outline-variant/30 hover:bg-surface-container-high cursor-pointer transition-all">
+                            <span class="material-symbols-outlined text-[14px]">{{ rv.isVisible ? 'visibility_off' : 'visibility' }}</span>
+                            {{ rv.isVisible ? 'Hide Review' : 'Publish Review' }}
+                          </button>
+                          <button (click)="markReviewedFromExpanded(rv)"
+                            class="w-full flex items-center gap-2 px-3 py-2 text-[12px] font-semibold rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 cursor-pointer transition-all">
+                            <span class="material-symbols-outlined text-[14px]">check_circle</span>
+                            Mark Reviewed
+                          </button>
+                          <button (click)="confirmDeleteReview(rv)"
+                            class="w-full flex items-center gap-2 px-3 py-2 text-[12px] font-semibold rounded-lg bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 cursor-pointer transition-all">
+                            <span class="material-symbols-outlined text-[14px]">delete</span>
+                            Delete Review
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Mobile cards -->
+      <div class="md:hidden divide-y divide-outline-variant/15">
+        @for (rv of pagedReviews(); track rv._id) {
+          <div class="p-4">
+            <div class="flex items-start justify-between gap-3 mb-2">
+              <div class="flex items-center gap-2.5">
+                @if (rv.familyId?.avatar?.url) {
+                  <img [src]="rv.familyId!.avatar!.url" class="w-9 h-9 rounded-full object-cover shrink-0" />
+                } @else {
+                  <div class="w-9 h-9 rounded-full bg-secondary/10 text-secondary flex items-center justify-center text-xs font-bold shrink-0">
+                    {{ getInitials(rv.familyId?.name) }}
+                  </div>
+                }
+                <div>
+                  <p class="font-semibold text-sm text-on-surface">{{ rv.familyId?.name ?? '—' }}</p>
+                  <p class="text-[11px] text-on-surface-variant">→ {{ getCompanionName(rv) }}</p>
+                </div>
+              </div>
+              <div class="flex flex-col items-end gap-1">
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase" [class]="getAiPriorityBadgeForReview(rv)">{{ getAiPriorityLabelForReview(rv) }}</span>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase" [class]="getStatusClass(rv.isVisible)">{{ rv.isVisible ? 'Published' : 'Hidden' }}</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-1 mb-1.5">
+              @for (s of getStars(rv.rating); track s) {
+                <span class="material-symbols-outlined text-[13px]" [class]="s <= rv.rating ? 'text-amber-400' : 'text-outline/20'" style="font-variation-settings:'FILL' 1;">star</span>
+              }
+              <span class="ml-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border" [class]="getAiSentimentBadgeForReview(rv)">{{ getAiSentimentLabelForReview(rv) }}</span>
+            </div>
+            @if (rv.comment) {
+              <p class="text-xs text-on-surface-variant mb-2 line-clamp-2">{{ rv.comment }}</p>
+            }
+            <div class="flex gap-2">
+              <button (click)="openInvestigation(getAiItemForReview(rv), getSmartTab(rv))" class="flex-1 h-8 bg-purple-50 text-purple-700 text-xs font-bold rounded-lg border border-purple-200 cursor-pointer flex items-center justify-center gap-1">
+                <span class="material-symbols-outlined text-[13px]">manage_search</span>
+                Investigate
+              </button>
+              <button (click)="toggleVisibility(rv)" class="flex-1 h-8 border border-outline-variant text-on-surface-variant text-xs font-bold rounded-lg cursor-pointer">
+                {{ rv.isVisible ? 'Hide' : 'Show' }}
+              </button>
+              <button (click)="confirmDeleteReview(rv)" class="h-8 px-3 border border-error text-error text-xs font-bold rounded-lg cursor-pointer">
+                <span class="material-symbols-outlined text-[14px]">delete</span>
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Pagination -->
+    @if (totalPages() > 1 && !isLoading()) {
+      <div class="px-5 py-4 border-t border-outline-variant/20 flex items-center justify-between gap-4 flex-wrap bg-surface-container-low/40">
+        <p class="text-xs text-on-surface-variant">
+          Showing <span class="font-semibold text-on-surface">{{ pagedReviews().length }}</span> of
+          <span class="font-semibold text-on-surface">{{ filteredReviews().length }}</span> reviews
+        </p>
+        <div class="flex items-center gap-1">
+          <button (click)="goToPage(page() - 1)" [disabled]="page() === 1"
+            class="h-8 w-8 flex items-center justify-center rounded-lg border border-outline-variant hover:bg-surface-container disabled:opacity-40 cursor-pointer transition-all">
+            <span class="material-symbols-outlined text-[16px]">chevron_left</span>
+          </button>
+          @for (n of pageNumbers(); track n) {
+            <button (click)="goToPage(n)"
+              class="h-8 w-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all cursor-pointer"
+              [class]="page() === n ? 'bg-primary text-white' : 'border border-outline-variant hover:bg-surface-container text-on-surface-variant'">
+              {{ n }}
+            </button>
+          }
+          <button (click)="goToPage(page() + 1)" [disabled]="page() === totalPages()"
+            class="h-8 w-8 flex items-center justify-center rounded-lg border border-outline-variant hover:bg-surface-container disabled:opacity-40 cursor-pointer transition-all">
+            <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+
+
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════════════
+     CONFIRM DELETE DIALOG
+     ═══════════════════════════════════════════════════════════════════════ -->
+<app-confirm-dialog
+  [visible]="!!confirmDelete()"
+  title="Delete Review"
+  message="Are you sure you want to permanently delete this review? This action cannot be undone."
+  confirmLabel="Delete"
+  confirmClass="bg-error"
+  icon="delete"
+  iconColorClass="text-error"
+  [isSubmitting]="isDeleting()"
+  (confirmed)="executeDelete()"
+  (cancelled)="cancelDelete()"
+/>
+
+
+<!-- ════════════════════════════════════════════════════════════════════════════
+     INVESTIGATION DRAWER — Enterprise slide-out panel
+     ═══════════════════════════════════════════════════════════════════════ -->
+@if (showInvestigation()) {
+  <!-- Backdrop -->
+  <div class="fixed inset-0 bg-black/30 backdrop-blur-sm z-[1050] transition-all"
+    (click)="closeInvestigation()"></div>
+
+  <!-- Drawer -->
+  <div class="fixed top-0 right-0 h-full z-[1060] flex flex-col rvw-drawer"
+    [class.rvw-drawer-open]="drawerVisible()"
+    (keydown.escape)="closeInvestigation()">
+
+    <!-- ── STICKY HEADER ─────────────────────────────────────────────────── -->
+    <div class="rvw-drawer-header flex items-center justify-between gap-3 px-5 py-3 border-b border-outline-variant/20 bg-white shrink-0">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="p-2 rounded-xl bg-purple-100 text-purple-600 shrink-0">
+          <span class="material-symbols-outlined text-[18px]" style="font-variation-settings:'FILL' 1;">manage_search</span>
+        </div>
+        <div class="min-w-0">
+          <div class="flex items-center gap-2 flex-wrap">
+            <h3 class="font-bold text-on-surface text-sm truncate">Investigation Center</h3>
+            @if (selectedAiReview(); as rv) {
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase" [class]="getAiPriorityBadge(rv)">
+                {{ getAiPriorityLabel(rv) }}
+              </span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant border border-outline-variant/30 uppercase font-mono">
+                #{{ rv._id.slice(-6).toUpperCase() }}
+              </span>
+            }
+          </div>
+          @if (selectedAiReview(); as rv) {
+            <p class="text-[11px] text-on-surface-variant truncate">{{ rv.familyId?.name ?? '—' }} → {{ rv.companionId?.userId?.name ?? '—' }}</p>
+          }
+        </div>
+      </div>
+      <div class="flex items-center gap-1.5 shrink-0">
+        <!-- Navigate between cases -->
+        <button (click)="prevCase()" [disabled]="currentCaseIndex() <= 0"
+          class="p-1.5 rounded-lg hover:bg-surface-container text-on-surface-variant disabled:opacity-30 cursor-pointer transition-colors" title="Previous case (←)">
+          <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+        </button>
+        <span class="text-[11px] text-on-surface-variant font-mono">{{ currentCaseIndex() + 1 }}/{{ aiReviews().length }}</span>
+        <button (click)="nextCase()" [disabled]="currentCaseIndex() >= aiReviews().length - 1"
+          class="p-1.5 rounded-lg hover:bg-surface-container text-on-surface-variant disabled:opacity-30 cursor-pointer transition-colors" title="Next case (→)">
+          <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+        </button>
+        <div class="w-px h-5 bg-outline-variant/30"></div>
+        <button (click)="closeInvestigation()"
+          class="p-1.5 rounded-lg hover:bg-surface-container text-on-surface-variant cursor-pointer transition-colors" title="Close (ESC)">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+    </div>
+
+
+    <!-- ── MAIN CONTENT AREA (tabs + sidebar) ──────────────────────────── -->
+    @if (selectedAiReview(); as rv) {
+      <div class="flex flex-1 min-h-0 overflow-hidden">
+
+        <!-- LEFT: Tabs Content -->
+        <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+          <!-- Tab navigation -->
+          <div class="flex items-center gap-0 border-b border-outline-variant/20 bg-white px-4 shrink-0 overflow-x-auto">
+            @for (tab of investigationTabs; track tab.id) {
+              <button (click)="setActiveTab(tab.id)"
+                class="flex items-center gap-1.5 px-4 py-3 text-[12px] font-semibold transition-all cursor-pointer whitespace-nowrap border-b-2 -mb-px"
+                [class]="activeTab() === tab.id
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-on-surface-variant hover:text-on-surface hover:bg-surface-container'">
+                <span class="material-symbols-outlined text-[14px]">{{ tab.icon }}</span>
+                {{ tab.label }}
+              </button>
+            }
+          </div>
+
+          <!-- Tab content (scrollable) -->
+          <div class="flex-1 overflow-y-auto p-5 space-y-4 bg-surface-container-lowest">
+
+            <!-- ── TAB 1: REVIEW ─────────────────────────────────────── -->
+            @if (activeTab() === 'review') {
+              <!-- Parties -->
+              <div class="grid grid-cols-2 gap-3">
+                <div class="bg-white rounded-xl border border-outline-variant/20 p-4">
+                  <p class="text-[10px] font-bold text-outline uppercase tracking-wider mb-2">Reviewer (Family)</p>
+                  <div class="flex items-center gap-2.5">
+                    @if (rv.familyId?.avatar?.url) {
+                      <img [src]="rv.familyId!.avatar!.url" class="w-10 h-10 rounded-full object-cover" />
+                    } @else {
+                      <div class="w-10 h-10 rounded-full bg-secondary/10 text-secondary flex items-center justify-center font-bold">
+                        {{ getInitials(rv.familyId?.name) }}
+                      </div>
+                    }
+                    <div>
+                      <p class="font-semibold text-sm text-on-surface">{{ rv.familyId?.name ?? '—' }}</p>
+                      <p class="text-xs text-on-surface-variant">{{ rv.familyId?.email ?? '' }}</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="bg-white rounded-xl border border-outline-variant/20 p-4">
+                  <p class="text-[10px] font-bold text-outline uppercase tracking-wider mb-2">Caregiver</p>
+                  <div class="flex items-center gap-2.5">
+                    @if (rv.companionId?.userId?.avatar?.url) {
+                      <img [src]="rv.companionId!.userId!.avatar!.url" class="w-10 h-10 rounded-full object-cover" />
+                    } @else {
+                      <div class="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">
+                        {{ getInitials(rv.companionId?.userId?.name) }}
+                      </div>
+                    }
+                    <div>
+                      <p class="font-semibold text-sm text-on-surface">{{ rv.companionId?.userId?.name ?? '—' }}</p>
+                      <p class="text-xs text-on-surface-variant">Caregiver</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Rating + Meta -->
+              <div class="bg-white rounded-xl border border-outline-variant/20 p-4">
+                <div class="flex items-center justify-between flex-wrap gap-3">
+                  <div>
+                    <p class="text-[10px] font-bold text-outline uppercase tracking-wider mb-1.5">Rating</p>
+                    <div class="flex items-center gap-1">
+                      @for (s of getStars(rv.rating); track s) {
+                        <span class="material-symbols-outlined text-[22px]" [class]="s <= rv.rating ? 'text-amber-400' : 'text-outline/20'" style="font-variation-settings:'FILL' 1;">star</span>
+                      }
+                      <span class="ml-2 font-bold text-on-surface text-lg">{{ rv.rating }}/5</span>
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-3 text-right text-xs">
+                    <div>
+                      <p class="text-outline font-semibold">Review Date</p>
+                      <p class="text-on-surface font-bold">{{ rv.createdAt | date:'mediumDate' }}</p>
+                    </div>
+                    <div>
+                      <p class="text-outline font-semibold">Status</p>
+                      <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase" [class]="getStatusClass(rv.isVisible)">{{ rv.isVisible ? 'Published' : 'Hidden' }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Original Review -->
+              <div class="bg-white rounded-xl border border-outline-variant/20 p-4">
+                <p class="text-[10px] font-bold text-outline uppercase tracking-wider mb-2">Original Review</p>
+                <p class="text-sm text-on-surface leading-relaxed">{{ rv.comment || 'No review text provided.' }}</p>
+              </div>
+              <!-- Booking ID -->
+              @if (rv.bookingId?._id) {
+                <div class="bg-white rounded-xl border border-outline-variant/20 p-4 flex items-center justify-between">
+                  <div>
+                    <p class="text-[10px] font-bold text-outline uppercase tracking-wider mb-1">Booking ID</p>
+                    <p class="text-sm font-mono font-bold text-on-surface">{{ rv.bookingId!['_id'] }}</p>
+                  </div>
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant border border-outline-variant/30 uppercase">
+                    {{ rv.bookingId!['status'] ?? 'completed' }}
+                  </span>
+                </div>
+              }
+            }
+
+
+            <!-- ── TAB 2: AI ANALYSIS ──────────────────────────────── -->
+            @if (activeTab() === 'ai_analysis') {
+              <!-- AI Scores row -->
+              <div class="grid grid-cols-3 gap-3">
+                <div class="bg-white rounded-xl border border-outline-variant/20 p-4 text-center">
+                  <p class="text-[10px] font-bold text-outline uppercase tracking-wider mb-2">Sentiment</p>
+                  <span class="text-[12px] font-bold px-3 py-1 rounded-full border uppercase" [class]="getAiSentimentBadge(rv)">{{ getAiSentimentLabel(rv) }}</span>
+                </div>
+                <div class="bg-white rounded-xl border border-outline-variant/20 p-4 text-center">
+                  <p class="text-[10px] font-bold text-outline uppercase tracking-wider mb-2">AI Confidence</p>
+                  <div class="flex flex-col items-center gap-1">
+                    <!-- Circular-style progress using SVG -->
+                    <div class="relative w-12 h-12">
+                      <svg class="w-12 h-12 -rotate-90" viewBox="0 0 36 36">
+                        <circle class="opacity-20" stroke="#006767" stroke-width="3.5" fill="none" cx="18" cy="18" r="15.9"/>
+                        <circle stroke="#006767" stroke-width="3.5" fill="none" cx="18" cy="18" r="15.9"
+                          stroke-dasharray="100" [attr.stroke-dashoffset]="100 - getAiConfidenceScore(rv)" stroke-linecap="round"/>
+                      </svg>
+                      <span class="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-primary">{{ getAiConfidenceScore(rv) }}%</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="bg-white rounded-xl border border-outline-variant/20 p-4 text-center">
+                  <p class="text-[10px] font-bold text-outline uppercase tracking-wider mb-2">Risk Level</p>
+                  <span class="text-[12px] font-bold px-3 py-1 rounded-full border uppercase" [class]="getAiPriorityBadge(rv)">{{ getAiPriorityLabel(rv) }}</span>
+                </div>
+              </div>
+              <!-- AI Category + Explanation -->
+              <div class="bg-white rounded-xl border border-outline-variant/20 p-4">
+                <div class="flex items-center justify-between mb-3">
+                  <p class="text-[10px] font-bold text-outline uppercase tracking-wider">Detected Category</p>
+                  <span class="text-[11px] font-semibold text-on-surface">{{ getAiCategoryLabel(rv) }}</span>
+                </div>
+                @if (rv.auditSummary) {
+                  <div class="bg-purple-50 rounded-lg p-3 border border-purple-200">
+                    <p class="text-[10px] font-bold text-purple-700 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                      <span class="material-symbols-outlined text-[12px]">psychology</span>
+                      AI Explanation
+                    </p>
+                    <p class="text-[12px] text-purple-900 leading-relaxed">{{ rv.auditSummary }}</p>
+                  </div>
+                }
+              </div>
+              <!-- Flagged Keywords / Violations -->
+              @if (rv.flaggedViolations && rv.flaggedViolations.length > 0) {
+                <div class="bg-white rounded-xl border border-red-200 p-4">
+                  <p class="text-[10px] font-bold text-red-700 uppercase tracking-wider mb-2.5 flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[13px]" style="font-variation-settings:'FILL' 1;">flag</span>
+                    Detected Keywords & Violations
+                  </p>
+                  <div class="flex flex-wrap gap-1.5">
+                    @for (v of rv.flaggedViolations; track v) {
+                      <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-red-100 text-red-700 border border-red-200">{{ v }}</span>
+                    }
+                  </div>
+                </div>
+              }
+              <!-- Risk Assessment -->
+              <div class="rounded-xl p-4 border" [class]="getAiPriorityLabel(rv) === 'Critical' ? 'bg-red-50 border-red-200' : getAiPriorityLabel(rv) === 'High' ? 'bg-orange-50 border-orange-200' : 'bg-emerald-50 border-emerald-200'">
+                <p class="text-[10px] font-bold uppercase tracking-wider mb-1.5" [class]="getAiPriorityLabel(rv) === 'Critical' ? 'text-red-700' : getAiPriorityLabel(rv) === 'High' ? 'text-orange-700' : 'text-emerald-700'">
+                  Suggested Action
+                </p>
+                <p class="text-[12px] leading-relaxed" [class]="getAiPriorityLabel(rv) === 'Critical' ? 'text-red-800' : getAiPriorityLabel(rv) === 'High' ? 'text-orange-800' : 'text-emerald-800'">
+                  @if (getAiPriorityLabel(rv) === 'Critical') {
+                    🚨 This review contains critical content. Immediate suspension or escalation recommended. Contact the reviewer and caregiver.
+                  } @else if (getAiPriorityLabel(rv) === 'High') {
+                    ⚠ Prompt review required. Consider issuing a formal warning to the caregiver and following up with the reviewer.
+                  } @else {
+                    ✓ This review is within normal parameters. Standard monitoring applies. No immediate action required.
+                  }
+                </p>
+              </div>
+            }
+
+
+            <!-- ── TAB 3: SERVICE POST ─────────────────────────────── -->
+            @if (activeTab() === 'service_post') {
+              <!-- Investigation Summary above the post -->
+              <div class="bg-white rounded-xl border border-outline-variant/20 p-4 mb-1">
+                <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+                  <p class="text-[10px] font-bold text-outline uppercase tracking-wider">Investigation Progress</p>
+                  <span class="text-[11px] font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full">
+                    {{ getInvestigationScore() }}/100
+                  </span>
+                </div>
+                <div class="space-y-1.5">
+                  @for (step of getInvestigationSteps(); track step.label) {
+                    <div class="flex items-center gap-2 text-[12px]">
+                      @if (step.done) {
+                        <span class="material-symbols-outlined text-[14px] text-emerald-500" style="font-variation-settings:'FILL' 1;">check_circle</span>
+                      } @else {
+                        <span class="material-symbols-outlined text-[14px] text-outline/40 animate-pulse">pending</span>
+                      }
+                      <span [class]="step.done ? 'text-on-surface' : 'text-outline'">{{ step.label }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+              <!-- Service Post Preview Card -->
+              @if (rv.bookingId) {
+                <div class="bg-white rounded-xl border border-outline-variant/20 overflow-hidden">
+                  <!-- Post header -->
+                  <div class="bg-gradient-to-r from-primary/5 to-secondary/5 px-5 py-4 border-b border-outline-variant/20">
+                    <div class="flex items-center gap-3">
+                      <div class="w-11 h-11 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-base">
+                        {{ getInitials(rv.familyId?.name) }}
+                      </div>
+                      <div>
+                        <p class="font-bold text-on-surface">{{ rv.familyId?.name ?? 'Family' }}</p>
+                        <p class="text-[11px] text-on-surface-variant">Posted a service request</p>
+                      </div>
+                      <div class="ml-auto">
+                        <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200 uppercase">Completed</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="p-5 space-y-3">
+                    <div class="grid grid-cols-2 gap-3">
+                      <div class="bg-surface-container-low rounded-lg p-3">
+                        <p class="text-[10px] font-bold text-outline uppercase tracking-wider mb-1">Service Duration</p>
+                        <div class="flex items-center gap-1 text-on-surface font-semibold text-sm">
+                          <span class="material-symbols-outlined text-[14px] text-primary">schedule</span>
+                          {{ rv.bookingId?.['totalHours'] ?? '—' }}h
+                        </div>
+                      </div>
+                      <div class="bg-surface-container-low rounded-lg p-3">
+                        <p class="text-[10px] font-bold text-outline uppercase tracking-wider mb-1">Total Price</p>
+                        <div class="flex items-center gap-1 text-on-surface font-semibold text-sm">
+                          <span class="material-symbols-outlined text-[14px] text-primary">payments</span>
+                          {{ rv.bookingId?.['totalPrice'] ? (rv.bookingId!['totalPrice'] | number) + ' EGP' : '—' }}
+                        </div>
+                      </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                      <div class="bg-surface-container-low rounded-lg p-3">
+                        <p class="text-[10px] font-bold text-outline uppercase tracking-wider mb-1">Start Date</p>
+                        <p class="text-sm font-semibold text-on-surface">{{ rv.bookingId?.['startDate'] ? (rv.bookingId!['startDate'] | date:'mediumDate') : '—' }}</p>
+                      </div>
+                      <div class="bg-surface-container-low rounded-lg p-3">
+                        <p class="text-[10px] font-bold text-outline uppercase tracking-wider mb-1">End Date</p>
+                        <p class="text-sm font-semibold text-on-surface">{{ rv.bookingId?.['endDate'] ? (rv.bookingId!['endDate'] | date:'mediumDate') : '—' }}</p>
+                      </div>
+                    </div>
+                    <div class="flex items-center justify-between pt-2">
+                      <p class="text-[10px] text-outline font-mono">{{ rv.bookingId?.['_id'] }}</p>
+                      <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant border border-outline-variant/30 uppercase">
+                        {{ rv.bookingId?.['status'] ?? 'completed' }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              } @else {
+                <div class="bg-white rounded-xl border border-outline-variant/20 p-8 text-center">
+                  <span class="material-symbols-outlined text-[40px] text-outline/40 mb-2 block">assignment</span>
+                  <p class="text-on-surface-variant text-sm">No linked service post available</p>
+                </div>
+              }
+            }
+
+
+            <!-- ── TAB 4: BOOKING DETAILS ──────────────────────────── -->
+            @if (activeTab() === 'booking') {
+              @if (rv.bookingId) {
+                <div class="bg-white rounded-xl border border-outline-variant/20 p-5">
+                  <p class="text-[10px] font-bold text-outline uppercase tracking-wider mb-4">Booking Information</p>
+                  <div class="grid grid-cols-2 gap-4">
+                    <div>
+                      <p class="text-[10px] text-outline font-semibold mb-0.5">Booking ID</p>
+                      <p class="text-sm font-mono font-bold text-on-surface">{{ rv.bookingId?._id }}</p>
+                    </div>
+                    <div>
+                      <p class="text-[10px] text-outline font-semibold mb-0.5">Status</p>
+                      <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant border border-outline-variant/30 uppercase">{{ rv.bookingId?.status }}</span>
+                    </div>
+                    <div>
+                      <p class="text-[10px] text-outline font-semibold mb-0.5">Family</p>
+                      <p class="text-sm font-semibold text-on-surface">{{ rv.familyId?.name ?? '—' }}</p>
+                    </div>
+                    <div>
+                      <p class="text-[10px] text-outline font-semibold mb-0.5">Caregiver</p>
+                      <p class="text-sm font-semibold text-on-surface">{{ rv.companionId?.userId?.name ?? '—' }}</p>
+                    </div>
+                    <div>
+                      <p class="text-[10px] text-outline font-semibold mb-0.5">Total Price</p>
+                      <p class="text-sm font-bold text-on-surface">{{ rv.bookingId?.totalPrice ? (rv.bookingId.totalPrice | number) + ' EGP' : '—' }}</p>
+                    </div>
+                    <div>
+                      <p class="text-[10px] text-outline font-semibold mb-0.5">Start Date</p>
+                      <p class="text-sm font-semibold text-on-surface">{{ rv.bookingId?.startDate ? (rv.bookingId.startDate | date:'mediumDate') : '—' }}</p>
+                    </div>
+                    <div>
+                      <p class="text-[10px] text-outline font-semibold mb-0.5">End Date</p>
+                      <p class="text-sm font-semibold text-on-surface">{{ rv.bookingId?.endDate ? (rv.bookingId.endDate | date:'mediumDate') : '—' }}</p>
+                    </div>
+                  </div>
+                </div>
+              } @else {
+                <div class="bg-white rounded-xl border border-outline-variant/20 p-8 text-center">
+                  <span class="material-symbols-outlined text-[40px] text-outline/40 mb-2 block">event_busy</span>
+                  <p class="text-on-surface-variant text-sm">No booking details available</p>
+                </div>
+              }
+            }
+
+
+            <!-- ── TAB 5: CAREGIVER HISTORY ────────────────────────── -->
+            @if (activeTab() === 'caregiver_history') {
+              <div class="bg-white rounded-xl border border-outline-variant/20 p-5">
+                <div class="flex items-center gap-3 mb-4">
+                  @if (rv.companionId?.userId?.avatar?.url) {
+                    <img [src]="rv.companionId!.userId!.avatar!.url" class="w-12 h-12 rounded-full object-cover" />
+                  } @else {
+                    <div class="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center text-base font-bold">
+                      {{ getInitials(rv.companionId?.userId?.name) }}
+                    </div>
+                  }
+                  <div>
+                    <p class="font-bold text-on-surface">{{ rv.companionId?.userId?.name ?? '—' }}</p>
+                    <p class="text-xs text-on-surface-variant">Caregiver Profile</p>
+                  </div>
+                </div>
+                <div class="grid grid-cols-3 gap-3 mb-4">
+                  <div class="bg-emerald-50 rounded-lg p-3 text-center">
+                    <p class="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Positive Reviews</p>
+                    <p class="text-xl font-bold text-emerald-600 mt-1">{{ getCaregiverStats(rv).positive }}</p>
+                  </div>
+                  <div class="bg-amber-50 rounded-lg p-3 text-center">
+                    <p class="text-[10px] font-bold text-amber-700 uppercase tracking-wider">Negative Reviews</p>
+                    <p class="text-xl font-bold text-amber-600 mt-1">{{ getCaregiverStats(rv).negative }}</p>
+                  </div>
+                  <div class="bg-red-50 rounded-lg p-3 text-center">
+                    <p class="text-[10px] font-bold text-red-700 uppercase tracking-wider">Critical Reviews</p>
+                    <p class="text-xl font-bold text-red-600 mt-1">{{ getCaregiverStats(rv).critical }}</p>
+                  </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                  <div class="bg-surface-container-low rounded-lg p-3">
+                    <p class="text-[10px] text-outline font-semibold mb-0.5">Total Reviews About This Caregiver</p>
+                    <p class="font-bold text-on-surface">{{ getCaregiverStats(rv).total }}</p>
+                  </div>
+                  <div class="bg-surface-container-low rounded-lg p-3">
+                    <p class="text-[10px] text-outline font-semibold mb-0.5">Avg Rating</p>
+                    <p class="font-bold text-on-surface">{{ getCaregiverStats(rv).avgRating | number:'1.1-1' }} / 5</p>
+                  </div>
+                </div>
+                @if (getCaregiverReviews(rv).length > 0) {
+                  <div class="mt-4">
+                    <p class="text-[10px] font-bold text-outline uppercase tracking-wider mb-3">Recent Reviews for This Caregiver</p>
+                    <div class="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                      @for (cr of getCaregiverReviews(rv); track cr._id) {
+                        <div class="flex items-start gap-2.5 bg-surface-container-low rounded-lg p-3">
+                          <div class="w-7 h-7 rounded-full bg-secondary/10 text-secondary flex items-center justify-center text-[10px] font-bold shrink-0">{{ getInitials(cr.familyId?.name) }}</div>
+                          <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between gap-2">
+                              <p class="text-[11px] font-semibold text-on-surface">{{ cr.familyId?.name ?? '—' }}</p>
+                              <div class="flex items-center gap-0.5">
+                                @for (s of getStars(cr.rating); track s) {
+                                  <span class="material-symbols-outlined text-[10px]" [class]="s <= cr.rating ? 'text-amber-400' : 'text-outline/20'" style="font-variation-settings:'FILL' 1;">star</span>
+                                }
+                              </div>
+                            </div>
+                            <p class="text-[11px] text-on-surface-variant mt-0.5 line-clamp-1">{{ cr.comment || '—' }}</p>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+
+
+            <!-- ── TAB 6: TIMELINE ─────────────────────────────────── -->
+            @if (activeTab() === 'timeline') {
+              <div class="bg-white rounded-xl border border-outline-variant/20 p-5">
+                <p class="text-[10px] font-bold text-outline uppercase tracking-wider mb-4">Case Timeline</p>
+                <div class="relative pl-6">
+                  <!-- Timeline line -->
+                  <div class="absolute left-2 top-2 bottom-2 w-0.5 bg-outline-variant/30 rounded-full"></div>
+                  <div class="space-y-4">
+                    @for (event of getTimeline(rv); track event.label) {
+                      <div class="relative flex items-start gap-3">
+                        <div class="absolute -left-[18px] w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 bg-white"
+                          [class]="event.done ? 'border-primary bg-primary' : 'border-outline-variant/40'">
+                          @if (event.done) {
+                            <span class="material-symbols-outlined text-[8px] text-white">check</span>
+                          }
+                        </div>
+                        <div class="flex-1 min-w-0 pb-0.5">
+                          <p class="text-[12px] font-semibold" [class]="event.done ? 'text-on-surface' : 'text-outline'">{{ event.label }}</p>
+                          @if (event.time) {
+                            <p class="text-[10px] text-outline">{{ event.time }}</p>
+                          }
+                          @if (event.current) {
+                            <span class="inline-block text-[9px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 mt-0.5">Current</span>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+
+          </div><!-- end tab content -->
+
+          <!-- ── STICKY FOOTER: Admin Actions ──────────────────────────── -->
+          <div class="rvw-drawer-footer border-t border-outline-variant/20 bg-white px-5 py-3.5 flex items-center gap-2 flex-wrap shrink-0">
+            <button (click)="handleAiAction('reviewed', rv)"
+              class="flex items-center gap-1.5 px-3.5 py-2 text-[12px] font-bold rounded-xl bg-emerald-100 text-emerald-700 border border-emerald-200 hover:bg-emerald-200 cursor-pointer transition-all">
+              <span class="material-symbols-outlined text-[14px]">check_circle</span>
+              Mark Reviewed
+            </button>
+            <button (click)="handleAiAction('warn', rv)"
+              class="flex items-center gap-1.5 px-3.5 py-2 text-[12px] font-bold rounded-xl bg-amber-100 text-amber-700 border border-amber-200 hover:bg-amber-200 cursor-pointer transition-all">
+              <span class="material-symbols-outlined text-[14px]">warning</span>
+              Warn Caregiver
+            </button>
+            <button (click)="handleAiAction('contact', rv)"
+              class="flex items-center gap-1.5 px-3.5 py-2 text-[12px] font-bold rounded-xl bg-blue-100 text-blue-700 border border-blue-200 hover:bg-blue-200 cursor-pointer transition-all">
+              <span class="material-symbols-outlined text-[14px]">mail</span>
+              Contact Reviewer
+            </button>
+            <button (click)="handleAiAction('suspend', rv)"
+              class="flex items-center gap-1.5 px-3.5 py-2 text-[12px] font-bold rounded-xl bg-red-100 text-red-700 border border-red-200 hover:bg-red-200 cursor-pointer transition-all">
+              <span class="material-symbols-outlined text-[14px]">block</span>
+              Suspend Caregiver
+            </button>
+            <button (click)="handleAiAction('escalate', rv)"
+              class="flex items-center gap-1.5 px-3.5 py-2 text-[12px] font-bold rounded-xl bg-purple-100 text-purple-700 border border-purple-200 hover:bg-purple-200 cursor-pointer transition-all">
+              <span class="material-symbols-outlined text-[14px]">escalator_warning</span>
+              Escalate
+            </button>
+            <button (click)="handleAiAction('dismiss', rv)"
+              class="flex items-center gap-1.5 px-3.5 py-2 text-[12px] font-semibold rounded-xl bg-surface-container text-on-surface-variant border border-outline-variant/30 hover:bg-surface-container-high cursor-pointer transition-all ml-auto">
+              Dismiss
+            </button>
+            <button (click)="closeInvestigation()"
+              class="flex items-center gap-1.5 px-3.5 py-2 text-[12px] font-semibold rounded-xl border border-outline-variant/30 text-on-surface-variant hover:bg-surface-container cursor-pointer transition-all">
+              <span class="material-symbols-outlined text-[14px]">close</span>
+              Close
+            </button>
+          </div>
+
+        </div><!-- end LEFT content -->
+
+
+        <!-- RIGHT: Sticky Sidebar -->
+        <div class="rvw-sidebar w-72 border-l border-outline-variant/20 bg-white overflow-y-auto flex-col hidden lg:flex shrink-0">
+          <div class="p-4 space-y-3">
+
+            <!-- Case Status -->
+            <div class="bg-surface-container-low rounded-xl p-3.5">
+              <p class="text-[9px] font-bold text-outline uppercase tracking-wider mb-2">Case Status</p>
+              <span class="text-[11px] font-bold px-3 py-1 rounded-full border uppercase" [class]="getCaseStatusBadge()">
+                {{ caseStatus() }}
+              </span>
+            </div>
+
+            <!-- AI Risk Assessment -->
+            <div class="bg-surface-container-low rounded-xl p-3.5">
+              <p class="text-[9px] font-bold text-outline uppercase tracking-wider mb-2.5">AI Risk Assessment</p>
+              <div class="flex items-center gap-3 mb-2">
+                <!-- Circular confidence -->
+                <div class="relative w-12 h-12 shrink-0">
+                  <svg class="w-12 h-12 -rotate-90" viewBox="0 0 36 36">
+                    <circle class="opacity-20" stroke="#006767" stroke-width="3.5" fill="none" cx="18" cy="18" r="15.9"/>
+                    <circle stroke="#006767" stroke-width="3.5" fill="none" cx="18" cy="18" r="15.9"
+                      stroke-dasharray="100" [attr.stroke-dashoffset]="100 - getAiConfidenceScore(rv)" stroke-linecap="round"/>
+                  </svg>
+                  <span class="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-primary">{{ getAiConfidenceScore(rv) }}%</span>
+                </div>
+                <div class="flex-1">
+                  <p class="text-[10px] text-outline font-semibold">Confidence</p>
+                  <p class="text-[10px] text-outline font-semibold mt-1">Risk Level</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-[11px] font-bold text-primary">{{ getAiConfidenceScore(rv) }}%</p>
+                  <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full border uppercase" [class]="getAiPriorityBadge(rv)">{{ getAiPriorityLabel(rv) }}</span>
+                </div>
+              </div>
+              <!-- Severity score bar -->
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-[9px] text-outline">Severity Score</span>
+                  <span class="text-[10px] font-bold text-on-surface">{{ getAiConfidenceScore(rv) }}/100</span>
+                </div>
+                <div class="h-1.5 bg-surface-container rounded-full overflow-hidden">
+                  <div class="h-full rounded-full transition-all" [class]="getConfidenceBarColor(rv)" [style.width]="getAiConfidenceScore(rv) + '%'"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Review Summary -->
+            <div class="bg-surface-container-low rounded-xl p-3.5">
+              <p class="text-[9px] font-bold text-outline uppercase tracking-wider mb-2">Review Summary</p>
+              <div class="space-y-1.5 text-[11px]">
+                <div class="flex justify-between">
+                  <span class="text-outline">Reviewer</span>
+                  <span class="font-semibold text-on-surface truncate ml-2 max-w-[120px]">{{ rv.familyId?.name ?? '—' }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-outline">Caregiver</span>
+                  <span class="font-semibold text-on-surface truncate ml-2 max-w-[120px]">{{ rv.companionId?.userId?.name ?? '—' }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-outline">Rating</span>
+                  <div class="flex items-center gap-0.5">
+                    @for (s of getStars(rv.rating); track s) {
+                      <span class="material-symbols-outlined text-[10px]" [class]="s <= rv.rating ? 'text-amber-400' : 'text-outline/20'" style="font-variation-settings:'FILL' 1;">star</span>
+                    }
+                    <span class="font-bold text-on-surface text-[10px] ml-0.5">{{ rv.rating }}</span>
+                  </div>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-outline">Date</span>
+                  <span class="font-semibold text-on-surface">{{ rv.createdAt | date:'MMM d, y' }}</span>
+                </div>
+                @if (rv.bookingId?._id) {
+                  <div class="flex justify-between">
+                    <span class="text-outline">Booking</span>
+                    <span class="font-mono text-[9px] text-on-surface-variant">{{ (rv.bookingId!['_id']).slice(-8) }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- Service Summary -->
+            <div class="bg-surface-container-low rounded-xl p-3.5">
+              <p class="text-[9px] font-bold text-outline uppercase tracking-wider mb-2">Service Summary</p>
+              <div class="space-y-1.5 text-[11px]">
+                <div class="flex justify-between items-center">
+                  <span class="text-outline">Sentiment</span>
+                  <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full border uppercase" [class]="getAiSentimentBadge(rv)">{{ getAiSentimentLabel(rv) }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-outline">Category</span>
+                  <span class="font-semibold text-on-surface text-[10px]">{{ getAiCategoryLabel(rv) }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-outline">Review Status</span>
+                  <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full border uppercase" [class]="getStatusClass(rv.isVisible)">{{ rv.isVisible ? 'Published' : 'Hidden' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- AI Quick Summary -->
+            <div class="bg-purple-50 border border-purple-200 rounded-xl p-3.5">
+              <p class="text-[9px] font-bold text-purple-700 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                <span class="material-symbols-outlined text-[11px]">psychology</span>
+                AI Quick Summary
+              </p>
+              <p class="text-[11px] text-purple-900 leading-relaxed">{{ rv.auditSummary ?? getAiDefaultSummary(rv) }}</p>
+            </div>
+
+            <!-- Investigation Progress -->
+            <div class="bg-surface-container-low rounded-xl p-3.5">
+              <p class="text-[9px] font-bold text-outline uppercase tracking-wider mb-2">Investigation Progress</p>
+              <div class="space-y-1.5">
+                @for (step of getInvestigationSteps(); track step.label) {
+                  <div class="flex items-center gap-1.5 text-[11px]">
+                    @if (step.done) {
+                      <span class="material-symbols-outlined text-[12px] text-emerald-500" style="font-variation-settings:'FILL' 1;">check_circle</span>
+                    } @else {
+                      <span class="material-symbols-outlined text-[12px] text-outline/40">pending</span>
+                    }
+                    <span [class]="step.done ? 'text-on-surface' : 'text-outline/60'">{{ step.label }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- Quick Actions sidebar -->
+            <div class="space-y-1.5">
+              <p class="text-[9px] font-bold text-outline uppercase tracking-wider">Quick Actions</p>
+              <button (click)="handleAiAction('warn', rv)" class="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-bold rounded-lg bg-amber-100 text-amber-700 border border-amber-200 hover:bg-amber-200 cursor-pointer transition-all">
+                <span class="material-symbols-outlined text-[13px]">warning</span> Warn Caregiver
+              </button>
+              <button (click)="handleAiAction('contact', rv)" class="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-bold rounded-lg bg-blue-100 text-blue-700 border border-blue-200 hover:bg-blue-200 cursor-pointer transition-all">
+                <span class="material-symbols-outlined text-[13px]">mail</span> Contact Reviewer
+              </button>
+              <button (click)="handleAiAction('suspend', rv)" class="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-bold rounded-lg bg-red-100 text-red-700 border border-red-200 hover:bg-red-200 cursor-pointer transition-all">
+                <span class="material-symbols-outlined text-[13px]">block</span> Suspend Caregiver
+              </button>
+              <button (click)="handleAiAction('escalate', rv)" class="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-bold rounded-lg bg-purple-100 text-purple-700 border border-purple-200 hover:bg-purple-200 cursor-pointer transition-all">
+                <span class="material-symbols-outlined text-[13px]">escalator_warning</span> Escalate Case
+              </button>
+              <button (click)="handleAiAction('reviewed', rv)" class="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-bold rounded-lg bg-emerald-100 text-emerald-700 border border-emerald-200 hover:bg-emerald-200 cursor-pointer transition-all">
+                <span class="material-symbols-outlined text-[13px]">check_circle</span> Mark Reviewed
+              </button>
+              <button (click)="handleAiAction('dismiss', rv)" class="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-semibold rounded-lg bg-surface-container text-on-surface-variant border border-outline-variant/30 hover:bg-surface-container-high cursor-pointer transition-all">
+                Dismiss
+              </button>
+            </div>
+
+          </div>
+        </div><!-- end RIGHT sidebar -->
+
+      </div><!-- end main content area -->
+    }
+
+  </div><!-- end drawer -->
+}
+

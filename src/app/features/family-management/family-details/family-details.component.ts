@@ -1,148 +1,186 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { CommonModule, DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { 
-  FamilyManagementService, 
-  FamilyDetailsData 
+import {
+  FamilyManagementService,
+  FamilyDetailsData,
 } from '../../../core/services/family-management.service';
+import { BookingsService, AdminBooking } from '../../../core/services/bookings.service';
+import { ToastNotificationComponent } from '../../../shared/components/toast-notification/toast-notification';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state';
+import { BookingDetailModalComponent } from '../../../shared/components/booking-detail-modal/booking-detail-modal';
+import { CareRequestModalComponent } from '../../../shared/components/care-request-modal/care-request-modal';
+import { MessageButtonComponent } from '../../../shared/components/message-button/message-button';
+export type FamilyTabId = 'overview' | 'bookings' | 'caregivers' | 'requests';
 
 @Component({
   selector: 'app-family-details',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [
+    CommonModule, DatePipe, FormsModule, RouterModule,
+    ToastNotificationComponent, EmptyStateComponent,
+    BookingDetailModalComponent, CareRequestModalComponent,
+    MessageButtonComponent,
+  ],
   templateUrl: './family-details.component.html',
-  styleUrl: './family-details.component.css'
+  styleUrl: './family-details.component.css',
 })
 export class FamilyDetailsComponent implements OnInit {
-  private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
-  private readonly familyService = inject(FamilyManagementService);
+  private readonly route        = inject(ActivatedRoute);
+  private readonly router       = inject(Router);
+  private readonly familySvc    = inject(FamilyManagementService);
+  private readonly bookingsSvc  = inject(BookingsService);
 
-  // ─── Signals ──────────────────────────────────────────────────────────────
-  readonly familyId = signal<string | null>(null);
-  readonly details = signal<FamilyDetailsData | null>(null);
-  readonly isLoading = signal<boolean>(false);
-  readonly error = signal<string | null>(null);
+  readonly familyId     = signal<string | null>(null);
+  readonly details      = signal<FamilyDetailsData | null>(null);
+  readonly isLoading    = signal<boolean>(true);
+  readonly error        = signal<string | null>(null);
   readonly isSubmitting = signal<boolean>(false);
-  readonly toast = signal<{ message: string; type: 'success' | 'error' } | null>(null);
+  readonly toast        = signal<{ message: string; type: 'success' | 'error' } | null>(null);
 
+  // ── Tabs ───────────────────────────────────────────────────────────────────
+  readonly activeTab = signal<FamilyTabId>('overview');
+  readonly tabs: { id: FamilyTabId; label: string; icon: string }[] = [
+    { id: 'overview',   label: 'Overview',          icon: 'person'            },
+    { id: 'bookings',   label: 'Booking History',   icon: 'history'           },
+    { id: 'caregivers', label: 'Caregivers',         icon: 'medical_services'  },
+    { id: 'requests',   label: 'Care Requests',      icon: 'assignment'        },
+  ];
+
+  // ── Bookings for this family ───────────────────────────────────────────────
+  readonly bookings        = signal<AdminBooking[]>([]);
+  readonly bookingsLoading = signal<boolean>(false);
+  readonly bookingsTotal   = signal<number>(0);
+  readonly bookingsPage    = signal<number>(1);
+  readonly bookingsPages   = signal<number>(1);
+  selectedBookingId        = signal<string | null>(null);
+  openRequestId            = signal<string | null>(null);
+
+  // ── Computed ───────────────────────────────────────────────────────────────
+  readonly verificationChecks = computed(() => {
+    const d = this.details();
+    if (!d) return [];
+    return [
+      { label: 'Email Verified',   done: !!d.family.email,  icon: 'mail'     },
+      { label: 'Phone Provided',   done: !!d.family.phone,  icon: 'call'     },
+      { label: 'Profile Complete', done: !!d.profile,       icon: 'person'   },
+      { label: 'Beneficiary Added',done: (d.profile?.beneficiaries?.length ?? 0) > 0, icon: 'elderly' },
+    ];
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
-    if (id) {
-      this.familyId.set(id);
-      this.loadDetails(id);
-    } else {
-      this.error.set('No Family ID was provided.');
-    }
+    if (!id) { this.error.set('No family ID provided.'); this.isLoading.set(false); return; }
+    this.familyId.set(id);
+    this.loadDetails(id);
   }
 
   loadDetails(id: string): void {
     this.isLoading.set(true);
     this.error.set(null);
-
-    this.familyService.getFamilyDetails(id).subscribe({
+    this.familySvc.getFamilyDetails(id).subscribe({
       next: (res) => {
         this.details.set(res.data);
         this.isLoading.set(false);
+        this.loadBookings(1);
       },
-      error: (err) => {
-        console.error('Failed to load family details:', err);
-        this.error.set('Failed to load family profile details. Please try again.');
+      error: () => {
+        this.error.set('Failed to load family profile. Please try again.');
         this.isLoading.set(false);
-      }
+      },
     });
   }
 
+  // ── Load bookings scoped to this family ──────────────────────────────────
+  loadBookings(page: number): void {
+    const fid = this.familyId();
+    if (!fid) return;
+    this.bookingsLoading.set(true);
+    this.bookingsSvc.getBookings({ page, limit: 8, familyId: fid }).subscribe({
+      next: (res) => {
+        this.bookings.set(res.data?.bookings ?? []);
+        this.bookingsTotal.set(res.pagination?.total ?? 0);
+        this.bookingsPage.set(res.pagination?.page ?? 1);
+        this.bookingsPages.set(res.pagination?.totalPages ?? 1);
+        this.bookingsLoading.set(false);
+      },
+      error: () => { this.bookingsLoading.set(false); },
+    });
+  }
+
+  // ── Toggle suspension ────────────────────────────────────────────────────
   toggleSuspension(): void {
     const id = this.familyId();
     if (!id || this.isSubmitting()) return;
-
     this.isSubmitting.set(true);
-    this.familyService.toggleBanFamily(id).subscribe({
+    this.familySvc.toggleBanFamily(id).subscribe({
       next: (res) => {
-        const nextStatus = res.data?.user?.isBanned ? 'suspended' : 'active';
-        this.showToast(`Family account is now ${nextStatus}.`, 'success');
+        const banned = res.data?.user?.isBanned;
+        this.showToast(`Account is now ${banned ? 'suspended' : 'active'}.`, 'success');
         this.isSubmitting.set(false);
-        this.loadDetails(id); // Reload updated data
+        this.loadDetails(id);
       },
       error: (err) => {
-        console.error('Failed to toggle ban status:', err);
-        const msg = err.error?.message || 'Failed to update account status. Please try again.';
-        this.showToast(msg, 'error');
+        this.showToast(err.error?.message || 'Failed to update account status.', 'error');
         this.isSubmitting.set(false);
-      }
+      },
     });
   }
 
-  // ─── Helpers ──────────────────────────────────────────────────────────────
+  // ── Navigation ────────────────────────────────────────────────────────────
+  goBack(): void { this.router.navigate(['/families']); }
+  openCaregiver(id: string): void { this.router.navigate(['/caregivers', id]); }
+  openBooking(id: string): void   { this.selectedBookingId.set(id); }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
   getInitials(name?: string): string {
     if (!name) return 'F';
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   }
 
-  getRelationship(category?: string): string {
-    if (!category) return 'Elderly Relative';
-    return category === 'elderly' ? 'Elderly Parent' : 'Special Needs Dependent';
-  }
-
-  getCareRequestsHeading(): string {
-    const count = this.details()?.requests?.length || 0;
-    return `Care Requests (${count})`;
-  }
-
-  getServiceTypeLabel(type: string): string {
-    switch (type) {
-      case 'elderly_care': return 'Elderly Care';
-      case 'child_care': return 'Child Care';
-      case 'home_nursing': return 'Home Nursing';
-      case 'physical_therapy': return 'Physiotherapy';
-      case 'companionship': return 'Companionship';
-      default:
-        return 'General Care';
-    }
+  getServiceLabel(type?: string): string {
+    const m: Record<string, string> = {
+      elderly_care: 'Elderly Care', home_nursing: 'Home Nursing',
+      companionship: 'Companionship', physical_therapy: 'Physiotherapy',
+      child_care: 'Child Care',
+    };
+    return type ? (m[type] ?? type) : '—';
   }
 
   getBookingStatusClass(status: string): string {
-    switch (status) {
-      case 'active':
-      case 'approved':
-        return 'bg-emerald-100 text-emerald-800 border-emerald-200';
-      case 'completed':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'pending':
-      case 'pending_payment':
-        return 'bg-amber-100 text-amber-800 border-amber-200';
-      case 'cancelled':
-      default:
-        return 'bg-neutral-100 text-neutral-800 border-neutral-200';
-    }
+    const m: Record<string, string> = {
+      pending: 'pp-pending', pending_payment: 'pp-pending',
+      approved: 'pp-approved', active: 'pp-active',
+      completed: 'pp-completed', cancelled: 'pp-cancelled',
+    };
+    return m[status] ?? 'pp-pending';
+  }
+
+  getBookingStatusLabel(status: string): string {
+    const m: Record<string, string> = {
+      pending: 'Pending', pending_payment: 'Awaiting Payment',
+      approved: 'Approved', active: 'Active',
+      completed: 'Completed', cancelled: 'Cancelled',
+    };
+    return m[status] ?? status;
   }
 
   getJobStatusClass(status: string): string {
-    switch (status) {
-      case 'open':
-        return 'bg-emerald-100 text-emerald-800 border-emerald-200';
-      case 'filled':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'closed':
-      default:
-        return 'bg-neutral-100 text-neutral-800 border-neutral-200';
-    }
+    const m: Record<string, string> = {
+      open: 'pp-active', filled: 'pp-completed', closed: 'pp-cancelled',
+    };
+    return m[status] ?? 'pp-pending';
   }
 
-  goBack(): void {
-    this.router.navigate(['/families']);
+  formatCurrency(v?: number): string {
+    if (v == null) return '—';
+    return v.toLocaleString('en-EG');
   }
 
-  private showToast(message: string, type: 'success' | 'error'): void {
-    this.toast.set({ message, type });
-    setTimeout(() => {
-      this.toast.set(null);
-    }, 4000);
+  private showToast(msg: string, type: 'success' | 'error'): void {
+    this.toast.set({ message: msg, type });
+    setTimeout(() => this.toast.set(null), 4000);
   }
 }

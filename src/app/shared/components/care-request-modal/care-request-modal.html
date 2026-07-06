@@ -1,0 +1,410 @@
+@if (requestId) {
+  <!-- Backdrop -->
+  <div class="crm-backdrop" (click)="close()">
+
+    <!-- Dialog panel — stops propagation to prevent backdrop close -->
+    <div class="crm-panel" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+
+      <!-- ══ STICKY HEADER ══ -->
+      <div class="crm-header">
+        @if (loading()) {
+          <div class="crm-header-skeleton">
+            <div class="crm-sk crm-sk-title"></div>
+            <div class="crm-sk crm-sk-badge"></div>
+          </div>
+        } @else if (job(); as j) {
+          <div class="crm-header-content">
+            <!-- Icon + Title -->
+            <div class="crm-header-left">
+              <div class="crm-header-icon">
+                <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1; color:var(--color-primary); font-size:22px;">assignment</span>
+              </div>
+              <div class="crm-header-text">
+                <h2 class="crm-title">{{ j.title }}</h2>
+                <div class="crm-header-badges">
+                  <span class="crm-badge" [class]="getStatusClass(j.status)">
+                    {{ getStatusLabel(j.status) }}
+                  </span>
+                  <span class="crm-badge crm-badge-service">{{ getServiceLabel(j.serviceType) }}</span>
+                  <span class="crm-header-date">
+                    <span class="material-symbols-outlined" style="font-size:13px;">calendar_today</span>
+                    {{ j.createdAt | date:'mediumDate' }}
+                  </span>
+                  <span class="crm-header-date">
+                    <span class="material-symbols-outlined" style="font-size:13px;">update</span>
+                    Updated {{ j.updatedAt | date:'mediumDate' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <!-- Close -->
+            <button class="crm-close-btn" (click)="close()" aria-label="Close">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+        } @else {
+          <div class="crm-header-text">
+            <h2 class="crm-title">Care Request Details</h2>
+          </div>
+          <button class="crm-close-btn" (click)="close()">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        }
+      </div>
+
+      <!-- ══ SCROLLABLE BODY ══ -->
+      <div class="crm-body">
+
+        <!-- Loading skeleton -->
+        @if (loading()) {
+          <div class="crm-skeleton-wrap">
+            @for (i of [1,2,3,4,5,6]; track i) {
+              <div class="crm-sk-block">
+                <div class="crm-sk crm-sk-section-title"></div>
+                <div class="crm-sk-grid">
+                  <div class="crm-sk crm-sk-field"></div>
+                  <div class="crm-sk crm-sk-field"></div>
+                  <div class="crm-sk crm-sk-field"></div>
+                  <div class="crm-sk crm-sk-field"></div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Error state -->
+        @if (!loading() && error()) {
+          <div class="crm-error-state">
+            <span class="material-symbols-outlined">error</span>
+            <p>{{ error() }}</p>
+            <button class="crm-retry-btn" (click)="requestId && load(requestId)">Retry</button>
+          </div>
+        }
+
+        <!-- Content -->
+        @if (!loading() && !error() && job(); as j) {
+
+          <!-- ─── Section 1: Request Information ───────────────────────── -->
+          <section class="crm-section">
+            <h3 class="crm-section-title">
+              <span class="crm-section-icon" style="background:rgba(0,103,103,0.08)">
+                <span class="material-symbols-outlined" style="color:var(--color-primary);font-variation-settings:'FILL' 1;">info</span>
+              </span>
+              Request Information
+            </h3>
+
+            <!-- Description -->
+            @if (j.description) {
+              <div class="crm-desc-box">
+                <p class="crm-desc-label">Description</p>
+                <p class="crm-desc-text">{{ j.description }}</p>
+              </div>
+            }
+
+            <!-- Two-column grid -->
+            <div class="crm-info-grid">
+              <div class="crm-info-item">
+                <span class="crm-info-label">
+                  <span class="material-symbols-outlined crm-info-icon">medical_services</span>Service Type
+                </span>
+                <span class="crm-info-value">{{ getServiceLabel(j.serviceType) }}</span>
+              </div>
+              <div class="crm-info-item">
+                <span class="crm-info-label">
+                  <span class="material-symbols-outlined crm-info-icon">calendar_month</span>Start Date
+                </span>
+                <span class="crm-info-value">{{ j.startDate | date:'mediumDate' }}</span>
+              </div>
+              <div class="crm-info-item">
+                <span class="crm-info-label">
+                  <span class="material-symbols-outlined crm-info-icon">schedule</span>Working Hours
+                </span>
+                <span class="crm-info-value">{{ j.schedule.startTime }} – {{ j.schedule.endTime }}</span>
+              </div>
+              <div class="crm-info-item">
+                <span class="crm-info-label">
+                  <span class="material-symbols-outlined crm-info-icon">date_range</span>Duration
+                </span>
+                <span class="crm-info-value">{{ j.schedule.durationInWeeks }} week{{ j.schedule.durationInWeeks !== 1 ? 's' : '' }}</span>
+              </div>
+              <div class="crm-info-item">
+                <span class="crm-info-label">
+                  <span class="material-symbols-outlined crm-info-icon">payments</span>Budget / hr
+                </span>
+                <span class="crm-info-value crm-accent">{{ formatCurrency(j.budgetPerHour) }} EGP</span>
+              </div>
+              <div class="crm-info-item">
+                <span class="crm-info-label">
+                  <span class="material-symbols-outlined crm-info-icon">wc</span>Preferred Gender
+                </span>
+                <span class="crm-info-value">{{ getGenderLabel(j.preferredCaregiverGender ?? j.preferredGender) }}</span>
+              </div>
+              <div class="crm-info-item">
+                <span class="crm-info-label">
+                  <span class="material-symbols-outlined crm-info-icon">location_on</span>City
+                </span>
+                <span class="crm-info-value">{{ j.location.city }}, {{ j.location.governorate }}</span>
+              </div>
+              @if (j.location.readableAddress) {
+                <div class="crm-info-item" style="grid-column:1/-1">
+                  <span class="crm-info-label">
+                    <span class="material-symbols-outlined crm-info-icon">home_pin</span>Address
+                  </span>
+                  <span class="crm-info-value">{{ j.location.readableAddress }}</span>
+                </div>
+              }
+            </div>
+
+            <!-- Working days chips -->
+            @if (j.schedule.workingDays && j.schedule.workingDays.length) {
+              <div class="crm-subsection">
+                <p class="crm-sub-label">
+                  <span class="material-symbols-outlined crm-info-icon">event_repeat</span>Working Days
+                </p>
+                <div class="crm-chips-row">
+                  @for (day of j.schedule.workingDays; track day) {
+                    <span class="crm-day-chip">{{ day }}</span>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Required skills -->
+            @if (j.requiredSkills?.length) {
+              <div class="crm-subsection">
+                <p class="crm-sub-label">
+                  <span class="material-symbols-outlined crm-info-icon">psychology</span>Required Skills
+                </p>
+                <div class="crm-chips-row">
+                  @for (skill of j.requiredSkills; track skill) {
+                    <span class="crm-skill-chip">{{ skill }}</span>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Task list -->
+            @if (j.taskList?.length) {
+              <div class="crm-subsection">
+                <p class="crm-sub-label">
+                  <span class="material-symbols-outlined crm-info-icon">checklist</span>Task List
+                </p>
+                <ul class="crm-task-list">
+                  @for (task of j.taskList; track task) {
+                    <li class="crm-task-item">
+                      <span class="material-symbols-outlined" style="font-size:14px;color:var(--color-secondary);flex-shrink:0;font-variation-settings:'FILL' 1;">check_circle</span>
+                      {{ task }}
+                    </li>
+                  }
+                </ul>
+              </div>
+            }
+          </section>
+
+          <!-- ─── Section 2: Beneficiary ───────────────────────────────── -->
+          @if (j.beneficiary) {
+            <section class="crm-section">
+              <h3 class="crm-section-title">
+                <span class="crm-section-icon" style="background:rgba(139,92,246,0.08)">
+                  <span class="material-symbols-outlined" style="color:#8b5cf6;font-variation-settings:'FILL' 1;">elderly</span>
+                </span>
+                Beneficiary
+              </h3>
+              <div class="crm-beneficiary-card">
+                <div class="crm-bene-avatar" [style.background]="j.beneficiary.gender === 'female' ? 'rgba(236,72,153,0.1)' : 'rgba(59,130,246,0.1)'">
+                  <span class="material-symbols-outlined" [style.color]="j.beneficiary.gender === 'female' ? '#ec4899' : '#3b82f6'"
+                    style="font-size:28px;font-variation-settings:'FILL' 1;">
+                    {{ j.beneficiary.gender === 'female' ? 'female' : 'man' }}
+                  </span>
+                </div>
+                <div class="crm-bene-info">
+                  <div class="crm-bene-header">
+                    <p class="crm-bene-name">{{ j.beneficiary.name }}</p>
+                    <span class="crm-bene-age">{{ j.beneficiary.age }} yrs</span>
+                  </div>
+                  <p class="crm-bene-cat">{{ j.beneficiary.category === 'elderly' ? 'Elderly' : 'Special Needs' }} · {{ j.beneficiary.gender | titlecase }}</p>
+                </div>
+              </div>
+              <div class="crm-info-grid" style="margin-top:14px;">
+                <div class="crm-info-item" style="grid-column:1/-1">
+                  <span class="crm-info-label">
+                    <span class="material-symbols-outlined crm-info-icon">medical_information</span>Medical Condition
+                  </span>
+                  <span class="crm-info-value">{{ j.beneficiary.conditionDetails || 'Not specified' }}</span>
+                </div>
+              </div>
+              @if (j.beneficiary.interests?.length) {
+                <div class="crm-subsection">
+                  <p class="crm-sub-label">
+                    <span class="material-symbols-outlined crm-info-icon">interests</span>Interests
+                  </p>
+                  <div class="crm-chips-row">
+                    @for (interest of j.beneficiary.interests; track interest) {
+                      <span class="crm-interest-chip">{{ interest }}</span>
+                    }
+                  </div>
+                </div>
+              }
+            </section>
+          }
+
+          <!-- ─── Section 3: Assigned Caregiver ────────────────────────── -->
+          <section class="crm-section">
+            <h3 class="crm-section-title">
+              <span class="crm-section-icon" style="background:rgba(44,105,86,0.08)">
+                <span class="material-symbols-outlined" style="color:var(--color-secondary);font-variation-settings:'FILL' 1;">medical_services</span>
+              </span>
+              Assigned Caregiver
+            </h3>
+            @if (j.status === 'assigned' || j.status === 'completed') {
+              <div class="crm-caregiver-card">
+                <div class="crm-cg-avatar-wrap">
+                  <div class="crm-cg-avatar-ph">
+                    <span class="material-symbols-outlined" style="font-size:22px;color:var(--color-primary)">person</span>
+                  </div>
+                </div>
+                <div class="crm-cg-info">
+                  <p class="crm-cg-name">Caregiver Assigned</p>
+                  <p class="crm-cg-status">
+                    <span class="material-symbols-outlined" style="font-size:14px;color:var(--color-secondary);font-variation-settings:'FILL' 1;">check_circle</span>
+                    Service is {{ j.status }}
+                  </p>
+                </div>
+                @if (assignedCaregiverId) {
+                  <button class="crm-view-profile-btn" (click)="viewCaregiver()">
+                    <span class="material-symbols-outlined" style="font-size:15px;">open_in_new</span>
+                    View Profile
+                  </button>
+                }
+              </div>
+            } @else {
+              <div class="crm-empty-caregiver">
+                <span class="material-symbols-outlined">person_search</span>
+                <p>No caregiver has been assigned yet.</p>
+                <span class="crm-badge crm-badge-open">Accepting Applications</span>
+              </div>
+            }
+          </section>
+
+          <!-- ─── Section 4: Timeline ───────────────────────────────────── -->
+          <section class="crm-section">
+            <h3 class="crm-section-title">
+              <span class="crm-section-icon" style="background:rgba(99,102,241,0.08)">
+                <span class="material-symbols-outlined" style="color:#6366f1;font-variation-settings:'FILL' 1;">timeline</span>
+              </span>
+              Request Timeline
+            </h3>
+            <div class="crm-timeline">
+              @for (step of getTimeline(j); track step.label; let last = $last) {
+                <div class="crm-tl-item">
+                  <div class="crm-tl-dot-col">
+                    <div class="crm-tl-dot"
+                      [style.background]="step.done ? step.bg : 'var(--color-surface-container)'"
+                      [style.border]="step.done ? '2px solid ' + step.color : '2px solid var(--color-outline-variant)'">
+                      <span class="material-symbols-outlined"
+                        style="font-variation-settings:'FILL' 1; font-size:16px;"
+                        [style.color]="step.done ? step.color : 'var(--color-outline)'">
+                        {{ step.icon }}
+                      </span>
+                    </div>
+                    @if (!last) {
+                      <div class="crm-tl-line" [class.crm-tl-line-done]="step.done"></div>
+                    }
+                  </div>
+                  <div class="crm-tl-content">
+                    <p class="crm-tl-label" [style.color]="step.done ? 'var(--color-on-surface)' : 'var(--color-on-surface-variant)'">
+                      {{ step.label }}
+                    </p>
+                    @if (step.done && step.date) {
+                      <p class="crm-tl-date">{{ step.date | date:'medium' }}</p>
+                    } @else if (!step.done) {
+                      <p class="crm-tl-date" style="font-style:italic;">Not yet reached</p>
+                    }
+                    @if (step.note) {
+                      <p class="crm-tl-note">{{ step.note }}</p>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          </section>
+
+          <!-- ─── Section 5: Payment Information ──────────────────────── -->
+          <section class="crm-section">
+            <h3 class="crm-section-title">
+              <span class="crm-section-icon" style="background:rgba(22,163,74,0.08)">
+                <span class="material-symbols-outlined" style="color:#16a34a;font-variation-settings:'FILL' 1;">payments</span>
+              </span>
+              Payment Information
+            </h3>
+            <div class="crm-payment-grid">
+              <div class="crm-pay-card crm-pay-primary">
+                <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">payments</span>
+                <div>
+                  <p class="crm-pay-label">Budget / Hour</p>
+                  <p class="crm-pay-value">{{ formatCurrency(j.budgetPerHour) }} EGP</p>
+                </div>
+              </div>
+              <div class="crm-pay-card">
+                <span class="material-symbols-outlined" style="color:#f59e0b;font-variation-settings:'FILL' 1;">calculate</span>
+                <div>
+                  <p class="crm-pay-label">Est. Daily</p>
+                  @let hours = getDailyHours(j);
+                  <p class="crm-pay-value">{{ formatCurrency(j.budgetPerHour * hours) }} EGP</p>
+                  <p class="crm-pay-sub">{{ hours }}h/day</p>
+                </div>
+              </div>
+              <div class="crm-pay-card">
+                <span class="material-symbols-outlined" style="color:#6366f1;font-variation-settings:'FILL' 1;">receipt_long</span>
+                <div>
+                  <p class="crm-pay-label">Est. Weekly</p>
+                  @let weekly = getWeeklyEst(j);
+                  <p class="crm-pay-value">{{ formatCurrency(weekly) }} EGP</p>
+                  <p class="crm-pay-sub">{{ j.schedule.workingDays.length }} days/week</p>
+                </div>
+              </div>
+              <div class="crm-pay-card crm-pay-status-card" [class]="'crm-pay-status-' + j.status">
+                <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">
+                  {{ j.status === 'completed' ? 'check_circle' : j.status === 'canceled' ? 'cancel' : 'pending' }}
+                </span>
+                <div>
+                  <p class="crm-pay-label">Status</p>
+                  <p class="crm-pay-value">{{ getStatusLabel(j.status) }}</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ─── Section 6: Notes ─────────────────────────────────────── -->
+          <section class="crm-section crm-section-last">
+            <h3 class="crm-section-title">
+              <span class="crm-section-icon" style="background:rgba(245,158,11,0.08)">
+                <span class="material-symbols-outlined" style="color:#f59e0b;font-variation-settings:'FILL' 1;">notes</span>
+              </span>
+              Notes
+            </h3>
+            <p class="crm-no-notes">No notes available for this request.</p>
+          </section>
+
+        }
+      </div>
+
+      <!-- ══ STICKY FOOTER ══ -->
+      <div class="crm-footer">
+        <button class="crm-footer-close-btn" (click)="close()">
+          <span class="material-symbols-outlined" style="font-size:16px;">close</span>
+          Close
+        </button>
+        @if (!loading() && !error() && job(); as j) {
+          @if (j.status === 'assigned' || j.status === 'completed') {
+            <button class="crm-footer-primary-btn" (click)="viewCaregiver()">
+              <span class="material-symbols-outlined" style="font-size:16px;">medical_services</span>
+              View Caregiver Profile
+            </button>
+          }
+        }
+      </div>
+
+    </div>
+  </div>
+}

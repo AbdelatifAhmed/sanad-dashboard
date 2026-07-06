@@ -1,0 +1,194 @@
+<div class="bk-dir-page">
+
+  <!-- ── Page Header ──────────────────────────────────────────────────────── -->
+  <div class="bk-dir-header">
+    <div>
+      <h1 class="bk-dir-title">
+        <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">event_note</span>
+        Requests & Bookings
+      </h1>
+      <p class="bk-dir-subtitle">Browse all care requests and bookings across the platform</p>
+    </div>
+    <div class="bk-count-badge">
+      <span class="material-symbols-outlined" style="font-size:15px;font-variation-settings:'FILL' 1;">event_available</span>
+      @if (isLoading()) { — } @else { {{ total() }} } bookings
+    </div>
+  </div>
+
+  <!-- ── Stats row ────────────────────────────────────────────────────────── -->
+  @if (!isLoading() && stats()) {
+    <div class="bk-stats-row">
+      @for (s of [
+        { label:'Pending',    value: stats()!.pending + stats()!.pending_payment, color:'#f59e0b'                 },
+        { label:'Approved',   value: stats()!.approved,                           color:'var(--color-secondary)'  },
+        { label:'Active',     value: stats()!.active,                             color:'var(--color-primary)'    },
+        { label:'Completed',  value: stats()!.completed,                          color:'#16a34a'                 },
+        { label:'Cancelled',  value: stats()!.cancelled,                          color:'var(--color-error)'      }
+      ]; track s.label) {
+        <div class="bk-stat-card">
+          <p class="bk-stat-label">{{ s.label }}</p>
+          <p class="bk-stat-value" [style.color]="s.color">{{ s.value }}</p>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ── Status chips ──────────────────────────────────────────────────────── -->
+  <div class="bk-chips">
+    @for (opt of statusOptions; track opt.value) {
+      <button class="bk-chip" [class]="opt.colorClass" [class.bk-chip-active]="statusFilter === opt.value"
+        (click)="setStatus(opt.value)">
+        {{ opt.label }}
+      </button>
+    }
+  </div>
+
+  <!-- ── Results info ─────────────────────────────────────────────────────── -->
+  @if (!isLoading()) {
+    <div class="bk-results-row">
+      <span class="bk-results-text">Showing {{ bookings().length }} of {{ total() }} bookings</span>
+    </div>
+  }
+
+  <!-- ── Loading skeleton ─────────────────────────────────────────────────── -->
+  @if (isLoading()) {
+    <div class="bk-grid">
+      @for (i of [1,2,3,4,5,6,7,8,9,10,11,12]; track i) {
+        <div class="bk-skeleton">
+          <div class="bk-sk-row">
+            <div class="bk-sk-avatar"></div>
+            <div class="bk-sk-lines">
+              <div class="bk-sk-line bk-sk-lg"></div>
+              <div class="bk-sk-line bk-sk-sm"></div>
+            </div>
+          </div>
+          <div class="bk-sk-body">
+            <div class="bk-sk-line bk-sk-md"></div>
+            <div class="bk-sk-line bk-sk-sm"></div>
+          </div>
+          <div class="bk-sk-footer">
+            <div class="bk-sk-badge"></div><div class="bk-sk-badge"></div>
+          </div>
+        </div>
+      }
+    </div>
+
+  } @else if (error()) {
+    <div class="bk-error-state">
+      <span class="material-symbols-outlined">error</span>
+      <p>{{ error() }}</p>
+      <button class="bk-retry-btn" (click)="load()">Try Again</button>
+    </div>
+
+  } @else if (bookings().length === 0) {
+    <div class="bk-empty-state">
+      <span class="material-symbols-outlined">event_busy</span>
+      <p>No bookings match your current filters.</p>
+    </div>
+
+  } @else {
+    <!-- ── Booking Cards Grid ─────────────────────────────────────────── -->
+    <div class="bk-grid">
+      @for (b of bookings(); track trackById($index, b)) {
+        <div class="bk-card" role="button" tabindex="0"
+          (click)="openDetail(b._id)"
+          (keydown.enter)="openDetail(b._id)">
+
+          <!-- Card header: parties -->
+          <div class="bk-card-header">
+            <!-- Family avatar + name -->
+            <div class="bk-party">
+              @if (b.familyId?.avatar?.url) {
+                <img [src]="b.familyId!.avatar!.url" class="bk-avatar" />
+              } @else {
+                <div class="bk-avatar-ph bk-avatar-family">{{ getInitials(b.familyId?.name) }}</div>
+              }
+              <div class="bk-party-info">
+                <span class="bk-party-label">Family</span>
+                <span class="bk-party-name">{{ b.familyId?.name ?? '—' }}</span>
+              </div>
+            </div>
+
+            <span class="material-symbols-outlined bk-arrow">arrow_forward</span>
+
+            <!-- Caregiver avatar + name -->
+            <div class="bk-party">
+              @if (b.companionId?.avatar?.url) {
+                <img [src]="b.companionId!.avatar!.url" class="bk-avatar" />
+              } @else {
+                <div class="bk-avatar-ph bk-avatar-cg">{{ getInitials(b.companionId?.name) }}</div>
+              }
+              <div class="bk-party-info">
+                <span class="bk-party-label">Caregiver</span>
+                <span class="bk-party-name">{{ b.companionId?.name ?? 'Unassigned' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Divider -->
+          <div class="bk-divider"></div>
+
+          <!-- Card meta grid -->
+          <div class="bk-meta-grid">
+            <div class="bk-meta-item">
+              <span class="material-symbols-outlined bk-meta-icon">medical_services</span>
+              <span>{{ getServiceLabel(b.jobPostId?.serviceType) }}</span>
+            </div>
+            <div class="bk-meta-item">
+              <span class="material-symbols-outlined bk-meta-icon">schedule</span>
+              <span>{{ b.totalHours }}h</span>
+            </div>
+            <div class="bk-meta-item">
+              <span class="material-symbols-outlined bk-meta-icon">payments</span>
+              <span>{{ formatCurrency(b.totalPrice) }} EGP</span>
+            </div>
+            <div class="bk-meta-item">
+              <span class="material-symbols-outlined bk-meta-icon">calendar_today</span>
+              <span>{{ b.startDate | date:'mediumDate' }}</span>
+            </div>
+          </div>
+
+          <!-- Card footer: badges + CTA -->
+          <div class="bk-card-footer">
+            <div class="bk-badges">
+              <span class="bk-status-badge" [class]="getStatusClass(b.status)">
+                {{ getStatusLabel(b.status) }}
+              </span>
+              <span class="bk-pay-badge" [class]="getPaymentClass(b.paymentStatus)">
+                {{ b.paymentStatus | titlecase }}
+              </span>
+            </div>
+            <span class="bk-cta">
+              Details <span class="material-symbols-outlined" style="font-size:14px;">arrow_forward</span>
+            </span>
+          </div>
+
+        </div>
+      }
+    </div>
+
+    <!-- ── Pagination ────────────────────────────────────────────────────── -->
+    @if (totalPages() > 1) {
+      <div class="bk-pagination">
+        <button class="bk-pg-btn" [disabled]="page() === 1" (click)="goToPage(page() - 1)">
+          <span class="material-symbols-outlined">chevron_left</span>
+        </button>
+        @if (pageNumbers()[0] > 1) {
+          <button class="bk-pg-num" (click)="goToPage(1)">1</button>
+          @if (pageNumbers()[0] > 2) { <span class="bk-pg-ellipsis">…</span> }
+        }
+        @for (n of pageNumbers(); track n) {
+          <button class="bk-pg-num" [class.bk-pg-active]="n === page()" (click)="goToPage(n)">{{ n }}</button>
+        }
+        @if (pageNumbers()[pageNumbers().length - 1] < totalPages()) {
+          @if (pageNumbers()[pageNumbers().length - 1] < totalPages() - 1) { <span class="bk-pg-ellipsis">…</span> }
+          <button class="bk-pg-num" (click)="goToPage(totalPages())">{{ totalPages() }}</button>
+        }
+        <button class="bk-pg-btn" [disabled]="page() === totalPages()" (click)="goToPage(page() + 1)">
+          <span class="material-symbols-outlined">chevron_right</span>
+        </button>
+      </div>
+    }
+  }
+
+</div>
