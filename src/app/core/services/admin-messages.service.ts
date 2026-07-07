@@ -3,7 +3,23 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
-export type ConversationFilter = 'all' | 'families' | 'caregivers' | 'unread' | 'resolved' | 'open';
+export type ConversationStatus =
+  | 'open'
+  | 'waiting_for_admin'
+  | 'waiting_for_user'
+  | 'resolved'
+  | 'closed';
+
+export type ConversationFilter =
+  | 'all'
+  | 'families'
+  | 'caregivers'
+  | 'unread'
+  | 'resolved'
+  | 'open'
+  | 'waiting_for_admin'
+  | 'waiting_for_user'
+  | 'closed';
 
 export interface ConversationUser {
   _id: string;
@@ -14,6 +30,8 @@ export interface ConversationUser {
   avatar?: { url?: string; public_id?: string } | null;
   createdAt?: string;
   isBanned?: boolean;
+  isOnline?: boolean;
+  lastSeen?: string | null;
 }
 
 export interface AdminConversation {
@@ -26,8 +44,12 @@ export interface AdminConversation {
   lastMessageSenderId?: string;
   unreadByAdmin: number;
   unreadByUser: number;
-  status: 'open' | 'resolved';
+  status: ConversationStatus;
   subject?: string;
+  reopenedAt?: string | null;
+  reopenCount?: number;
+  resolvedAt?: string | null;
+  closedAt?: string | null;
   createdAt: string;
   updatedAt: string;
   user?: ConversationUser | null;
@@ -49,7 +71,7 @@ export interface AdminMessage {
   senderRole: 'admin' | 'family' | 'companion';
   receiverId: string | ConversationUser;
   receiverRole: 'admin' | 'family' | 'companion';
-  messageType: 'text' | 'image' | 'pdf' | 'document';
+  messageType: 'text' | 'image' | 'pdf' | 'document' | 'system';
   text: string;
   attachment?: Attachment;
   isRead: boolean;
@@ -64,7 +86,6 @@ export class AdminMessagesService {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiBaseUrl}/admin/messages`;
 
-  /** GET /admin/messages  — list all conversations with optional filters */
   getConversations(
     filter: ConversationFilter = 'all',
     search = '',
@@ -79,7 +100,6 @@ export class AdminMessagesService {
     return this.http.get<any>(this.base, { params });
   }
 
-  /** GET /admin/messages/:id  — full chat history */
   getChatHistory(
     conversationId: string,
     page = 1,
@@ -91,7 +111,6 @@ export class AdminMessagesService {
     return this.http.get<any>(`${this.base}/${conversationId}`, { params });
   }
 
-  /** POST /admin/messages/send */
   sendMessage(body: {
     conversationId?: string;
     userId?: string;
@@ -102,7 +121,6 @@ export class AdminMessagesService {
     return this.http.post<any>(`${this.base}/send`, body);
   }
 
-  /** POST /admin/messages/upload */
   uploadAttachment(conversationId: string, file: File): Observable<{ status: string; data: { message: AdminMessage } }> {
     const fd = new FormData();
     fd.append('file', file);
@@ -110,28 +128,26 @@ export class AdminMessagesService {
     return this.http.post<any>(`${this.base}/upload`, fd);
   }
 
-  /** PATCH /admin/messages/read */
   markAsRead(conversationId: string): Observable<any> {
     return this.http.patch(`${this.base}/read`, { conversationId });
   }
 
-  /** PATCH /admin/messages/resolve */
   resolveConversation(conversationId: string): Observable<any> {
     return this.http.patch(`${this.base}/resolve`, { conversationId });
   }
 
-  /** PATCH /admin/messages/reopen */
   reopenConversation(conversationId: string): Observable<any> {
     return this.http.patch(`${this.base}/reopen`, { conversationId });
   }
 
-  /** DELETE /admin/messages/:messageId */
+  closeConversation(conversationId: string): Observable<any> {
+    return this.http.patch(`${this.base}/close`, { conversationId });
+  }
+
   deleteMessage(messageId: string): Observable<any> {
     return this.http.delete(`${this.base}/${messageId}`);
   }
 
-  /** POST /admin/messages/start-conversation
-   *  Admin-only: find or create a conversation with a user instantly. */
   startConversation(targetUserId: string, targetUserRole?: string): Observable<{
     status: string;
     data: { conversationId: string; conversation: AdminConversation };
