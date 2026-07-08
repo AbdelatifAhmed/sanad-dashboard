@@ -430,14 +430,11 @@ export class ReviewsComponent implements OnInit, OnDestroy, AfterViewInit {
       warn:     'Warning issued to caregiver',
       contact:  'Contact request sent to reviewer',
       suspend:  'Caregiver suspended',
-      escalate: 'Case escalated',
       dismiss:  'Case dismissed',
     };
     this.toastService.success(labels[action] ?? 'Action applied.');
     if (['reviewed', 'dismiss'].includes(action)) {
       this.caseStatus.set(action === 'reviewed' ? 'Action Taken' : 'Resolved');
-    } else if (action === 'escalate') {
-      this.caseStatus.set('Escalated');
     }
   }
 
@@ -566,7 +563,7 @@ export class ReviewsComponent implements OnInit, OnDestroy, AfterViewInit {
   // ── Case Status badge ─────────────────────────────────────────────────────
   getCaseStatusBadge(): string {
     const s = this.caseStatus();
-    if (s === 'Escalated')           return 'bg-purple-100 text-purple-700 border-purple-200';
+    if (s === 'Manual Review')       return 'bg-purple-100 text-purple-700 border-purple-200';
     if (s === 'Under Investigation') return 'bg-amber-100 text-amber-700 border-amber-200';
     if (s === 'Action Taken')        return 'bg-blue-100 text-blue-700 border-blue-200';
     if (s === 'Resolved')            return 'bg-emerald-100 text-emerald-700 border-emerald-200';

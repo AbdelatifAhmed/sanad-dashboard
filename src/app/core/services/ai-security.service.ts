@@ -104,4 +104,26 @@ export class AiSecurityService {
         (cases.length ? Math.round((highRisk / cases.length) * 100) : 0),
     };
   }
+
+  getHighRiskUsers(page: number = 1, limit: number = 10): Observable<any> {
+    return this.http.get<any>(
+      `${this.BASE}/ai/admin/risk-center/users?page=${page}&limit=${limit}`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  getUserInvestigationReport(userId: string): Observable<any> {
+    return this.http.get<any>(
+      `${this.BASE}/ai/admin/risk-center/investigate/${userId}`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  executeAdminAction(userId: string, action: string, reason?: string): Observable<any> {
+    return this.http.post<any>(
+      `${this.BASE}/ai/admin/risk-center/action`,
+      { userId, action, reason },
+      { headers: this.getHeaders() }
+    );
+  }
 }

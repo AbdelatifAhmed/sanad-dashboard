@@ -1129,11 +1129,7 @@
               <span class="material-symbols-outlined text-[14px]">block</span>
               Suspend Caregiver
             </button>
-            <button (click)="handleAiAction('escalate', rv)"
-              class="flex items-center gap-1.5 px-3.5 py-2 text-[12px] font-bold rounded-xl bg-purple-100 text-purple-700 border border-purple-200 hover:bg-purple-200 cursor-pointer transition-all">
-              <span class="material-symbols-outlined text-[14px]">escalator_warning</span>
-              Escalate
-            </button>
+
             <button (click)="handleAiAction('dismiss', rv)"
               class="flex items-center gap-1.5 px-3.5 py-2 text-[12px] font-semibold rounded-xl bg-surface-container text-on-surface-variant border border-outline-variant/30 hover:bg-surface-container-high cursor-pointer transition-all ml-auto">
               Dismiss
@@ -1285,9 +1281,7 @@
               <button (click)="handleAiAction('suspend', rv)" class="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-bold rounded-lg bg-red-100 text-red-700 border border-red-200 hover:bg-red-200 cursor-pointer transition-all">
                 <span class="material-symbols-outlined text-[13px]">block</span> Suspend Caregiver
               </button>
-              <button (click)="handleAiAction('escalate', rv)" class="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-bold rounded-lg bg-purple-100 text-purple-700 border border-purple-200 hover:bg-purple-200 cursor-pointer transition-all">
-                <span class="material-symbols-outlined text-[13px]">escalator_warning</span> Escalate Case
-              </button>
+
               <button (click)="handleAiAction('reviewed', rv)" class="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-bold rounded-lg bg-emerald-100 text-emerald-700 border border-emerald-200 hover:bg-emerald-200 cursor-pointer transition-all">
                 <span class="material-symbols-outlined text-[13px]">check_circle</span> Mark Reviewed
               </button>
