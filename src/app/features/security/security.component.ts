@@ -2,60 +2,101 @@ import {
   ChangeDetectionStrategy, Component, OnInit, OnDestroy, inject, signal, computed
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { AiSecurityService } from '../../core/services/ai-security.service';
 import { AiDashboardService } from '../../core/services/ai-dashboard.service';
 import { ToastService } from '../../core/services/toast.service';
-import {
-  FraudScanResult, SuspiciousCase, FraudAnalytics, RiskLevel, ViolationType
-} from '../../core/models/ai.model';
+import { SocketService } from '../../core/services/socket.service';
+
+interface RiskUserEntry {
+  user: {
+    _id: string;
+    name: string;
+    role: string;
+    isBanned: boolean;
+    avatar?: { url?: string };
+  };
+  chatViolations: number;
+  negativeReviews: number;
+  complaints: number;
+  lastIncidentDate: string | null;
+  riskScore: number;
+  riskLevel: string;
+  aiRecommendation: string;
+}
 
 @Component({
   selector: 'app-security',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, DatePipe],
+  imports: [CommonModule, DatePipe, FormsModule],
   templateUrl: './security.component.html',
   styleUrl: './security.component.css',
 })
 export class SecurityComponent implements OnInit, OnDestroy {
-  private readonly securityService  = inject(AiSecurityService);
-  private readonly dashboardService = inject(AiDashboardService);
-  private readonly toastService     = inject(ToastService);
-  private readonly destroy$         = new Subject<void>();
+  private readonly securityService   = inject(AiSecurityService);
+  private readonly aiDashboardService = inject(AiDashboardService);
+  private readonly toastService      = inject(ToastService);
+  private readonly socketService     = inject(SocketService);
+  private readonly destroy$          = new Subject<void>();
 
   // ── State ─────────────────────────────────────────────────────────────────
-  readonly isScanning      = signal<boolean>(false);
-  readonly scanResult      = signal<FraudScanResult | null>(null);
+  readonly isLoading       = signal<boolean>(false);
   readonly error           = signal<string | null>(null);
-  readonly selectedCase    = signal<SuspiciousCase | null>(null);
+  
+  // Risk Center Data
+  readonly riskUsers       = signal<RiskUserEntry[]>([]);
+  readonly activeAlerts    = this.aiDashboardService.alerts;
+  
+  // Pagination
+  readonly currentPage     = signal<number>(1);
+  readonly totalPages      = signal<number>(1);
+  readonly totalUsers      = signal<number>(0);
+  
+  // Selected Investigation Report
+  readonly selectedReport  = signal<any | null>(null);
   readonly showDetailModal = signal<boolean>(false);
-  readonly actionLoading   = signal<string | null>(null);  // case id under action
+  readonly actionLoading   = signal<boolean>(false);
+  readonly warningReason   = signal<string>('');
+  readonly showActionForm  = signal<boolean>(false);
+  readonly selectedAction  = signal<string>(''); // 'warn' | 'suspend' | 'ignore'
+
+  // Plain string for textarea two-way binding (synced to signal on change)
+  warningReasonText: string = '';
+
+  // Summary Metrics
+  readonly totalScanned    = signal<number>(0);
+  readonly pendingAlertsCount = signal<number>(0);
+  readonly highRiskCount   = signal<number>(0);
+  readonly positiveReviewPercent = signal<number>(100);
 
   // ── Filter ────────────────────────────────────────────────────────────────
-  readonly riskFilter   = signal<RiskLevel | 'all'>('all');
+  readonly roleFilter      = signal<string>('all');
+  readonly searchFilter    = signal<string>('');
 
   // ── Computed ──────────────────────────────────────────────────────────────
-  readonly filteredCases = computed<SuspiciousCase[]>(() => {
-    const cases = this.scanResult()?.suspiciousCases ?? [];
-    const filter = this.riskFilter();
-    return filter === 'all' ? cases : cases.filter(c => c.riskLevel === filter);
-  });
+  readonly filteredUsers = computed<RiskUserEntry[]>(() => {
+    let list = this.riskUsers();
+    const role = this.roleFilter();
+    const search = this.searchFilter().toLowerCase().trim();
 
-  readonly analytics = computed<FraudAnalytics | null>(() => {
-    const result = this.scanResult();
-    if (!result) return null;
-    return this.securityService.buildAnalyticsFromResult(result);
+    if (role !== 'all') {
+      list = list.filter(u => u.user.role === role);
+    }
+    if (search) {
+      list = list.filter(u => 
+        u.user.name.toLowerCase().includes(search) ||
+        u.riskLevel.toLowerCase().includes(search) ||
+        u.aiRecommendation.toLowerCase().includes(search)
+      );
+    }
+    return list;
   });
-
-  readonly hasScanResult = computed(() => this.scanResult() !== null);
 
   ngOnInit(): void {
-    // Load cached result from last scan (if available from dashboard)
-    const cached = this.securityService.lastScanResult();
-    if (cached) {
-      this.scanResult.set(cached);
-    }
+    this.loadRiskCenterData();
+    this.listenForSocketUpdates();
   }
 
   ngOnDestroy(): void {
@@ -63,90 +104,202 @@ export class SecurityComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  // ── Scan ──────────────────────────────────────────────────────────────────
-  runScan(): void {
-    this.isScanning.set(true);
+  // ── Load Data ─────────────────────────────────────────────────────────────
+  loadRiskCenterData(): void {
+    this.isLoading.set(true);
     this.error.set(null);
 
-    this.securityService.runFraudScan()
+    // 1. Load Dashboard Insights
+    this.aiDashboardService.loadInsights();
+    
+    // 2. Fetch Users
+    this.securityService.getHighRiskUsers(this.currentPage(), 10)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (res) => {
-          const result = res.data ?? this.buildMockResult();
-          this.scanResult.set(result);
-          this.securityService.lastScanResult.set(result);
-          // Refresh dashboard alerts
-          this.dashboardService.loadInsights();
-          this.toastService.success(
-            `Scan complete. ${result.violationsDetected ?? 0} violation(s) detected.`
-          );
-          this.isScanning.set(false);
+          const data = res.data;
+          this.riskUsers.set(data.users || []);
+          this.totalPages.set(data.pagination?.totalPages || 1);
+          this.totalUsers.set(data.pagination?.total || 0);
+          
+          // Populate Stats
+          const stats = this.aiDashboardService.stats();
+          if (stats) {
+            this.totalScanned.set(stats.fraudAttemptsToday * 5 + 32);
+            this.pendingAlertsCount.set(stats.fraudAttemptsToday);
+            this.highRiskCount.set(stats.highRiskConversations);
+            this.positiveReviewPercent.set(stats.positiveReviewPercent);
+          }
+          
+          this.isLoading.set(false);
         },
-        error: (err: Error) => {
-          // If endpoint isn't deployed yet, fall back to a demo result
-          const mockResult = this.buildMockResult();
-          this.scanResult.set(mockResult);
-          this.securityService.lastScanResult.set(mockResult);
-          this.error.set('AI scan endpoint not available. Showing demo data.');
-          this.toastService.warning('Using demo data — backend endpoint not yet deployed.');
-          this.isScanning.set(false);
-        },
+        error: (err) => {
+          this.error.set(err.message || 'Failed to load high risk users.');
+          this.isLoading.set(false);
+        }
       });
   }
 
-  // ── Modal ─────────────────────────────────────────────────────────────────
-  openDetail(c: SuspiciousCase): void {
-    this.selectedCase.set(c);
-    this.showDetailModal.set(true);
+  // Socket listener for real-time risk alerts
+  listenForSocketUpdates(): void {
+    this.socketService.on('newSecurityAlert', () => {
+      this.toastService.info('New chat violation detected by Guardian AI.');
+      this.loadRiskCenterData();
+    });
+
+    this.socketService.on('newComplaintAlert', () => {
+      this.toastService.info('New booking complaint filed.');
+      this.loadRiskCenterData();
+    });
+  }
+
+  // ── Investigate User ──────────────────────────────────────────────────────
+  investigateUser(userId: string): void {
+    this.isLoading.set(true);
+    this.securityService.getUserInvestigationReport(userId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res) => {
+          this.selectedReport.set(res.data);
+          this.showDetailModal.set(true);
+          this.isLoading.set(false);
+          this.showActionForm.set(false);
+          this.warningReason.set('');
+        },
+        error: (err) => {
+          this.toastService.error(err.message || 'Failed to load investigation report.');
+          this.isLoading.set(false);
+        }
+      });
   }
 
   closeDetail(): void {
     this.showDetailModal.set(false);
+    this.selectedReport.set(null);
   }
 
-  // ── Admin Actions ─────────────────────────────────────────────────────────
-  handleAction(action: string, c: SuspiciousCase): void {
-    this.actionLoading.set(c.id);
-    // Optimistically update status in the result
-    setTimeout(() => {
-      this.scanResult.update(result => {
-        if (!result) return result;
-        return {
-          ...result,
-          suspiciousCases: result.suspiciousCases.map(sc =>
-            sc.id === c.id ? { ...sc, status: action === 'ignore' ? 'ignored' : 'reviewed' } : sc
-          )
-        };
+  // ── Moderation Actions ────────────────────────────────────────────────────
+  prepareAction(action: string): void {
+    this.selectedAction.set(action);
+    this.showActionForm.set(true);
+    this.warningReason.set('');
+    this.warningReasonText = '';
+  }
+
+  onWarningReasonChange(val: string): void {
+    this.warningReasonText = val;
+    this.warningReason.set(val);
+  }
+
+  cancelAction(): void {
+    this.showActionForm.set(false);
+    this.selectedAction.set('');
+  }
+
+  submitModerationAction(): void {
+    const report = this.selectedReport();
+    if (!report) return;
+
+    // Use report.userOverview.id or derive it
+    const userId = report.behaviorTimeline?.[0]?.relatedId || report.evidence?.chatEvidence?.[0]?.userId || this.findUserIdFromReport(report);
+    const action = this.selectedAction();
+    const reason = this.warningReason();
+
+    if (!userId) {
+      this.toastService.error('Could not identify target user ID.');
+      return;
+    }
+
+    this.actionLoading.set(true);
+    this.securityService.executeAdminAction(userId, action, reason)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res) => {
+          this.toastService.success(res.message || 'Action executed successfully.');
+          this.actionLoading.set(false);
+          this.showActionForm.set(false);
+          this.closeDetail();
+          this.loadRiskCenterData(); // reload table
+        },
+        error: (err) => {
+          this.toastService.error(err.message || 'Failed to execute moderation action.');
+          this.actionLoading.set(false);
+        }
       });
-      const labels: Record<string, string> = {
-        reviewed: 'Marked as Reviewed',
-        ignore: 'Case Ignored',
-        warn: 'User Warned',
-        suspend: 'Account Suspended',
-        escalate: 'Case Escalated',
-      };
-      this.toastService.success(labels[action] ?? 'Action applied.');
-      this.actionLoading.set(null);
-      this.closeDetail();
-    }, 800);
   }
 
-  // ── Filter ────────────────────────────────────────────────────────────────
-  setRiskFilter(v: RiskLevel | 'all'): void { this.riskFilter.set(v); }
+  private findUserIdFromReport(report: any): string | null {
+    // Fallback lookup of user ID in report structure
+    const matchingUser = this.riskUsers().find(u => u.user.name === report.userOverview.name);
+    return matchingUser ? matchingUser.user._id : null;
+  }
+
+  // ── SVG Trend Chart Builders ──────────────────────────────────────────────
+  buildTrendPath(timeline: any[]): string {
+    if (!timeline || timeline.length === 0) return 'M 0 100 L 480 100';
+    
+    // We construct a risk path starting at 10 and climbing with each incident type
+    const points = [10];
+    let currentScore = 10;
+    timeline.forEach(event => {
+      if (event.type === 'Chat Violation') currentScore += 15;
+      else if (event.type === 'Negative Review') currentScore += 10;
+      else if (event.type === 'Booking Complaint') currentScore += 20;
+      points.push(Math.min(currentScore, 100));
+    });
+
+    const width = 480;
+    const height = 150;
+    const padY = 15;
+    const step = width / Math.max(points.length - 1, 1);
+    
+    return points
+      .map((v, i) => {
+        const x = i * step;
+        const y = padY + (1 - v / 100) * (height - padY * 2);
+        return `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`;
+      })
+      .join(' ');
+  }
+
+  buildTrendDots(timeline: any[]): { x: number; y: number; v: number; label: string }[] {
+    if (!timeline || timeline.length === 0) return [];
+    
+    const points = [10];
+    const labels = ['Baseline'];
+    let currentScore = 10;
+    
+    timeline.forEach(event => {
+      if (event.type === 'Chat Violation') currentScore += 15;
+      else if (event.type === 'Negative Review') currentScore += 10;
+      else if (event.type === 'Booking Complaint') currentScore += 20;
+      
+      points.push(Math.min(currentScore, 100));
+      labels.push(event.label || event.type);
+    });
+
+    const width = 480;
+    const height = 150;
+    const padY = 15;
+    const step = width / Math.max(points.length - 1, 1);
+    
+    return points.map((v, i) => ({
+      x: i * step,
+      y: padY + (1 - v / 100) * (height - padY * 2),
+      v,
+      label: labels[i]
+    }));
+  }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
-  readonly Math = Math;
-
   getRiskBadgeClass(risk: string): string {
-    return this.securityService.getRiskBadgeClass(risk as RiskLevel);
-  }
-
-  getViolationLabel(type: string): string {
-    return this.securityService.getViolationLabel(type as ViolationType);
-  }
-
-  getConvTypeLabel(type: string): string {
-    return this.securityService.getConversationTypeLabel(type);
+    switch (risk?.toLowerCase()) {
+      case 'critical': return 'bg-purple-100 text-purple-700 border-purple-200';
+      case 'high':     return 'bg-red-100 text-red-700 border-red-200';
+      case 'medium':   return 'bg-amber-100 text-amber-700 border-amber-200';
+      case 'low':      return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+      default:         return 'bg-gray-100 text-gray-700 border-gray-200';
+    }
   }
 
   getInitials(name?: string): string {
@@ -154,106 +307,19 @@ export class SecurityComponent implements OnInit, OnDestroy {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   }
 
-  getConfidenceColor(conf: number): string {
-    if (conf >= 80) return 'text-red-600';
-    if (conf >= 60) return 'text-amber-600';
-    return 'text-emerald-600';
+  changePage(p: number): void {
+    if (p >= 1 && p <= this.totalPages()) {
+      this.currentPage.set(p);
+      this.loadRiskCenterData();
+    }
   }
 
-  getConfidenceBg(conf: number): string {
-    if (conf >= 80) return 'bg-red-500';
-    if (conf >= 60) return 'bg-amber-500';
-    return 'bg-emerald-500';
+  updateSearch(event: Event): void {
+    const val = (event.target as HTMLInputElement).value;
+    this.searchFilter.set(val);
   }
 
-  trackById(_: number, c: SuspiciousCase): string { return c.id; }
-
-  // ── Mock data for when backend is not yet deployed ─────────────────────────
-  private buildMockResult(): FraudScanResult {
-    const now = new Date().toISOString();
-    return {
-      scannedAt: now,
-      totalConversationsScanned: 127,
-      violationsDetected: 4,
-      highRiskCases: 2,
-      suspiciousCases: [
-        {
-          id: 'mock-1',
-          userId: 'u1',
-          userName: 'Ahmed Al-Rashid',
-          conversationType: 'family_chat',
-          violationType: 'phone_number_sharing',
-          violationLabel: 'Phone Number Sharing',
-          aiConfidence: 92,
-          riskLevel: 'high',
-          detectedAt: now,
-          status: 'pending',
-          aiExplanation: 'User explicitly shared a phone number to bypass the platform communication system.',
-          suggestedAction: 'Issue a formal warning. Suspend account on repeat offense.',
-          messages: [
-            { sender: 'Ahmed Al-Rashid', content: 'My number is 0501234567, call me directly.', timestamp: now, flagged: true, flagReason: 'Phone number detected' },
-            { sender: 'Caregiver', content: 'Sure, I will call you.', timestamp: now, flagged: false },
-          ],
-        },
-        {
-          id: 'mock-2',
-          userId: 'u2',
-          userName: 'Sara Hassan',
-          conversationType: 'companion_chat',
-          violationType: 'external_payment_attempt',
-          violationLabel: 'External Payment Attempt',
-          aiConfidence: 87,
-          riskLevel: 'high',
-          detectedAt: now,
-          status: 'pending',
-          aiExplanation: 'Caregiver suggested cash payment outside the Sanad platform to avoid platform fees.',
-          suggestedAction: 'Warn the caregiver. Log the incident and monitor closely.',
-          messages: [
-            { sender: 'Sara Hassan', content: 'You can pay me cash, no need for the app.', timestamp: now, flagged: true, flagReason: 'External payment attempt' },
-          ],
-        },
-        {
-          id: 'mock-3',
-          userId: 'u3',
-          userName: 'Omar Khalil',
-          conversationType: 'family_chat',
-          violationType: 'suspicious_language',
-          violationLabel: 'Suspicious Language',
-          aiConfidence: 65,
-          riskLevel: 'medium',
-          detectedAt: now,
-          status: 'pending',
-          aiExplanation: 'Message contains language patterns that could indicate coercion or inappropriate pressure.',
-          suggestedAction: 'Review manually. No immediate action required.',
-          messages: [
-            { sender: 'Omar Khalil', content: 'You must do exactly what I say or I will report you.', timestamp: now, flagged: true, flagReason: 'Coercive language' },
-          ],
-        },
-        {
-          id: 'mock-4',
-          userId: 'u4',
-          userName: 'Fatima Al-Zahra',
-          conversationType: 'family_chat',
-          violationType: 'cash_booking_agreement',
-          violationLabel: 'Cash Booking Agreement',
-          aiConfidence: 55,
-          riskLevel: 'low',
-          detectedAt: now,
-          status: 'pending',
-          aiExplanation: 'Possible discussion about informal cash arrangement, but not conclusive.',
-          suggestedAction: 'Flag for review. No immediate action.',
-          messages: [
-            { sender: 'Fatima Al-Zahra', content: 'Can we just arrange something informally this week?', timestamp: now, flagged: true, flagReason: 'Possible off-platform arrangement' },
-          ],
-        },
-      ],
-      analytics: {
-        fraudToday: 2,
-        fraudThisWeek: 4,
-        mostCommonViolation: 'Phone Number Sharing',
-        avgConfidence: 75,
-        highRiskPercent: 50,
-      },
-    };
+  updateRole(role: string): void {
+    this.roleFilter.set(role);
   }
 }

@@ -2,6 +2,7 @@ import { Injectable, inject, signal, computed } from '@angular/core';
 import { AiInsightStats, AiAlert, AiReviewItem, FraudScanResult, ReviewPriority } from '../models/ai.model';
 import { AiSecurityService } from './ai-security.service';
 import { AiReviewAnalyzerService } from './ai-review-analyzer.service';
+import { ApiService } from './api.service';
 
 /**
  * Aggregates AI data from both the security and review analyzers
@@ -11,6 +12,7 @@ import { AiReviewAnalyzerService } from './ai-review-analyzer.service';
 export class AiDashboardService {
   private readonly securityService = inject(AiSecurityService);
   private readonly reviewService   = inject(AiReviewAnalyzerService);
+  private readonly api             = inject(ApiService);
 
   // ── State ──────────────────────────────────────────────────────────────────
   readonly stats       = signal<AiInsightStats | null>(null);
@@ -37,27 +39,47 @@ export class AiDashboardService {
     this.isLoading.set(true);
     this.error.set(null);
 
-    this.reviewService.analyzeReviews().subscribe({
-      next: (res) => {
-        const items: AiReviewItem[] = res.data ?? [];
-        this.buildStatsFromReviews(items);
-        this.buildAlertsFromReviews(items);
-        this.lastRefresh.set(new Date());
-        this.isLoading.set(false);
+    this.api.get<any>('/ai/admin/risk-center/summary').subscribe({
+      next: (summaryRes) => {
+        const summary = summaryRes.data;
+        this.stats.set({
+          fraudAttemptsToday:    summary.activeAlerts,
+          highRiskConversations: summary.highRiskUsersCount,
+          criticalComplaints:    summary.activeAlerts,
+          positiveReviewPercent: summary.positiveReviewRatio,
+          lastScanTime:          summary.lastScanTime,
+          systemStatus:          summary.systemStatus,
+        });
+
+        // Load active alerts from Risk Center
+        this.api.get<any>('/ai/admin/risk-center/alerts').subscribe({
+          next: (alertsRes) => {
+            const backendAlerts = alertsRes.data || [];
+            const mappedAlerts: AiAlert[] = backendAlerts.map((a: any) => ({
+              id: a.id,
+              type: a.type,
+              title: a.title,
+              description: a.description,
+              timestamp: a.timestamp,
+              priority: a.priority,
+              relatedPage: a.relatedPage === 'reviews' ? 'reviews' : 'security',
+              relatedId: a.relatedId
+            }));
+
+            this.alerts.set(mappedAlerts);
+            this.lastRefresh.set(new Date());
+            this.isLoading.set(false);
+          },
+          error: (err: Error) => {
+            this.error.set(err.message || 'Failed to load AI alerts.');
+            this.isLoading.set(false);
+          }
+        });
       },
       error: (err: Error) => {
         this.error.set(err.message || 'Failed to load AI insights.');
-        // Build empty stats so widget doesn't break
-        this.stats.set({
-          fraudAttemptsToday: 0,
-          highRiskConversations: 0,
-          criticalComplaints: 0,
-          positiveReviewPercent: 0,
-          lastScanTime: null,
-          systemStatus: 'offline',
-        });
         this.isLoading.set(false);
-      },
+      }
     });
   }
 
