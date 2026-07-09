@@ -224,7 +224,7 @@ export class StatsService {
     },
     {
       id: 'completed-bookings',
-      title: 'Comp. Bookings',
+      title: 'Completed Bookings',
       value: '—',
       change: '',
       trend: 'up',

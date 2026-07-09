@@ -4,7 +4,7 @@
   <!-- Section Header -->
   <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
     <div class="flex items-center gap-3">
-      <div class="p-2 rounded-xl bg-purple-100 text-purple-600">
+      <div class="p-2 rounded-xl bg-primary/10 text-primary">
         <span class="material-symbols-outlined text-[20px]">smart_toy</span>
       </div>
       <div>
@@ -22,12 +22,16 @@
           }
         </h4>
         <p class="font-body-sm text-body-sm text-on-surface-variant text-[11px]">
-          Real-time AI monitoring • Reviews & Security
+          Real-time monitoring • Reviews & Security •
+          <span class="font-bold"
+            [class]="stats()?.systemStatus === 'active' ? 'text-emerald-600' : 'text-on-surface-variant/60'">
+            Status: {{ stats()?.systemStatus === 'active' ? 'Active' : 'Offline' }}
+          </span>
         </p>
       </div>
     </div>
     <button (click)="openAiCenter()"
-      class="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white text-xs font-bold rounded-xl hover:bg-purple-700 active:scale-95 transition-all cursor-pointer shadow-sm">
+      class="flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary/90 active:scale-95 transition-all cursor-pointer shadow-sm">
       <span class="material-symbols-outlined text-[16px]">shield</span>
       Open AI Center
     </button>
@@ -35,13 +39,13 @@
 
   <!-- AI Stat Cards -->
   @if (isLoading()) {
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-5">
-      @for (i of [1,2,3,4,5,6]; track i) {
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-5">
+      @for (i of [1,2,3,4,5]; track i) {
         <div class="bg-white rounded-2xl card-shadow p-4 animate-pulse h-[90px]"></div>
       }
     </div>
   } @else if (stats(); as s) {
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-5">
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-5">
 
       <!-- Fraud Attempts Today -->
       <div class="bg-white rounded-2xl card-shadow border border-white p-4 ai-mini-card">
@@ -75,7 +79,7 @@
         <div class="flex items-center gap-2 mb-2">
           <span class="material-symbols-outlined text-[18px] text-emerald-500">sentiment_satisfied</span>
         </div>
-        <p class="font-label-sm text-label-sm text-on-surface-variant text-[10px] uppercase tracking-wider leading-tight">Positive</p>
+        <p class="font-label-sm text-label-sm text-on-surface-variant text-[10px] uppercase tracking-wider leading-tight">Positive Reviews</p>
         <p class="font-headline-sm text-headline-sm font-bold text-emerald-600">{{ s.positiveReviewPercent }}%</p>
       </div>
 
@@ -94,18 +98,6 @@
         </p>
       </div>
 
-      <!-- AI Status -->
-      <div class="bg-white rounded-2xl card-shadow border border-white p-4 ai-mini-card">
-        <div class="flex items-center gap-2 mb-2">
-          <span class="material-symbols-outlined text-[18px]"
-            [class]="s.systemStatus === 'active' ? 'text-emerald-500' : 'text-outline/50'">smart_toy</span>
-        </div>
-        <p class="font-label-sm text-label-sm text-on-surface-variant text-[10px] uppercase tracking-wider leading-tight">AI Status</p>
-        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase"
-          [class]="s.systemStatus === 'active' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-surface-container text-on-surface-variant border-outline-variant/30'">
-          {{ s.systemStatus === 'active' ? 'Active' : 'Offline' }}
-        </span>
-      </div>
     </div>
   }
 
@@ -151,7 +143,7 @@
               <p class="text-[11px] text-on-surface-variant line-clamp-1 mb-1">{{ alert.description }}</p>
               <p class="text-[10px] text-outline/60">{{ alert.timestamp | date:'MMM d, h:mm a' }}</p>
             </div>
-            <button (click)="navigateToAlert(alert)"
+            <button (click)="openAlertInvestigation(alert)"
               class="shrink-0 px-3 py-1.5 text-[10px] font-bold rounded-lg bg-primary/5 text-primary border border-primary/20 hover:bg-primary/10 cursor-pointer transition-all whitespace-nowrap">
               View Details
             </button>
@@ -165,5 +157,10 @@
       </div>
     }
   </div>
+
+  <!-- Shared Investigation Modal — opens in-place, no routing -->
+  <app-investigation-modal
+    (actionCompleted)="onInvestigationActionCompleted()">
+  </app-investigation-modal>
 
 </section>
