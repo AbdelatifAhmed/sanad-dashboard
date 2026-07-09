@@ -83,6 +83,7 @@ export interface AiReviewItem {
   comment: string;
   isVisible: boolean;
   createdAt: string;
+  bookingId?: { _id: string; status: string; totalPrice: number; totalHours?: number; startDate: string; endDate: string };
   // AI-augmented fields
   sentimentScore?: SentimentType;
   alertLevel?: ReviewPriority;

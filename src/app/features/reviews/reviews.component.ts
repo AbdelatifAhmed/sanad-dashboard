@@ -270,8 +270,13 @@ export class ReviewsComponent implements OnInit, OnDestroy, AfterViewInit {
           // ── Merge strategy: update only AI-generated fields per row ────────
           // Never wipe the whole array — preserve all existing review data and
           // only patch the fields the AI actually returned for each matching row.
+          // Stale entries (e.g. reviews deleted since the last analysis) are
+          // dropped first so counts here never exceed the live reviews list.
+          const validIds = new Set(this.reviews().map(r => r._id));
           this.aiReviews.update(existing => {
-            const existingMap = new Map(existing.map(r => [r._id, r]));
+            const existingMap = new Map(
+              existing.filter(r => validIds.has(r._id)).map(r => [r._id, r])
+            );
 
             // Patch or insert each incoming item
             incoming.forEach(item => {
@@ -396,6 +401,8 @@ export class ReviewsComponent implements OnInit, OnDestroy, AfterViewInit {
       .subscribe({
         next: () => {
           this.reviews.update(list => list.filter(r => r._id !== review._id));
+          this.aiReviews.update(list => list.filter(r => r._id !== review._id));
+          this.aiSummary.set(this.aiAnalyzer.buildSummary(this.aiReviews()));
           this.toastService.success('Review deleted.');
           this.confirmDelete.set(null);
           this.isDeleting.set(false);

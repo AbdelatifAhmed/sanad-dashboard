@@ -51,7 +51,17 @@ export class AiReviewAnalyzerService {
       critical: 0,
     };
     items.forEach((rv) => {
-      // Always use the normalised value so numeric scores are handled correctly
+      // "Critical" here must match the same critical/high priority test used
+      // by the Critical Alerts banner (getEffectivePriority) — priority can
+      // diverge from raw sentimentScore (e.g. a low star rating forces
+      // priority to high/critical even when the LLM scored the text as
+      // neutral). Bucketing by sentiment alone caused the stat card to show
+      // 0 while the alerts banner showed active critical/high cases.
+      const priority = this.getEffectivePriority(rv);
+      if (priority === 'critical' || priority === 'high') {
+        summary.critical++;
+        return;
+      }
       const sentiment = this.getEffectiveSentiment(rv);
       switch (sentiment) {
         case 'positive': summary.positive++; break;

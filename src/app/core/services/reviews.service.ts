@@ -20,7 +20,7 @@ export interface ReviewCompanion {
 
 export interface AdminReview {
   _id: string;
-  bookingId?: { _id: string; status: string; totalPrice: number; startDate: string; endDate: string };
+  bookingId?: { _id: string; status: string; totalPrice: number; totalHours?: number; startDate: string; endDate: string };
   familyId?: ReviewFamily;
   companionId?: ReviewCompanion;
   rating: number;
