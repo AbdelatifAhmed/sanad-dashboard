@@ -45,6 +45,10 @@ export interface AdminBooking {
   endDate: string;
   workingDays: string[];
   notes?: string;
+  /** Normalized service type — present on both direct bookings and post-based bookings */
+  serviceType?: string;
+  /** Clean additional notes — separated from the service type for direct bookings */
+  additionalNotes?: string;
   location?: { city?: string; governorate?: string; readableAddress?: string };
   createdAt: string;
   updatedAt: string;

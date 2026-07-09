@@ -27,6 +27,10 @@
 .bd-pay-paid     { background: #ecfdf5; color: #065f46; }
 .bd-pay-unpaid   { background: #fff0f0; color: var(--color-error); }
 .bd-pay-refunded { background: #eff6ff; color: #1e40af; }
+.bd-direct-badge {
+  background: rgba(124,58,237,0.1); color: #7c3aed;
+  display: inline-flex; align-items: center; gap: 4px;
+}
 
 /* ── Party card (family / caregiver block) ──────────────────── */
 .bd-party-card {

@@ -110,13 +110,14 @@ export class BookingsComponent implements OnInit, OnDestroy {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   }
 
-  getServiceLabel(type?: string): string {
+  getServiceLabel(booking?: AdminBooking | null): string {
+    const type = booking?.serviceType ?? booking?.jobPostId?.serviceType;
     const m: Record<string, string> = {
       elderly_care: 'Elderly Care', home_nursing: 'Home Nursing',
       companionship: 'Companionship', physical_therapy: 'Physical Therapy',
       child_care: 'Child Care',
     };
-    return type ? (m[type] ?? type) : '—';
+    return type ? (m[type] ?? type) : 'Not specified';
   }
 
   getStatusClass(status: string): string {
