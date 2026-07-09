@@ -51,16 +51,13 @@ export class AiReviewAnalyzerService {
       critical: 0,
     };
     items.forEach((rv) => {
-      switch (rv.sentimentScore) {
-        case 'positive': summary.positive++;   break;
-        case 'neutral':  summary.neutral++;    break;
-        case 'negative': summary.negative++;   break;
-        case 'critical': summary.critical++;   break;
-        default:
-          // Infer from rating if no AI score
-          if (rv.rating >= 4)       summary.positive++;
-          else if (rv.rating === 3) summary.neutral++;
-          else                      summary.negative++;
+      // Always use the normalised value so numeric scores are handled correctly
+      const sentiment = this.getEffectiveSentiment(rv);
+      switch (sentiment) {
+        case 'positive': summary.positive++; break;
+        case 'neutral':  summary.neutral++;  break;
+        case 'negative': summary.negative++; break;
+        case 'critical': summary.critical++; break;
       }
     });
     return summary;
@@ -120,18 +117,64 @@ export class AiReviewAnalyzerService {
     return (violation && map[violation]) ? map[violation] : (violation ?? 'Other');
   }
 
+  // ── Private normalization helpers ────────────────────────────────────────
+
+  /**
+   * Normalise whatever the backend sends as sentimentScore → SentimentType.
+   * Handles:
+   *   - Already-correct strings: 'positive' | 'neutral' | 'negative' | 'critical'
+   *   - Legacy numeric values (1.0–5.0) returned by the old auditAgent schema
+   */
+  private normaliseSentiment(raw: any): SentimentType | undefined {
+    if (!raw && raw !== 0) return undefined;
+    if (typeof raw === 'string') {
+      if (['positive','neutral','negative','critical'].includes(raw)) return raw as SentimentType;
+      return undefined; // unknown string — fall through to rating fallback
+    }
+    if (typeof raw === 'number') {
+      if (raw >= 4.0) return 'positive';
+      if (raw >= 3.0) return 'neutral';
+      if (raw >= 2.0) return 'negative';
+      return 'critical';
+    }
+    return undefined;
+  }
+
+  /**
+   * Normalise whatever the backend sends as alertLevel → ReviewPriority.
+   * Handles:
+   *   - Already-correct strings: 'critical' | 'high' | 'medium' | 'low'
+   *   - Legacy free-text: 'Urgent Action Required' | 'Standard Review'
+   */
+  private normalisePriority(raw: any, rating?: number): ReviewPriority | undefined {
+    if (!raw) return undefined;
+    if (typeof raw === 'string') {
+      if (['critical','high','medium','low'].includes(raw)) return raw as ReviewPriority;
+      if (raw === 'Urgent Action Required') return (rating === 1) ? 'critical' : 'high';
+      if (raw === 'Standard Review')        return 'low';
+      return undefined;
+    }
+    return undefined;
+  }
+
+  // ── Public helpers ────────────────────────────────────────────────────────
+
   /** Derive effective sentiment from AI score or rating fallback */
   getEffectiveSentiment(item: AiReviewItem): SentimentType {
-    if (item.sentimentScore) return item.sentimentScore;
-    if (item.rating >= 4)       return 'positive';
-    if (item.rating === 3)      return 'neutral';
-    if (item.rating <= 2)       return 'negative';
+    const norm = this.normaliseSentiment((item as any).sentimentScore);
+    if (norm) return norm;
+    // Rating-based fallback — always produces a valid value
+    if (item.rating >= 4) return 'positive';
+    if (item.rating === 3) return 'neutral';
+    if (item.rating <= 2) return 'negative';
     return 'neutral';
   }
 
   /** Derive effective priority from alert level or rating fallback */
   getEffectivePriority(item: AiReviewItem): ReviewPriority {
-    if (item.alertLevel) return item.alertLevel;
+    const norm = this.normalisePriority((item as any).alertLevel, item.rating);
+    if (norm) return norm;
+    // Rating-based fallback — always produces a valid value
     if (item.rating === 1) return 'critical';
     if (item.rating === 2) return 'high';
     if (item.rating === 3) return 'medium';
