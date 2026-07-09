@@ -1,17 +1,18 @@
 import {
-  ChangeDetectionStrategy, Component, OnInit, OnDestroy, inject, signal, computed
+  ChangeDetectionStrategy, Component, OnInit, OnDestroy, inject, signal, ViewChild
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject } from 'rxjs';
 import { AiDashboardService } from '../../../core/services/ai-dashboard.service';
-import { AiInsightStats, AiAlert, ReviewPriority } from '../../../core/models/ai.model';
+import { AiAlert, ReviewPriority } from '../../../core/models/ai.model';
+import { InvestigationModalComponent } from '../investigation-modal/investigation-modal';
 
 @Component({
   selector: 'app-ai-insights-widget',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, DatePipe, RouterLink],
+  imports: [CommonModule, DatePipe, RouterLink, InvestigationModalComponent],
   templateUrl: './ai-insights-widget.html',
   styleUrl: './ai-insights-widget.css',
 })
@@ -19,6 +20,9 @@ export class AiInsightsWidgetComponent implements OnInit, OnDestroy {
   private readonly aiDashboard = inject(AiDashboardService);
   private readonly router      = inject(Router);
   private readonly destroy$    = new Subject<void>();
+
+  @ViewChild(InvestigationModalComponent)
+  private readonly investigationModal!: InvestigationModalComponent;
 
   // ── Proxy signals from service ─────────────────────────────────────────
   readonly stats      = this.aiDashboard.stats;
@@ -37,14 +41,19 @@ export class AiInsightsWidgetComponent implements OnInit, OnDestroy {
   }
 
   // ── Navigation ────────────────────────────────────────────────────────
-  navigateToAlert(alert: AiAlert): void {
-    if (alert.relatedPage === 'security') {
-      this.router.navigate(['/security']);
-    } else {
-      this.router.navigate(['/reviews'], {
-        queryParams: { aiReviewId: alert.relatedId }
-      });
+  /**
+   * Opens the Investigation Details Modal directly on top of the dashboard.
+   * The relatedId is the userId whose investigation report will be fetched.
+   */
+  openAlertInvestigation(alert: AiAlert): void {
+    if (alert.relatedId) {
+      this.investigationModal.open(alert.relatedId);
     }
+  }
+
+  onInvestigationActionCompleted(): void {
+    // Refresh the alerts list so the dashboard reflects any changes
+    this.aiDashboard.loadInsights();
   }
 
   openAiCenter(): void {

@@ -23,7 +23,10 @@ export class AiDashboardService {
 
   // ── Derived ───────────────────────────────────────────────────────────────
   readonly recentAlerts = computed<AiAlert[]>(() =>
-    this.alerts().slice(0, 5)
+    this.alerts()
+      .slice()
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .slice(0, 3)
   );
 
   readonly hasAlerts = computed<boolean>(() => this.alerts().length > 0);
