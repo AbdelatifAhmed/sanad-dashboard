@@ -265,9 +265,36 @@ export class ReviewsComponent implements OnInit, OnDestroy, AfterViewInit {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (res) => {
-          const items = res.data ?? [];
-          this.aiReviews.set(items);
-          this.aiSummary.set(this.aiAnalyzer.buildSummary(items));
+          const incoming = res.data ?? [];
+
+          // ── Merge strategy: update only AI-generated fields per row ────────
+          // Never wipe the whole array — preserve all existing review data and
+          // only patch the fields the AI actually returned for each matching row.
+          this.aiReviews.update(existing => {
+            const existingMap = new Map(existing.map(r => [r._id, r]));
+
+            // Patch or insert each incoming item
+            incoming.forEach(item => {
+              const prev = existingMap.get(item._id);
+              if (prev) {
+                // Merge: keep all existing fields, overlay only AI fields
+                existingMap.set(item._id, {
+                  ...prev,
+                  sentimentScore:    item.sentimentScore    ?? prev.sentimentScore,
+                  alertLevel:        item.alertLevel        ?? prev.alertLevel,
+                  flaggedViolations: item.flaggedViolations ?? prev.flaggedViolations,
+                  auditSummary:      item.auditSummary      ?? prev.auditSummary,
+                });
+              } else {
+                // New item not previously in the list — add it
+                existingMap.set(item._id, item);
+              }
+            });
+
+            return Array.from(existingMap.values());
+          });
+
+          this.aiSummary.set(this.aiAnalyzer.buildSummary(this.aiReviews()));
           this.aiLoaded.set(true);
           this.aiLoading.set(false);
         },
@@ -527,12 +554,13 @@ export class ReviewsComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   getAiConfidenceScore(item: AiReviewItemExtended): number {
-    if (item.sentimentScore) {
-      if (item.sentimentScore === 'critical') return 92;
-      if (item.sentimentScore === 'negative') return 78;
-      if (item.sentimentScore === 'neutral')  return 60;
-      return 85;
-    }
+    // Use the normalised string sentimentScore if present
+    const sentiment = this.aiAnalyzer.getEffectiveSentiment(item);
+    if (sentiment === 'critical') return 92;
+    if (sentiment === 'negative') return 78;
+    if (sentiment === 'neutral')  return 60;
+    if (sentiment === 'positive') return 85;
+    // Ultimate fallback: derive from star rating
     return item.rating === 1 ? 88 : item.rating === 2 ? 72 : 55;
   }
 
