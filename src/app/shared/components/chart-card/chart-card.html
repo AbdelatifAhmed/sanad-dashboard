@@ -3,73 +3,109 @@
     <!-- Header -->
     <div class="flex justify-between items-center mb-6">
       <h4 class="font-title-lg text-title-lg text-on-surface font-bold">{{ title || 'Request Trends' }}</h4>
-      <select class="bg-surface-container-low border-none rounded-lg font-label-sm text-label-sm focus:ring-1 focus:ring-primary px-3 py-1.5 outline-none text-on-surface-variant">
-        <option>Last 30 Days</option>
-        <option>Last 6 Months</option>
-      </select>
+      <span class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container-low rounded-lg px-3 py-1.5">Booking Status</span>
     </div>
 
-    <!-- Chart Body -->
-    <div class="h-[200px] w-full flex items-end justify-between gap-2 px-2 pb-4 border-b border-outline-variant/30">
-      @for (bar of trendsData; track $index) {
-        <div 
-          [style.height.%]="bar.height"
-          [title]="bar.label + ': ' + bar.height + ' requests'"
-          class="flex-1 bg-primary/20 rounded-t-md hover:bg-primary/50 transition-all cursor-pointer relative group"
-        >
-          <!-- Tooltip on hover -->
-          <div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-on-surface text-surface text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
-            {{ bar.height }}%
+    @if (isLoading) {
+      <!-- Skeleton bars -->
+      <div class="h-[200px] w-full flex items-end justify-between gap-2 px-2 pb-4 border-b border-outline-variant/30 animate-pulse">
+        @for (i of [1,2,3]; track i) {
+          <div class="flex-1 bg-surface-container-low rounded-t-md" [style.height.%]="30 + i * 20"></div>
+        }
+      </div>
+      <div class="flex justify-between px-2 pt-4 animate-pulse">
+        <div class="h-3 w-20 rounded bg-surface-container-low"></div>
+        <div class="h-3 w-20 rounded bg-surface-container-low"></div>
+      </div>
+    } @else if (trendsData.length === 0) {
+      <!-- Empty state -->
+      <div class="flex flex-col items-center justify-center h-[200px] text-on-surface-variant">
+        <span class="material-symbols-outlined text-[48px] text-outline-variant">bar_chart</span>
+        <p class="font-body-sm text-body-sm mt-2">No booking data available yet.</p>
+      </div>
+    } @else {
+      <!-- Chart Body -->
+      <div class="h-[200px] w-full flex items-end justify-around gap-4 px-2 pb-4 border-b border-outline-variant/30">
+        @for (bar of trendsData; track $index) {
+          <div class="flex flex-col items-center gap-2 flex-1 h-full justify-end">
+            <span class="font-label-sm text-label-sm text-on-surface font-bold">{{ bar.count }}</span>
+            <div
+              [style.height.%]="bar.height < 8 && bar.count > 0 ? 8 : bar.height"
+              [title]="bar.label + ': ' + bar.count + ' bookings'"
+              class="w-full rounded-t-md hover:opacity-80 transition-all cursor-pointer relative group"
+              [class]="$index === 0 ? 'bg-error/40' : $index === 1 ? 'bg-primary/50' : 'bg-tertiary/50'"
+            >
+              <!-- Tooltip on hover -->
+              <div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-on-surface text-surface text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                {{ bar.count }} bookings
+              </div>
+            </div>
           </div>
-        </div>
-      }
-    </div>
+        }
+      </div>
 
-    <!-- Footer Legends -->
-    <div class="flex justify-between px-2 pt-4">
-      <p class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1.5">
-        <span class="w-3 h-3 rounded-full bg-primary"></span> New Bookings
-      </p>
-      <p class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1.5">
-        <span class="w-3 h-3 rounded-full bg-primary/20"></span> Completed
-      </p>
-    </div>
+      <!-- Footer Legends -->
+      <div class="flex justify-around px-2 pt-4">
+        @for (bar of trendsData; track $index) {
+          <p class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1.5">
+            <span
+              class="w-3 h-3 rounded-full"
+              [class]="$index === 0 ? 'bg-error/40' : $index === 1 ? 'bg-primary/50' : 'bg-tertiary/50'"
+            ></span>
+            {{ bar.label }}
+          </p>
+        }
+      </div>
+    }
   </div>
 } @else if (type === 'distribution') {
   <div class="bg-white p-5 rounded-2xl card-shadow border border-white h-full flex flex-col justify-between">
     <!-- Header -->
     <h4 class="font-title-lg text-title-lg text-on-surface font-bold mb-6">{{ title || 'User Distribution' }}</h4>
 
-    <!-- Donut Body -->
-    <div class="flex justify-center items-center h-[200px]">
-      <div 
-        class="relative w-44 h-44 rounded-full flex items-center justify-center shadow-inner"
-        style="background: conic-gradient(#006767 0% 71.4%, #96d3bd 71.4% 100%);"
-      >
-        <!-- Inner Cutout for Donut effect -->
-        <div class="absolute w-[120px] h-[120px] bg-white rounded-full flex flex-col items-center justify-center shadow-md">
-          <p class="font-headline-md text-headline-md font-extrabold text-primary leading-tight">{{ totalCount }}</p>
-          <p class="font-label-sm text-label-sm text-on-surface-variant">Total Users</p>
+    @if (isLoading) {
+      <!-- Skeleton donut -->
+      <div class="flex justify-center items-center h-[200px] animate-pulse">
+        <div class="w-44 h-44 rounded-full bg-surface-container-low flex items-center justify-center">
+          <div class="w-[120px] h-[120px] bg-white rounded-full border-4 border-surface-container-low"></div>
         </div>
       </div>
-    </div>
+      <div class="space-y-4 mt-6 animate-pulse">
+        <div class="flex justify-between"><div class="h-4 w-20 rounded bg-surface-container-low"></div><div class="h-4 w-8 rounded bg-surface-container-low"></div></div>
+        <div class="flex justify-between"><div class="h-4 w-20 rounded bg-surface-container-low"></div><div class="h-4 w-8 rounded bg-surface-container-low"></div></div>
+      </div>
+    } @else {
+      <!-- Donut Body -->
+      <div class="flex justify-center items-center h-[200px]">
+        <div
+          class="relative w-44 h-44 rounded-full flex items-center justify-center shadow-inner"
+          [style.background]="(familiesPercentage === 0 && caregiversPercentage === 0) ? '#e2e8f0' : ('conic-gradient(#006767 0% ' + familiesPercentage + '%, #96d3bd ' + familiesPercentage + '% 100%)')"
+        >
+          <!-- Inner Cutout for Donut effect -->
+          <div class="absolute w-[120px] h-[120px] bg-white rounded-full flex flex-col items-center justify-center shadow-md">
+            <p class="font-headline-md text-headline-md font-extrabold text-primary leading-tight">{{ totalCount }}</p>
+            <p class="font-label-sm text-label-sm text-on-surface-variant">Total Users</p>
+          </div>
+        </div>
+      </div>
 
-    <!-- Legends -->
-    <div class="space-y-4 mt-6">
-      <div class="flex justify-between items-center">
-        <div class="flex items-center gap-2.5">
-          <div class="w-3 h-3 rounded-full bg-primary"></div>
-          <span class="font-body-md text-body-md text-on-surface-variant font-medium">Families</span>
+      <!-- Legends -->
+      <div class="space-y-4 mt-6">
+        <div class="flex justify-between items-center">
+          <div class="flex items-center gap-2.5">
+            <div class="w-3 h-3 rounded-full bg-primary"></div>
+            <span class="font-body-md text-body-md text-on-surface-variant font-medium">Families</span>
+          </div>
+          <span class="font-label-md text-label-md font-bold text-on-surface">{{ familiesPercentage }}%</span>
         </div>
-        <span class="font-label-md text-label-md font-bold text-on-surface">{{ familiesPercentage }}%</span>
-      </div>
-      <div class="flex justify-between items-center">
-        <div class="flex items-center gap-2.5">
-          <div class="w-3 h-3 rounded-full bg-secondary-fixed-dim"></div>
-          <span class="font-body-md text-body-md text-on-surface-variant font-medium">Caregivers</span>
+        <div class="flex justify-between items-center">
+          <div class="flex items-center gap-2.5">
+            <div class="w-3 h-3 rounded-full bg-secondary-fixed-dim"></div>
+            <span class="font-body-md text-body-md text-on-surface-variant font-medium">Caregivers</span>
+          </div>
+          <span class="font-label-md text-label-md font-bold text-on-surface">{{ caregiversPercentage }}%</span>
         </div>
-        <span class="font-label-md text-label-md font-bold text-on-surface">{{ caregiversPercentage }}%</span>
       </div>
-    </div>
+    }
   </div>
 }

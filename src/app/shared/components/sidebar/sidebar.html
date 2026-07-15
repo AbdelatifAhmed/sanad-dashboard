@@ -1,55 +1,108 @@
-<aside class="fixed left-0 top-0 h-full w-[260px] bg-surface-container-low border-r border-outline-variant/30 flex flex-col z-50">
-  <!-- Brand Logo -->
-  <div class="py-8 px-6">
-    <div class="flex items-center gap-3">
-      <div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white">
-        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">medical_services</span>
-      </div>
-      <div>
-        <h1 class="font-headline-sm text-headline-sm font-bold text-primary">Sanad</h1>
-        <p class="font-label-sm text-label-sm text-on-surface-variant/70 uppercase tracking-widest">Admin Portal</p>
+<!-- ── Mobile backdrop ─────────────────────────────────────────────────────── -->
+@if (layout.sidebarOpen()) {
+  <div class="fixed inset-0 bg-black/40 z-40 lg:hidden" (click)="layout.closeSidebar()"></div>
+}
+
+<!-- ── Sidebar ──────────────────────────────────────────────────────────────── -->
+<aside
+  class="fixed left-0 top-0 h-full w-[260px] bg-surface-container-low border-r border-outline-variant/30 flex flex-col z-50 transition-transform duration-300 lg:translate-x-0"
+  [class.-translate-x-full]="!layout.sidebarOpen()"
+>
+  <!-- Brand -->
+  <div class="py-5 px-5 flex items-center justify-between">
+    <div class="flex items-center gap-2.5 min-w-0">
+      <!-- Sanad logo -->
+      <img src="logo.png" alt="Sanad Logo" width="36" height="36" class="w-9 h-9 rounded-xl object-contain shrink-0 shadow-sm" />
+      <div class="min-w-0">
+        <h1 class="font-headline-sm text-headline-sm font-bold text-primary leading-none">Sanad</h1>
+        <p class="font-label-sm text-label-sm text-on-surface-variant/60 uppercase tracking-widest text-[9px]">Admin Portal</p>
       </div>
     </div>
+    <!-- Close button — mobile only -->
+    <button (click)="layout.closeSidebar()" class="lg:hidden p-1.5 rounded-lg hover:bg-surface-container transition-colors cursor-pointer text-on-surface-variant">
+      <span class="material-symbols-outlined text-[20px]">close</span>
+    </button>
   </div>
 
   <!-- Navigation -->
-  <nav class="flex-1 px-4 space-y-1">
+  <nav class="flex-1 px-3 space-y-0.5 overflow-y-auto">
     @for (item of navItems; track item.route) {
-      <a 
-        [routerLink]="item.route" 
-        routerLinkActive="text-primary font-bold border-l-4 border-primary bg-secondary-container/10"
-        [routerLinkActiveOptions]="{ exact: true }"
-        class="flex items-center gap-3 px-4 py-3 text-on-surface-variant font-medium hover:bg-surface-container-high transition-colors duration-200"
+      <a
+        [routerLink]="item.route"
+        routerLinkActive="text-primary font-bold border-l-[3px] border-primary bg-primary/8"
+        (click)="layout.closeSidebar()"
+        class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-on-surface-variant font-medium hover:bg-surface-container-high transition-colors duration-150 cursor-pointer"
       >
-        <span class="material-symbols-outlined">{{ item.icon }}</span>
-        <span class="font-label-md text-label-md">{{ item.label }}</span>
+        <span class="material-symbols-outlined text-[20px] shrink-0">{{ item.icon }}</span>
+        <span class="font-label-md text-label-md truncate">{{ item.label }}</span>
       </a>
     }
 
-    <!-- System Section Header -->
-    <div class="pt-8 pb-4 px-4">
-      <p class="font-label-sm text-label-sm text-outline uppercase tracking-tighter">System</p>
+    <!-- Messages — separate item with unread badge -->
+    <a
+      routerLink="/messages"
+      routerLinkActive="text-primary font-bold border-l-[3px] border-primary bg-primary/8"
+      (click)="layout.closeSidebar()"
+      class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-on-surface-variant font-medium hover:bg-surface-container-high transition-colors duration-150 cursor-pointer"
+    >
+      <span class="material-symbols-outlined text-[20px] shrink-0">chat</span>
+      <span class="font-label-md text-label-md truncate flex-1">Messages</span>
+      @if (totalUnread() > 0) {
+        <span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-[11px] font-bold leading-none">
+          {{ totalUnread() > 99 ? '99+' : totalUnread() }}
+        </span>
+      }
+    </a>
+
+    <!-- System section -->
+    <!-- <div class="pt-6 pb-2 px-4">
+      <p class="font-label-sm text-label-sm text-outline/70 uppercase tracking-widest text-[10px]">System</p>
     </div>
 
-    <!-- Settings Link -->
-    <a 
-      routerLink="/settings" 
-      routerLinkActive="text-primary font-bold border-l-4 border-primary bg-secondary-container/10"
-      class="flex items-center gap-3 px-4 py-3 text-on-surface-variant font-medium hover:bg-surface-container-high transition-colors duration-200"
+    <a
+      routerLink="/settings"
+      routerLinkActive="text-primary font-bold border-l-[3px] border-primary bg-primary/8"
+      (click)="layout.closeSidebar()"
+      class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-on-surface-variant font-medium hover:bg-surface-container-high transition-colors duration-150 cursor-pointer"
     >
-      <span class="material-symbols-outlined">settings</span>
+      <span class="material-symbols-outlined text-[20px] shrink-0">settings</span>
       <span class="font-label-md text-label-md">Settings</span>
-    </a>
+    </a> -->
   </nav>
 
-  <!-- Health Card widget -->
-  <div class="p-4 mt-auto">
-    <div class="bg-primary-container text-on-primary-container p-4 rounded-2xl">
-      <p class="font-label-md text-label-md font-bold mb-1">System Health</p>
-      <div class="w-full bg-black/10 h-1.5 rounded-full overflow-hidden">
-        <div class="bg-white h-full w-[94%]"></div>
-      </div>
-      <p class="font-label-sm text-label-sm mt-2 opacity-80">94.2% Uptime</p>
-    </div>
+  <!-- Logout -->
+  <div class="p-3 border-t border-outline-variant/30">
+    <a
+      (click)="openLogoutModal($event)"
+      class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-error hover:bg-error-container/20 transition-colors cursor-pointer"
+    >
+      <span class="material-symbols-outlined text-[20px] shrink-0">logout</span>
+      <span class="font-label-md text-label-md font-semibold">Logout</span>
+    </a>
   </div>
 </aside>
+
+<!-- ── Logout Dialog ────────────────────────────────────────────────────────── -->
+@if (showLogoutModal()) {
+  <div class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    <div class="bg-white p-6 rounded-2xl shadow-xl max-w-sm w-full border border-outline-variant/30">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-full bg-error/10 flex items-center justify-center text-error shrink-0">
+          <span class="material-symbols-outlined">logout</span>
+        </div>
+        <h3 class="font-headline-sm text-headline-sm font-bold text-on-surface">Sign Out</h3>
+      </div>
+      <p class="font-body-md text-body-md text-on-surface-variant mb-6">Are you sure you want to sign out of the admin portal?</p>
+      <div class="flex justify-end gap-3">
+        <button (click)="cancelLogout()"
+          class="px-4 py-2 border border-outline rounded-lg text-on-surface font-label-md hover:bg-surface-container transition-colors cursor-pointer">
+          Cancel
+        </button>
+        <button (click)="confirmLogout()"
+          class="px-4 py-2 bg-error text-white font-label-md rounded-lg hover:opacity-90 active:scale-95 transition-all cursor-pointer">
+          Sign Out
+        </button>
+      </div>
+    </div>
+  </div>
+}

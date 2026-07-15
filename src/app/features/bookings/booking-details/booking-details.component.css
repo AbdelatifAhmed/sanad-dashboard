@@ -1,0 +1,118 @@
+/* Booking Details — extends shared pp-* system */
+
+/* ── Header icon ────────────────────────────────────────────── */
+.bd-header-icon {
+  width: 80px; height: 80px; border-radius: 18px;
+  background: rgba(0,103,103,0.08);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0,103,103,0.1);
+}
+
+/* ── Tab count pill ─────────────────────────────────────────── */
+.bd-tab-count {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--color-primary); color: #fff;
+  font-size: 10px; font-weight: 700;
+}
+
+/* ── Status badges ──────────────────────────────────────────── */
+.bd-pending   { background: #fff3cd; color: #856404; }
+.bd-awaiting  { background: #eff6ff; color: #1e40af; }
+.bd-approved  { background: rgba(44,105,86,0.1); color: var(--color-secondary); }
+.bd-active    { background: rgba(0,103,103,0.08); color: var(--color-primary); }
+.bd-completed { background: #ecfdf5; color: #065f46; }
+.bd-cancelled { background: #fff0f0; color: var(--color-error); }
+.bd-pay-paid     { background: #ecfdf5; color: #065f46; }
+.bd-pay-unpaid   { background: #fff0f0; color: var(--color-error); }
+.bd-pay-refunded { background: #eff6ff; color: #1e40af; }
+.bd-direct-badge {
+  background: rgba(124,58,237,0.1); color: #7c3aed;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+
+/* ── Party card (family / caregiver block) ──────────────────── */
+.bd-party-card {
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 12px;
+}
+.bd-party-avatar {
+  width: 52px; height: 52px; border-radius: 50%;
+  object-fit: cover; flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.bd-party-placeholder-family {
+  width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0;
+  background: rgba(44,105,86,0.1); color: var(--color-secondary);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; font-weight: 700;
+}
+.bd-party-placeholder-cg {
+  width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0;
+  background: rgba(0,103,103,0.1); color: var(--color-primary);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; font-weight: 700;
+}
+
+/* ── View profile link ──────────────────────────────────────── */
+.bd-view-link {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 13px; font-weight: 700; color: var(--color-primary);
+  background: none; border: none; cursor: pointer; padding: 0;
+  transition: opacity 150ms;
+}
+.bd-view-link:hover { opacity: 0.75; }
+
+/* ── Payment hero card ──────────────────────────────────────── */
+.bd-payment-hero {
+  display: flex; align-items: center; gap: 18px;
+  border-radius: 16px; padding: 24px 28px; margin-bottom: 16px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+.bd-payment-paid     { background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #fff; }
+.bd-payment-unpaid   { background: linear-gradient(135deg, #ba1a1a 0%, #991b1b 100%); color: #fff; }
+.bd-payment-refunded { background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%); color: #fff; }
+.bd-payment-hero-icon { font-size: 40px; opacity: 0.9; }
+.bd-payment-label { font-size: 12px; font-weight: 500; opacity: 0.85; text-transform: uppercase; letter-spacing: 0.4px; }
+.bd-payment-value { font-size: 26px; font-weight: 800; line-height: 1.2; }
+
+/* ── Review ─────────────────────────────────────────────────── */
+.bd-review-header {
+  display: flex; align-items: flex-start; gap: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--color-outline-variant);
+  margin-bottom: 14px;
+}
+.bd-reviewer-avatar {
+  width: 46px; height: 46px; border-radius: 50%; object-fit: cover;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+.bd-reviewer-placeholder {
+  width: 46px; height: 46px; border-radius: 50%;
+  background: rgba(0,103,103,0.1); color: var(--color-primary);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 700;
+}
+.bd-review-quote {
+  font-size: 14px; color: var(--color-on-surface); line-height: 1.7;
+  font-style: italic; margin: 0;
+  padding: 12px 16px;
+  background: var(--color-surface-container-low);
+  border-radius: 10px;
+  border-left: 3px solid var(--color-primary);
+}
+
+/* ── Proposal card ──────────────────────────────────────────── */
+.bd-proposal-card {
+  display: flex; align-items: flex-start;
+  justify-content: space-between; gap: 16px;
+  flex-wrap: wrap;
+}
+.bd-proposal-left {
+  display: flex; align-items: flex-start; gap: 14px; flex: 1; min-width: 0;
+}
+.bd-proposal-avatar {
+  width: 44px; height: 44px; border-radius: 50%; object-fit: cover;
+  flex-shrink: 0; box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}

@@ -4,6 +4,7 @@
 @import "./Styles/_typography.css";
 @import "./Styles/_animations.css";
 @import "./Styles/_utilities.css";
+@import "./Styles/_profile-page.css";
 
 @theme {
   --color-secondary-fixed: #b1efd8;
@@ -37,7 +38,7 @@
   --color-surface-bright: #fcf9f8;
   --color-primary: #006767;
   --color-outline: #6e7979;
-  --color-background: #F3E9DC;
+  --color-background: #FAFAFA;
   --color-on-tertiary: #ffffff;
   --color-surface-container-high: #eae7e7;
   --color-on-error-container: #93000a;
@@ -75,3 +76,35 @@
   --font-headline-sm: "Plus Jakarta Sans", sans-serif;
 }
 
+
+/* ── Tailwind v4 safelist — dynamic classes returned from the backend API ─────
+   These class strings are not present in template files so Tailwind's scanner
+   won't find them. Declaring them inside @layer utilities forces inclusion.   */
+@layer utilities {
+  /* Resubmission activity event badge & icon colors */
+  .bg-teal-50    { background-color: #f0fdfa; }
+  .bg-teal-100   { background-color: #ccfbf1; }
+  .text-teal-700 { color: #0f766e; }
+  .border-teal-200 { border-color: #99f6e4; }
+}
+
+/* ── Leaflet global overrides ─────────────────────────────────────────────── */
+/* Leaflet injects tiles and popups into <body>, so these MUST live in
+   the global stylesheet — component-scoped styles cannot reach them.    */
+
+.sanad-popup .leaflet-popup-content-wrapper {
+  border-radius: 10px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12) !important;
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  padding: 0 !important;
+}
+.sanad-popup .leaflet-popup-tip {
+  background: #ffffff !important;
+}
+.sanad-popup .leaflet-popup-content {
+  margin: 10px 14px !important;
+}
+.leaflet-control-attribution {
+  font-size: 9px !important;
+  opacity: 0.6;
+}

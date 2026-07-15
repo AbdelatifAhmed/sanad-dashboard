@@ -1,0 +1,295 @@
+/* ══════════════════════════════════════════════════════════
+   Guardian AI Security Center — Component Styles
+   ══════════════════════════════════════════════════════════ */
+
+/* ── Page Entry Animation ─────────────────────────────────── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.85); }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.95) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.animate-fade-in-up   { animation: fadeInUp 0.5s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-scale-in     { animation: scaleIn 0.35s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-slide-right  { animation: slideInRight 0.4s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-count-up     { animation: countUp 0.4s ease both; }
+.animate-modal-in     { animation: modalIn 0.3s cubic-bezier(0.16,1,0.3,1) both; }
+
+/* Stagger helpers */
+.delay-100 { animation-delay: 0.1s; }
+.delay-150 { animation-delay: 0.15s; }
+.delay-200 { animation-delay: 0.2s; }
+.delay-250 { animation-delay: 0.25s; }
+.delay-300 { animation-delay: 0.3s; }
+.delay-350 { animation-delay: 0.35s; }
+.delay-400 { animation-delay: 0.4s; }
+
+/* ── Skeleton Loader ─────────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+/* ── Overview KPI Cards ─────────────────────────────────── */
+.kpi-card {
+  transition: transform 0.22s cubic-bezier(0.16,1,0.3,1),
+              box-shadow 0.22s ease;
+}
+.kpi-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.08);
+}
+
+/* Mini progress bar inside KPI card */
+.mini-progress-track {
+  height: 4px;
+  border-radius: 9999px;
+  background: rgba(0,0,0,0.06);
+  overflow: hidden;
+}
+.mini-progress-fill {
+  height: 100%;
+  border-radius: 9999px;
+  /* Width is set via [style.width] binding.
+     The grow animation expands max-width from 0 → 100%
+     so the actual width (set inline) acts as the cap. */
+  max-width: 0%;
+  animation: progressGrow 0.9s 0.35s cubic-bezier(0.16,1,0.3,1) forwards;
+}
+@keyframes progressGrow {
+  to { max-width: 100%; }
+}
+
+/* ── AI Summary Banner ─────────────────────────────────── */
+.ai-summary-card {
+  background: linear-gradient(135deg, #f0fdff 0%, #f5f3ff 50%, #fdf4ff 100%);
+}
+
+/* ── Data Grid ──────────────────────────────────────────── */
+.data-grid-row {
+  transition: background 0.15s ease;
+}
+.data-grid-row:hover {
+  background: rgba(0,103,103,0.03);
+}
+
+/* Risk circular progress */
+.risk-ring {
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+}
+.risk-ring-bg {
+  fill: none;
+  stroke: #f3f4f6;
+  stroke-width: 3.5;
+}
+.risk-ring-fill {
+  fill: none;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1s cubic-bezier(0.16,1,0.3,1);
+}
+
+/* Recommendation chip */
+.rec-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* ── Quick Filter Chips ──────────────────────────────────── */
+.quick-chip {
+  transition: all 0.18s cubic-bezier(0.16,1,0.3,1);
+}
+.quick-chip:hover:not(.active) {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+}
+.quick-chip.active {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+/* ── Filtering Toolbar ──────────────────────────────────── */
+.filter-btn {
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.filter-btn.active {
+  background: white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+}
+
+/* ── Investigation Modal ─────────────────────────────────── */
+.modal-overlay {
+  animation: fadeInUp 0.2s ease both;
+}
+.modal-tab {
+  transition: all 0.18s ease;
+  border-bottom: 2px solid transparent;
+  padding-bottom: 10px;
+}
+.modal-tab.active {
+  color: #006767;           /* = var(--color-primary) */
+  border-bottom-color: #006767;
+}
+.modal-tab:hover:not(.active) {
+  color: #1b1c1c;
+}
+
+/* Timeline */
+.timeline-node {
+  position: relative;
+}
+.timeline-node::before {
+  content: '';
+  position: absolute;
+  left: -27px;
+  top: 18px;
+  bottom: -28px;
+  width: 2px;
+  background: linear-gradient(to bottom, #e5e7eb, transparent);
+}
+.timeline-node:last-child::before { display: none; }
+
+/* ── Donut Chart ─────────────────────────────────────────── */
+.donut-segment {
+  transition: opacity 0.2s ease;
+}
+.donut-segment:hover { opacity: 0.8; }
+
+/* ── Chart time range selector ──────────────────────────── */
+.time-range-btn {
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+.time-range-btn.active {
+  background: #006767;
+  color: white;
+}
+.time-range-btn:not(.active) {
+  color: #6b7280;
+}
+.time-range-btn:not(.active):hover {
+  background: #f3f4f6;
+  color: #1b1c1c;
+}
+
+/* ── Live pulse dot ─────────────────────────────────────── */
+.live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #22c55e;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+/* ── Investigate Button ─────────────────────────────────── */
+.investigate-btn {
+  background: #e6f4f4;
+  color: #006767;
+  border: 1.5px solid #b2dada;
+  transition: background 0.2s ease, border-color 0.2s ease,
+              box-shadow 0.2s ease, transform 0.15s ease;
+}
+.investigate-btn:hover {
+  background: #006767;
+  color: #ffffff;
+  border-color: #006767;
+  box-shadow: 0 4px 12px rgba(0,103,103,0.25);
+  transform: translateY(-1px);
+}
+.investigate-btn:active {
+  transform: translateY(0) scale(0.97);
+  box-shadow: none;
+}
+.investigate-btn:focus-visible {
+  outline: 2px solid #006767;
+  outline-offset: 2px;
+}
+.investigate-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ── Action buttons ─────────────────────────────────────── */
+.action-btn {
+  transition: all 0.2s ease;
+}
+.action-btn:hover:not(:disabled) { transform: translateY(-1px); }
+.action-btn:active:not(:disabled) { transform: translateY(0) scale(0.97); }
+.action-btn:focus-visible {
+  outline: 2px solid #006767;
+  outline-offset: 2px;
+}
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ── Tooltip ─────────────────────────────────────────────── */
+.tooltip-trigger {
+  position: relative;
+}
+.tooltip-content {
+  position: absolute;
+  bottom: 110%;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  background: #1b1c1c;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 8px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+  z-index: 50;
+}
+.tooltip-trigger:hover .tooltip-content { opacity: 1; }
+
+/* ── Responsive ─────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .kpi-card { min-height: 100px; }
+}

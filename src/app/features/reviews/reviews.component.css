@@ -1,0 +1,67 @@
+/* ── Reviews: AI Moderation Dashboard ─────────────────────────────────────── */
+
+/* ── Investigation Drawer ─────────────────────────────────────────────────── */
+.rvw-drawer {
+  width: 90vw;
+  max-width: 1300px;
+  background: #ffffff;
+  box-shadow: -8px 0 40px rgba(0, 0, 0, 0.18);
+  transform: translateX(100%);
+  transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.rvw-drawer-open {
+  transform: translateX(0);
+}
+
+/* Sticky header */
+.rvw-drawer-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+/* Sticky footer */
+.rvw-drawer-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+}
+
+/* Sticky sidebar */
+.rvw-sidebar {
+  position: sticky;
+  top: 0;
+  height: 100%;
+  overflow-y: auto;
+}
+
+/* ── Expanded table row ───────────────────────────────────────────────────── */
+.rvw-expanded-row {
+  background-color: var(--color-surface-container-lowest, #f8f6f6) !important;
+}
+
+/* ── Stat cards ──────────────────────────────────────────────────────────── */
+.rvw-stat-card {
+  height: 100%;
+  min-height: 96px;
+}
+
+/* ── Responsive drawer ───────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .rvw-drawer {
+    width: 100vw;
+  }
+  .rvw-sidebar {
+    display: none !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .rvw-drawer {
+    width: 100vw;
+    height: 100%;
+  }
+}

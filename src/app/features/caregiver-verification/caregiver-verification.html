@@ -1,0 +1,263 @@
+<!-- ═══════════════════════════════════════════════════════════════════════
+     Caregivers Directory — Modern SaaS Grid Layout
+════════════════════════════════════════════════════════════════════════ -->
+<div class="dir-page">
+
+  <!-- ── Page Header ──────────────────────────────────────────────────────── -->
+  <div class="dir-page-header">
+    <div class="dir-page-title-group">
+      <h1 class="dir-page-title">
+        <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">medical_services</span>
+        Caregivers
+      </h1>
+      <p class="dir-page-subtitle">Search, filter, and manage all registered caregivers on the platform</p>
+    </div>
+
+    <!-- Total count badge -->
+    <div class="dir-count-badge">
+      <span class="material-symbols-outlined" style="font-size:16px; font-variation-settings:'FILL' 1;">group</span>
+      @if (isLoading()) { — } @else { {{ total() }} }
+      caregivers
+    </div>
+  </div>
+
+  <!-- ── Filter Bar ────────────────────────────────────────────────────────── -->
+  <div class="dir-filter-bar">
+
+    <!-- Search -->
+    <div class="dir-search-wrap">
+      <span class="material-symbols-outlined dir-search-icon">search</span>
+      <input
+        type="text" id="dir-search" name="dir-search"
+        [value]="searchQuery"
+        (input)="onSearchInput($event)"
+        class="dir-search-input"
+        placeholder="Search by name, email, or phone…"
+        autocomplete="off"
+      />
+      @if (searchQuery) {
+        <button class="dir-search-clear" (click)="searchQuery=''; page.set(1); load()">
+          <span class="material-symbols-outlined" style="font-size:16px;">close</span>
+        </button>
+      }
+    </div>
+
+    <!-- Specialization -->
+    <select id="dir-spec" name="dir-spec" class="dir-select" [value]="specializationFilter" (change)="setSpecialization($any($event.target).value)">
+      @for (s of specializations; track s.value) {
+        <option [value]="s.value">{{ s.label }}</option>
+      }
+    </select>
+
+    <!-- Sort -->
+    <select id="dir-sort" name="dir-sort" class="dir-select" [value]="sortBy" (change)="setSort($any($event.target).value)">
+      <option value="createdAt">Sort: Newest</option>
+      <option value="rating">Sort: Rating</option>
+      <option value="totalWorkHours">Sort: Work Hours</option>
+      <option value="hourlyRate">Sort: Rate</option>
+    </select>
+
+    <!-- Clear filters -->
+    @if (hasActiveFilters) {
+      <button class="dir-clear-btn" (click)="clearFilters()">
+        <span class="material-symbols-outlined" style="font-size:15px;">filter_list_off</span>
+        Clear
+      </button>
+    }
+  </div>
+
+  <!-- ── Status Filter Chips ──────────────────────────────────────────────── -->
+  <div class="dir-chips">
+    @for (s of statuses; track s.value) {
+      <button class="dir-chip" [class]="s.colorClass" [class.dir-chip-active]="statusFilter === s.value"
+        (click)="setStatus(s.value)">
+        {{ s.label }}
+      </button>
+    }
+  </div>
+
+  <!-- ── Results info ─────────────────────────────────────────────────────── -->
+  @if (!isLoading()) {
+    <div class="dir-results-row">
+      <span class="dir-results-text">
+        Showing {{ companions().length }} of {{ total() }} caregivers
+        @if (hasActiveFilters) { <span class="dir-results-filtered">(filtered)</span> }
+      </span>
+      <div class="dir-sort-toggle">
+        <button class="dir-sort-dir-btn" (click)="sortOrder = sortOrder === 'desc' ? 'asc' : 'desc'; load()">
+          <span class="material-symbols-outlined" style="font-size:16px;">
+            {{ sortOrder === 'desc' ? 'arrow_downward' : 'arrow_upward' }}
+          </span>
+          {{ sortOrder === 'desc' ? 'Descending' : 'Ascending' }}
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- ── Grid / Loading / Empty ────────────────────────────────────────────── -->
+  @if (isLoading()) {
+    <!-- Skeleton grid -->
+    <div class="dir-grid">
+      @for (i of [1,2,3,4,5,6,7,8,9,10,11,12]; track i) {
+        <div class="dir-skeleton-card">
+          <div class="dir-sk-avatar"></div>
+          <div class="dir-sk-lines">
+            <div class="dir-sk-line dir-sk-line-lg"></div>
+            <div class="dir-sk-line dir-sk-line-sm"></div>
+            <div class="dir-sk-line dir-sk-line-md"></div>
+          </div>
+          <div class="dir-sk-footer">
+            <div class="dir-sk-badge"></div>
+            <div class="dir-sk-badge"></div>
+          </div>
+        </div>
+      }
+    </div>
+
+  } @else if (error()) {
+    <div class="dir-error-state">
+      <span class="material-symbols-outlined">error</span>
+      <p>{{ error() }}</p>
+      <button class="dir-retry-btn" (click)="load()">Try Again</button>
+    </div>
+
+  } @else if (companions().length === 0) {
+    <div class="dir-empty-state">
+      <app-empty-state icon="search_off" title="No Caregivers Found"
+        subtitle="Try adjusting your search or filters to see more results." />
+      @if (hasActiveFilters) {
+        <button class="dir-clear-btn dir-clear-btn-lg" (click)="clearFilters()">Clear all filters</button>
+      }
+    </div>
+
+  } @else {
+    <!-- ── Caregiver Cards Grid ────────────────────────────────────────── -->
+    <div class="dir-grid">
+      @for (comp of companions(); track trackById($index, comp)) {
+        <div class="dir-card" role="button" tabindex="0"
+          (click)="openProfile(comp._id)"
+          (keydown.enter)="openProfile(comp._id)">
+
+          <!-- Card top: avatar + status badge + action hint -->
+          <div class="dir-card-top">
+            <div class="dir-card-avatar-wrap">
+              @if (comp.userId.avatar?.url) {
+                <img [src]="comp.userId.avatar!.url" [alt]="comp.userId.name" class="dir-card-avatar" />
+              } @else {
+                <div class="dir-card-avatar-placeholder">{{ getInitials(comp.userId.name) }}</div>
+              }
+              <!-- Status dot -->
+              <span class="dir-card-status-dot" [class]="getStatusClass(comp.verificationStatus)"
+                [title]="getStatusLabel(comp.verificationStatus)"></span>
+            </div>
+
+            <!-- Status badge -->
+            <span class="dir-card-badge" [class]="getStatusClass(comp.verificationStatus)">
+              <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1; font-size:12px;">
+                {{ getStatusIcon(comp.verificationStatus) }}
+              </span>
+              {{ getStatusLabel(comp.verificationStatus) }}
+            </span>
+          </div>
+
+          <!-- Card identity -->
+          <div class="dir-card-identity">
+            <h3 class="dir-card-name">{{ comp.userId.name || 'Unknown' }}</h3>
+            <p class="dir-card-role">{{ getSpecializationLabel(comp.specialization) }}</p>
+
+            <!-- Stars -->
+            <div class="dir-card-rating">
+              @if (comp.reviewCount && comp.reviewCount > 0) {
+                <div class="dir-stars">
+                  @for (filled of getRatingStars(comp.rating); track $index) {
+                    <span class="material-symbols-outlined dir-star"
+                      [class.dir-star-filled]="filled"
+                      style="font-variation-settings:'FILL' 1;">star</span>
+                  }
+                </div>
+                <span class="dir-rating-val">{{ comp.rating.toFixed(1) }}</span>
+                <span class="dir-rating-count">({{ comp.reviewCount }})</span>
+              } @else {
+                <span class="dir-no-rating">No ratings yet</span>
+              }
+            </div>
+          </div>
+
+          <!-- Card meta grid -->
+          <div class="dir-card-meta">
+            @if (comp.userId.location?.city || comp.userId.location?.governorate) {
+              <div class="dir-meta-item">
+                <span class="material-symbols-outlined dir-meta-icon">location_on</span>
+                <span>{{ comp.userId.location?.city || comp.userId.location?.governorate }}</span>
+              </div>
+            }
+            <div class="dir-meta-item">
+              <span class="material-symbols-outlined dir-meta-icon">schedule</span>
+              <span>{{ comp.totalWorkHours || 0 }}h worked</span>
+            </div>
+            <div class="dir-meta-item">
+              <span class="material-symbols-outlined dir-meta-icon">payments</span>
+              <span>{{ comp.hourlyRate || '—' }} EGP/hr</span>
+            </div>
+            <div class="dir-meta-item">
+              <span class="material-symbols-outlined dir-meta-icon">calendar_today</span>
+              <span>{{ comp.createdAt | date:'MMM y' }}</span>
+            </div>
+          </div>
+
+          <!-- Card footer: docs progress + view cta -->
+          <div class="dir-card-footer">
+            @let docs = getDocsProgress(comp);
+            <div class="dir-docs-bar">
+              <div class="dir-docs-track">
+                <div class="dir-docs-fill" [style.width]="(docs.done / docs.total * 100) + '%'"
+                  [class.dir-docs-complete]="docs.done === docs.total"></div>
+              </div>
+              <span class="dir-docs-label">
+                {{ docs.done }}/{{ docs.total }} docs
+              </span>
+            </div>
+            <span class="dir-card-cta">
+              View Profile
+              <span class="material-symbols-outlined" style="font-size:14px;">arrow_forward</span>
+            </span>
+          </div>
+
+        </div>
+      }
+    </div>
+
+    <!-- ── Pagination ────────────────────────────────────────────────────── -->
+    @if (totalPages() > 1) {
+      <div class="dir-pagination">
+        <button class="dir-pg-btn" [disabled]="page() === 1" (click)="goToPage(page() - 1)">
+          <span class="material-symbols-outlined">chevron_left</span>
+        </button>
+
+        @if (pageNumbers()[0] > 1) {
+          <button class="dir-pg-num" (click)="goToPage(1)">1</button>
+          @if (pageNumbers()[0] > 2) {
+            <span class="dir-pg-ellipsis">…</span>
+          }
+        }
+
+        @for (n of pageNumbers(); track n) {
+          <button class="dir-pg-num" [class.dir-pg-active]="n === page()" (click)="goToPage(n)">{{ n }}</button>
+        }
+
+        @if (pageNumbers()[pageNumbers().length - 1] < totalPages()) {
+          @if (pageNumbers()[pageNumbers().length - 1] < totalPages() - 1) {
+            <span class="dir-pg-ellipsis">…</span>
+          }
+          <button class="dir-pg-num" (click)="goToPage(totalPages())">{{ totalPages() }}</button>
+        }
+
+        <button class="dir-pg-btn" [disabled]="page() === totalPages()" (click)="goToPage(page() + 1)">
+          <span class="material-symbols-outlined">chevron_right</span>
+        </button>
+      </div>
+    }
+  }
+</div>
+
+<app-toast [toast]="toast()" />

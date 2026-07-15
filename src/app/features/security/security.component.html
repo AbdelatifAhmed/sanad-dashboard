@@ -1,0 +1,601 @@
+﻿<div class="space-y-6 pb-10">
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       HEADER
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div class="flex flex-col md:flex-row md:items-start justify-between gap-5 animate-fade-in-up">
+    <div class="space-y-1.5">
+      <div class="flex items-center gap-3">
+        <div class="p-2.5 rounded-2xl bg-gradient-to-br from-red-500 to-rose-600 shadow-sm shrink-0">
+          <span class="material-symbols-outlined text-white text-xl font-bold">shield_with_heart</span>
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold text-gray-800 tracking-tight">Guardian AI Security Center</h1>
+          <p class="text-xs text-gray-400 font-medium">AI-powered platform safety monitoring & threat intelligence</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 pl-1 flex-wrap">
+        <span class="text-[11px] text-gray-400 font-medium flex items-center gap-1">
+          <span class="material-symbols-outlined text-[14px]">schedule</span>
+          Last sync: {{ lastSyncTime() | date:'MMM d, h:mm a' }}
+        </span>
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold uppercase">
+          <span class="live-dot"></span>
+          Live Monitoring
+        </span>
+      </div>
+    </div>
+    <div class="flex items-center gap-2 shrink-0 flex-wrap">
+      <button (click)="syncFeed()" [disabled]="isSyncing()"
+        class="action-btn flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white border border-gray-200 hover:border-primary/50 hover:bg-primary/5 text-gray-700 font-semibold text-xs shadow-sm cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed transition-all focus:outline-none focus:ring-2 focus:ring-primary/30">
+        @if (isSyncing()) {
+          <span class="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin shrink-0"></span>
+          Syncingâ€¦
+        } @else {
+          <span class="material-symbols-outlined text-base">sync</span>
+          Sync Feed
+        }
+      </button>
+    </div>
+  </div>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       OVERVIEW KPI CARDS
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    @if (isLoading()) {
+      @for (i of [1,2,3,4]; track i) {
+        <div class="bg-white rounded-[20px] p-6 pb-7 shadow-sm border border-gray-100 animate-pulse h-44">
+          <div class="skeleton h-10 w-10 rounded-xl mb-4"></div>
+          <div class="skeleton h-3 w-24 mb-2"></div>
+          <div class="skeleton h-7 w-16 mb-4"></div>
+          <div class="skeleton h-1.5 w-full rounded-full"></div>
+        </div>
+      }
+    } @else {
+
+      <!-- Users Scanned -->
+      <div class="kpi-card bg-white rounded-[20px] p-6 pb-7 shadow-sm border border-gray-100 animate-fade-in-up delay-100 flex flex-col">
+        <div class="flex items-start justify-between mb-4">
+          <div class="p-2.5 rounded-xl bg-indigo-50 text-indigo-600">
+            <span class="material-symbols-outlined text-xl">manage_search</span>
+          </div>
+          <span class="text-[11px] font-bold text-gray-400 flex items-center gap-0.5">
+            <span class="material-symbols-outlined text-sm">people</span>total
+          </span>
+        </div>
+        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Users Scanned</p>
+        <h3 class="text-3xl font-bold text-gray-800 animate-count-up flex-1">{{ totalScanned() }}</h3>
+        <div class="mini-progress-track mt-4">
+          <div class="mini-progress-fill bg-indigo-500" [style.width]="usersScannedPercent() + '%'"></div>
+        </div>
+      </div>
+
+      <!-- Active Alerts -->
+      <div class="kpi-card bg-white rounded-[20px] p-6 pb-7 shadow-sm border border-gray-100 animate-fade-in-up delay-150 flex flex-col">
+        <div class="flex items-start justify-between mb-4">
+          <div class="p-2.5 rounded-xl bg-amber-50 text-amber-600">
+            <span class="material-symbols-outlined text-xl">notifications_active</span>
+          </div>
+          <span class="text-[11px] font-bold flex items-center gap-0.5"
+            [class]="pendingAlertsCount() > 0 ? 'text-red-500' : 'text-emerald-600'">
+            <span class="material-symbols-outlined text-sm">{{ pendingAlertsCount() > 0 ? 'trending_up' : 'trending_flat' }}</span>
+            {{ pendingAlertsCount() > 0 ? pendingAlertsCount() + ' open' : 'clear' }}
+          </span>
+        </div>
+        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Active Alerts</p>
+        <h3 class="text-3xl font-bold animate-count-up flex-1"
+          [class]="pendingAlertsCount() > 0 ? 'text-amber-600' : 'text-emerald-600'">
+          {{ pendingAlertsCount() }}
+        </h3>
+        <div class="mini-progress-track mt-4">
+          <div class="mini-progress-fill"
+            [class]="pendingAlertsCount() > 5 ? 'bg-red-400' : pendingAlertsCount() > 0 ? 'bg-amber-400' : 'bg-emerald-400'"
+            [style.width]="alertsPercent() + '%'">
+          </div>
+        </div>
+      </div>
+
+      <!-- Avg Risk Score -->
+      <div class="kpi-card bg-white rounded-[20px] p-6 pb-7 shadow-sm border border-gray-100 animate-fade-in-up delay-200 flex flex-col">
+        <div class="flex items-start justify-between mb-4">
+          <div class="p-2.5 rounded-xl bg-red-50 text-red-600">
+            <span class="material-symbols-outlined text-xl">gpp_maybe</span>
+          </div>
+          <span class="text-[11px] font-bold flex items-center gap-0.5"
+            [class]="avgRiskScore() >= 60 ? 'text-red-500' : avgRiskScore() >= 30 ? 'text-amber-500' : 'text-emerald-600'">
+            <span class="material-symbols-outlined text-sm">{{ avgRiskScore() >= 60 ? 'trending_up' : avgRiskScore() >= 30 ? 'trending_flat' : 'trending_down' }}</span>
+            {{ avgRiskScore() >= 60 ? 'elevated' : avgRiskScore() >= 30 ? 'moderate' : 'low' }}
+          </span>
+        </div>
+        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Avg Risk Score</p>
+        <h3 class="text-3xl font-bold text-red-600 animate-count-up flex-1">
+          {{ avgRiskScore() }}<span class="text-sm text-gray-400 font-semibold">/100</span>
+        </h3>
+        <div class="mini-progress-track mt-4">
+          <div class="mini-progress-fill"
+            [class]="avgRiskScore() >= 60 ? 'bg-red-500' : avgRiskScore() >= 30 ? 'bg-amber-400' : 'bg-emerald-400'"
+            [style.width]="(avgRiskScore() || 2) + '%'">
+          </div>
+        </div>
+      </div>
+
+      <!-- Platform Health -->
+      <div class="kpi-card bg-white rounded-[20px] p-6 pb-7 shadow-sm border border-gray-100 animate-fade-in-up delay-250 flex flex-col">
+        <div class="flex items-start justify-between mb-4">
+          <div class="p-2.5 rounded-xl bg-emerald-50 text-emerald-600">
+            <span class="material-symbols-outlined text-xl">health_and_safety</span>
+          </div>
+          <span class="text-[11px] font-bold flex items-center gap-0.5"
+            [class]="positiveReviewPercent() >= 70 ? 'text-emerald-600' : positiveReviewPercent() >= 40 ? 'text-amber-500' : 'text-red-500'">
+            <span class="material-symbols-outlined text-sm">{{ positiveReviewPercent() >= 70 ? 'trending_up' : positiveReviewPercent() >= 40 ? 'trending_flat' : 'trending_down' }}</span>
+            {{ positiveReviewPercent() }}%
+          </span>
+        </div>
+        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Platform Health</p>
+        <h3 class="text-3xl font-bold text-emerald-600 animate-count-up flex-1">
+          {{ positiveReviewPercent() }}<span class="text-sm text-gray-400 font-semibold">%</span>
+        </h3>
+        <div class="mini-progress-track mt-4">
+          <div class="mini-progress-fill"
+            [class]="positiveReviewPercent() >= 70 ? 'bg-emerald-500' : positiveReviewPercent() >= 40 ? 'bg-amber-400' : 'bg-red-400'"
+            [style.width]="(positiveReviewPercent() || 2) + '%'">
+          </div>
+        </div>
+      </div>
+
+    }
+  </div>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       TODAY'S GUARDIAN AI SUMMARY
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div class="ai-summary-card rounded-[20px] border border-indigo-100/60 p-6 shadow-sm animate-fade-in-up delay-300">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+      <div class="flex items-start gap-4 flex-1">
+        <div class="p-3 rounded-2xl bg-white/70 border border-indigo-100 shadow-sm shrink-0">
+          <span class="material-symbols-outlined text-indigo-600 text-2xl">smart_toy</span>
+        </div>
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+          <h2 class="text-sm font-bold text-gray-800">Today's Guardian AI Observations</h2>
+            <span class="inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 border border-indigo-200 uppercase">
+              <span class="live-dot" style="background:#6366f1"></span> AI Active
+            </span>
+          </div>
+          <p class="text-xs text-gray-500 leading-relaxed max-w-2xl">
+            Guardian AI has completed its daily platform scan. Risk patterns detected across chat sessions, bookings, and review submissions have been catalogued. Immediate review recommended for flagged users.
+          </p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 shrink-0 flex-wrap">
+        <div class="text-center px-4 py-2.5 bg-white/80 rounded-2xl border border-gray-100 shadow-sm min-w-[72px]">
+          <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Incidents</p>
+          <p class="text-xl font-bold text-red-600 mt-0.5">{{ pendingAlertsCount() }}</p>
+        </div>
+        <div class="text-center px-4 py-2.5 bg-white/80 rounded-2xl border border-gray-100 shadow-sm min-w-[72px]">
+          <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Resolved</p>
+          <p class="text-xl font-bold text-emerald-600 mt-0.5">{{ resolvedCount() }}</p>
+        </div>
+        <div class="text-center px-4 py-2.5 bg-white/80 rounded-2xl border border-gray-100 shadow-sm min-w-[72px]">
+          <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">High Risk</p>
+          <p class="text-xl font-bold text-amber-600 mt-0.5">{{ highRiskCount() }}</p>
+        </div>
+        <div class="px-4 py-2.5 bg-white/80 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-2">
+          <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></div>
+          <div>
+            <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">AI Status</p>
+            <p class="text-xs font-bold text-emerald-700 mt-0.5">Platform Safe</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mt-4 pt-4 border-t border-indigo-100/50 flex items-center gap-3 flex-wrap">
+      <span class="text-[10px] font-bold text-indigo-700 uppercase tracking-wider flex items-center gap-1">
+        <span class="material-symbols-outlined text-sm">recommend</span>AI Recommendations:
+      </span>
+      <span class="text-[11px] px-3 py-1 rounded-full bg-white/80 border border-amber-200 text-amber-700 font-semibold">Review {{ highRiskCount() }} flagged users</span>
+      <span class="text-[11px] px-3 py-1 rounded-full bg-white/80 border border-red-200 text-red-700 font-semibold">Audit {{ pendingAlertsCount() }} active alerts</span>
+      <span class="text-[11px] px-3 py-1 rounded-full bg-white/80 border border-indigo-200 text-indigo-700 font-semibold">Run weekly full scan</span>
+    </div>
+  </div>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       SUSPICIOUS ACTIVITY MONITORING â€” FULL WIDTH
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div class="bg-white rounded-[20px] shadow-sm border border-gray-100 overflow-hidden animate-fade-in-up delay-350">
+
+    <!-- Card Header -->
+    <div class="px-6 pt-5 pb-4 border-b border-gray-100">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <div>
+          <h2 class="text-base font-bold text-gray-800">Suspicious Activity Monitoring</h2>
+          <p class="text-[11px] text-gray-400 mt-0.5">
+            High-priority users flagged by Guardian AI Â· Investigate directly from this workspace
+          </p>
+        </div>
+        <span class="text-[11px] font-semibold text-gray-400 shrink-0">
+          {{ filteredUsers().length }} of {{ riskUsers().length }} user{{ riskUsers().length !== 1 ? 's' : '' }}
+        </span>
+      </div>
+
+      <!-- Unified single-row toolbar: chips + search + role + toggle + reset -->
+      <div class="flex items-center gap-2 flex-wrap">
+
+        <!-- Quick filter chips -->
+        @for (chip of quickFilterChips; track chip.key) {
+          <button (click)="setQuickFilter(chip.key)"
+            class="quick-chip inline-flex items-center gap-1 text-[11px] font-semibold px-3 py-1.5 rounded-full border cursor-pointer transition-all whitespace-nowrap"
+            [class]="activeQuickFilter() === chip.key
+              ? chip.activeClass
+              : chip.key === 'all'
+                ? 'bg-gray-100 border-gray-200 text-gray-600 hover:bg-gray-200 hover:border-gray-300'
+                : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700'">
+            <span class="material-symbols-outlined text-[12px]">{{ chip.icon }}</span>
+            {{ chip.label }}
+            @if (chip.key !== 'all' && getQuickFilterCount(chip.key) > 0) {
+              <span class="text-[9px] font-bold opacity-60 ml-0.5">({{ getQuickFilterCount(chip.key) }})</span>
+            }
+          </button>
+        }
+
+        <!-- Divider -->
+        <div class="h-5 w-px bg-gray-200 mx-1 shrink-0 hidden sm:block"></div>
+
+        <!-- Search -->
+        <div class="relative min-w-[180px] flex-1 sm:flex-none sm:w-48">
+          <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-300 text-base pointer-events-none">search</span>
+          <input type="text" [value]="searchFilter()" (input)="updateSearch($event)"
+            placeholder="Search usersâ€¦"
+            class="w-full pl-8 pr-3 py-1.5 rounded-xl border border-gray-200 bg-gray-50 text-xs text-gray-700 placeholder-gray-300 focus:outline-none focus:border-primary/50 focus:bg-white transition-all" />
+        </div>
+
+        <!-- Role pill group -->
+        <div class="flex rounded-xl border border-gray-200 p-0.5 bg-gray-50 text-[10px] font-semibold shrink-0">
+          <button (click)="updateRole('all')"
+            class="filter-btn px-2.5 py-1.5 rounded-[9px] cursor-pointer text-gray-500"
+            [class.active]="roleFilter() === 'all'">All</button>
+          <button (click)="updateRole('family')"
+            class="filter-btn px-2.5 py-1.5 rounded-[9px] cursor-pointer text-indigo-600"
+            [class.active]="roleFilter() === 'family'">Families</button>
+          <button (click)="updateRole('companion')"
+            class="filter-btn px-2.5 py-1.5 rounded-[9px] cursor-pointer text-emerald-600"
+            [class.active]="roleFilter() === 'companion'">Caregivers</button>
+        </div>
+
+        <!-- Active Only toggle -->
+        <label class="flex items-center gap-1.5 cursor-pointer shrink-0">
+          <div class="relative">
+            <input type="checkbox" [checked]="onlyActiveAlerts()" (change)="toggleActiveAlerts()" class="sr-only peer" />
+            <div class="w-8 h-[18px] rounded-full bg-gray-200 peer-checked:bg-primary transition-colors"></div>
+            <div class="absolute left-0.5 top-0.5 w-[14px] h-[14px] rounded-full bg-white shadow transition-transform peer-checked:translate-x-[14px]"></div>
+          </div>
+          <span class="text-[10px] font-semibold text-gray-500">Active Only</span>
+        </label>
+
+        <!-- Reset -->
+        @if (hasActiveFilters()) {
+          <button (click)="resetFilters()"
+            class="inline-flex items-center gap-1 text-[10px] font-semibold text-primary border border-primary/20 bg-primary/5 hover:bg-primary/10 px-2.5 py-1.5 rounded-xl cursor-pointer transition-all shrink-0">
+            <span class="material-symbols-outlined text-sm">filter_alt_off</span>Reset
+          </button>
+        }
+
+      </div>
+    </div>
+
+    <!-- Full-Width Data Table -->
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-left">
+        <thead class="sticky top-0 z-10">
+          <tr class="bg-gray-50/80 backdrop-blur-sm border-b border-gray-100 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+            <th class="py-4 px-6 w-56">User</th>
+            <th class="py-4 px-5 text-center w-28">Risk Score</th>
+            <th class="py-4 px-5 text-center w-24">Violations</th>
+            <th class="py-4 px-5 text-center w-24">Complaints</th>
+            <th class="py-4 px-5 text-center w-28">Last Incident</th>
+            <th class="py-4 px-5 text-center w-28">Status</th>
+            <th class="py-4 px-5">AI Recommendation</th>
+            <th class="py-4 px-6 text-right w-36">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50/80">
+
+          @if (isLoading()) {
+            @for (i of [1,2,3,4,5,6]; track i) {
+              <tr>
+                <td class="py-4 px-6">
+                  <div class="flex items-center gap-3">
+                    <div class="skeleton w-9 h-9 rounded-full shrink-0"></div>
+                    <div class="space-y-1.5"><div class="skeleton h-3 w-32"></div><div class="skeleton h-2.5 w-16"></div></div>
+                  </div>
+                </td>
+                <td class="py-4 px-5"><div class="skeleton h-9 w-9 rounded-full mx-auto"></div></td>
+                <td class="py-4 px-5"><div class="skeleton h-3 w-6 mx-auto"></div></td>
+                <td class="py-4 px-5"><div class="skeleton h-3 w-6 mx-auto"></div></td>
+                <td class="py-4 px-5"><div class="skeleton h-3 w-24 mx-auto"></div></td>
+                <td class="py-4 px-5"><div class="skeleton h-5 w-18 rounded-full mx-auto"></div></td>
+                <td class="py-4 px-5"><div class="skeleton h-5 w-28 rounded-full"></div></td>
+                <td class="py-4 px-6 text-right"><div class="skeleton h-8 w-24 rounded-xl ml-auto"></div></td>
+              </tr>
+            }
+          } @else if (filteredUsers().length === 0) {
+            <tr>
+              <td colspan="8">
+                <div class="flex flex-col items-center justify-center py-20 px-6 text-center">
+                  <div class="w-20 h-20 rounded-[20px] bg-gray-50 border border-gray-100 flex items-center justify-center mb-4">
+                    @if (hasActiveFilters()) {
+                      <span class="material-symbols-outlined text-4xl text-gray-300">manage_search</span>
+                    } @else {
+                      <span class="material-symbols-outlined text-4xl text-gray-300">verified_user</span>
+                    }
+                  </div>
+                  @if (hasActiveFilters()) {
+                    <h3 class="font-semibold text-sm text-gray-700">No matching users found</h3>
+                    <p class="text-xs text-gray-400 mt-1.5 max-w-sm">
+                      There are currently no users that match the selected filters. Try adjusting your search criteria.
+                    </p>
+                    <button (click)="resetFilters()"
+                      class="mt-5 flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-primary text-white font-bold text-xs hover:bg-primary/90 cursor-pointer transition-colors shadow-sm">
+                      <span class="material-symbols-outlined text-base">filter_alt_off</span>
+                      Reset Filters
+                    </button>
+                  } @else {
+                    <h3 class="font-semibold text-sm text-gray-700">No Suspicious Activity Detected</h3>
+                    <p class="text-xs text-gray-400 mt-1.5 max-w-sm">
+                      All platform communications and transactions are currently within safety thresholds.
+                    </p>
+                    <button (click)="loadRiskCenterData()"
+                      class="mt-5 flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white border border-gray-200 text-gray-700 font-bold text-xs hover:border-primary/30 cursor-pointer transition-colors">
+                      <span class="material-symbols-outlined text-base">sync</span>
+                      Refresh Data
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          } @else {
+            @for (entry of filteredUsers(); track entry.user._id) {
+              <tr class="data-grid-row group">
+
+                <!-- User -->
+                <td class="py-4 px-6">
+                  <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-full overflow-hidden border-2 shrink-0 flex items-center justify-center font-bold text-xs"
+                      [class]="entry.user.role === 'family' ? 'border-indigo-200 bg-indigo-50 text-indigo-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700'">
+                      @if (entry.user.avatar?.url) {
+                        <img [src]="entry.user.avatar?.url" class="w-full h-full object-cover" alt="avatar" />
+                      } @else {
+                        {{ getInitials(entry.user.name) }}
+                      }
+                    </div>
+                    <div class="min-w-0">
+                      <h4 class="font-semibold text-xs text-gray-700 truncate max-w-[160px]">{{ entry.user.name }}</h4>
+                      <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-md border"
+                        [class]="entry.user.role === 'family' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'">
+                        {{ entry.user.role === 'family' ? 'Family' : 'Caregiver' }}
+                      </span>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Risk Score -->
+                <td class="py-4 px-5 text-center">
+                  <div class="tooltip-trigger inline-flex flex-col items-center gap-1 mx-auto">
+                    <svg width="38" height="38" viewBox="0 0 36 36">
+                      <circle class="risk-ring-bg" cx="18" cy="18" r="14" />
+                      <circle class="risk-ring risk-ring-fill" cx="18" cy="18" r="14"
+                        [attr.stroke]="entry.riskScore >= 85 ? '#9333ea' : entry.riskScore >= 60 ? '#dc2626' : entry.riskScore >= 30 ? '#d97706' : '#16a34a'"
+                        stroke-dasharray="87.96"
+                        [attr.stroke-dashoffset]="87.96 - (entry.riskScore / 100) * 87.96" />
+                      <text x="18" y="22" text-anchor="middle" font-size="9" font-weight="900"
+                        [attr.fill]="entry.riskScore >= 85 ? '#9333ea' : entry.riskScore >= 60 ? '#dc2626' : entry.riskScore >= 30 ? '#d97706' : '#16a34a'">
+                        {{ entry.riskScore }}
+                      </text>
+                    </svg>
+                    <span class="text-[8px] font-bold uppercase leading-none"
+                      [class]="entry.riskScore >= 85 ? 'text-purple-500' : entry.riskScore >= 60 ? 'text-red-500' : entry.riskScore >= 30 ? 'text-amber-500' : 'text-emerald-500'">
+                      {{ entry.riskLevel }}
+                    </span>
+                    <span class="tooltip-content">Risk Score: {{ entry.riskScore }}/100</span>
+                  </div>
+                </td>
+
+                <!-- Chat Violations -->
+                <td class="py-4 px-5 text-center">
+                  <span class="text-xs font-semibold" [class]="entry.chatViolations > 0 ? 'text-indigo-700' : 'text-gray-300'">
+                    {{ entry.chatViolations }}
+                  </span>
+                  <p class="text-[9px] text-gray-400 font-medium mt-0.5">chats</p>
+                </td>
+
+                <!-- Complaints -->
+                <td class="py-4 px-5 text-center">
+                  <span class="text-xs font-semibold" [class]="entry.complaints > 0 ? 'text-amber-700' : 'text-gray-300'">
+                    {{ entry.complaints }}
+                  </span>
+                  <p class="text-[9px] text-gray-400 font-medium mt-0.5">filed</p>
+                </td>
+
+                <!-- Last Incident -->
+                <td class="py-4 px-5 text-center">
+                  <span class="text-[11px] text-gray-500 font-medium whitespace-nowrap">
+                    {{ entry.lastIncidentDate ? (entry.lastIncidentDate | date:'MMM d') : 'â€”' }}
+                  </span>
+                  @if (entry.lastIncidentDate) {
+                    <p class="text-[9px] text-gray-400 font-medium mt-0.5">{{ entry.lastIncidentDate | date:'h:mm a' }}</p>
+                  }
+                </td>
+
+                <!-- Status -->
+                <td class="py-4 px-5 text-center">
+                  <span class="text-[10px] font-bold px-2.5 py-1 rounded-full border whitespace-nowrap"
+                    [class]="entry.user.isBanned ? 'bg-red-50 text-red-700 border-red-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'">
+                    {{ entry.user.isBanned ? 'Suspended' : 'Active' }}
+                  </span>
+                </td>
+
+                <!-- AI Recommendation -->
+                <td class="py-4 px-5">
+                  <span class="rec-chip border"
+                    [class]="getRecChipClass(entry.aiRecommendation)">
+                    <span class="material-symbols-outlined text-[11px]">{{ getRecIcon(entry.aiRecommendation) }}</span>
+                    {{ entry.aiRecommendation }}
+                  </span>
+                </td>
+
+                <!-- Actions -->
+                <td class="py-4 px-6 text-right">
+                  <button (click)="investigateUser(entry.user._id)"
+                    class="investigate-btn inline-flex items-center gap-1.5 px-4 py-2 rounded-xl font-bold text-[10px] cursor-pointer transition-all focus:outline-none focus:ring-2 focus:ring-primary/40 active:scale-95">
+                    <span class="material-symbols-outlined text-sm">manage_search</span>
+                    Investigate
+                  </button>
+                </td>
+              </tr>
+            }
+          }
+
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    @if (totalPages() > 1) {
+      <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+        <span class="text-[10px] font-bold text-gray-400">
+          Page {{ currentPage() }} of {{ totalPages() }} Â· {{ totalUsers() }} total users
+        </span>
+        <div class="flex items-center gap-1.5">
+          <button (click)="changePage(currentPage() - 1)" [disabled]="currentPage() === 1"
+            class="w-8 h-8 rounded-xl border border-gray-200 hover:bg-gray-50 flex items-center justify-center disabled:opacity-40 cursor-pointer text-xs font-semibold transition-colors">
+            â†
+          </button>
+          @for (p of pageNumbers(); track p) {
+            <button (click)="changePage(p)"
+              class="w-8 h-8 rounded-xl border text-[11px] font-bold flex items-center justify-center cursor-pointer transition-all"
+              [class]="p === currentPage() ? 'bg-primary text-white border-primary' : 'border-gray-200 hover:bg-gray-50 text-gray-500'">
+              {{ p }}
+            </button>
+          }
+          <button (click)="changePage(currentPage() + 1)" [disabled]="currentPage() === totalPages()"
+            class="w-8 h-8 rounded-xl border border-gray-200 hover:bg-gray-50 flex items-center justify-center disabled:opacity-40 cursor-pointer text-xs font-semibold transition-colors">
+            â†’
+          </button>
+        </div>
+      </div>
+    }
+
+  </div>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       RISK ANALYTICS ROW
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in-up delay-400">
+
+    <!-- Risk Trend Line Chart (2/3) -->
+    <div class="lg:col-span-2 bg-white rounded-[20px] shadow-sm border border-gray-100 p-6">
+      <div class="flex items-center justify-between mb-5 flex-wrap gap-3">
+        <div>
+          <h3 class="text-sm font-bold text-gray-800">Risk Trend</h3>
+          <p class="text-[11px] text-gray-400 mt-0.5">Platform-wide risk score distribution across flagged users</p>
+        </div>
+        <div class="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-xl p-1">
+          @for (range of timeRanges; track range.key) {
+            <button (click)="activeTimeRange.set(range.key)"
+              class="time-range-btn" [class.active]="activeTimeRange() === range.key">
+              {{ range.label }}
+            </button>
+          }
+        </div>
+      </div>
+      <div class="w-full overflow-x-auto">
+        <svg class="w-full" viewBox="0 0 520 160" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <linearGradient id="riskGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#dc2626" stop-opacity="0.12"/>
+              <stop offset="100%" stop-color="#dc2626" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <line x1="50" y1="10" x2="50" y2="140" stroke="#f3f4f6" stroke-width="1"/>
+          <line x1="50" y1="10" x2="520" y2="10" stroke="#f3f4f6" stroke-width="1"/>
+          <line x1="50" y1="50" x2="520" y2="50" stroke="#f3f4f6" stroke-width="1"/>
+          <line x1="50" y1="90" x2="520" y2="90" stroke="#f3f4f6" stroke-width="1"/>
+          <line x1="50" y1="130" x2="520" y2="130" stroke="#f3f4f6" stroke-width="1"/>
+          <text x="44" y="13" text-anchor="end" font-size="8" fill="#9ca3af" font-weight="600">100</text>
+          <text x="44" y="53" text-anchor="end" font-size="8" fill="#9ca3af" font-weight="600">75</text>
+          <text x="44" y="93" text-anchor="end" font-size="8" fill="#9ca3af" font-weight="600">50</text>
+          <text x="44" y="133" text-anchor="end" font-size="8" fill="#9ca3af" font-weight="600">0</text>
+          <path [attr.d]="buildAreaPath()" fill="url(#riskGradient)" />
+          <path [attr.d]="buildLinePath()" fill="none" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          @for (dot of buildChartDots(); track dot.x) {
+            <g>
+              <circle [attr.cx]="dot.x" [attr.cy]="dot.y" r="4" fill="#fff" stroke="#dc2626" stroke-width="2.5"/>
+              <circle [attr.cx]="dot.x" [attr.cy]="dot.y" r="1.5" fill="#dc2626"/>
+            </g>
+          }
+        </svg>
+      </div>
+    </div>
+
+    <!-- Incident Categories Donut (1/3) -->
+    <div class="bg-white rounded-[20px] shadow-sm border border-gray-100 p-6">
+      <div class="mb-5">
+        <h3 class="text-sm font-bold text-gray-800">Incident Categories</h3>
+        <p class="text-[11px] text-gray-400 mt-0.5">Distribution by violation type</p>
+      </div>
+      <div class="flex flex-col items-center gap-5">
+        <svg width="120" height="120" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="45" fill="none" stroke="#f3f4f6" stroke-width="18"/>
+          <circle cx="60" cy="60" r="45" fill="none" stroke="#6366f1" stroke-width="18"
+            stroke-dasharray="282.7"
+            [attr.stroke-dashoffset]="getDonutOffset(0)"
+            class="donut-segment" transform="rotate(-90 60 60)"/>
+          <circle cx="60" cy="60" r="45" fill="none" stroke="#f59e0b" stroke-width="18"
+            stroke-dasharray="282.7"
+            [attr.stroke-dashoffset]="getDonutOffset(1)"
+            class="donut-segment" transform="rotate(-90 60 60)"/>
+          <circle cx="60" cy="60" r="45" fill="none" stroke="#ef4444" stroke-width="18"
+            stroke-dasharray="282.7"
+            [attr.stroke-dashoffset]="getDonutOffset(2)"
+            class="donut-segment" transform="rotate(-90 60 60)"/>
+          <text x="60" y="56" text-anchor="middle" font-size="14" font-weight="900" fill="#1b1c1c">{{ totalScanned() }}</text>
+          <text x="60" y="69" text-anchor="middle" font-size="7" font-weight="700" fill="#9ca3af">SCANNED</text>
+        </svg>
+        <div class="w-full space-y-2.5">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <div class="w-2.5 h-2.5 rounded-full bg-indigo-500 shrink-0"></div>
+              <span class="text-[11px] font-medium text-gray-600">Chat Violations</span>
+            </div>
+            <span class="text-[11px] font-bold text-gray-700">{{ chatViolationsTotal() }}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <div class="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0"></div>
+              <span class="text-[11px] font-medium text-gray-600">Complaints</span>
+            </div>
+            <span class="text-[11px] font-bold text-gray-700">{{ complaintsTotal() }}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <div class="w-2.5 h-2.5 rounded-full bg-red-400 shrink-0"></div>
+              <span class="text-[11px] font-medium text-gray-600">Neg. Reviews</span>
+            </div>
+            <span class="text-[11px] font-bold text-gray-700">{{ negativeReviewsTotal() }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       INVESTIGATION MODAL (shared component)
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <app-investigation-modal
+    (actionCompleted)="onInvestigationActionCompleted()">
+  </app-investigation-modal>
+
+</div>
+
