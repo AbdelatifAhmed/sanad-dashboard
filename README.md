@@ -35,9 +35,9 @@ client/admin/sanad-Admin/my-app/
 
 ## 🔗 Connected Projects
 Sanad is a comprehensive ecosystem divided into three main projects:
-- **[Admin Dashboard (Frontend)](.)** - You are here! Angular application for administrators.
-- **[Server (Backend)](../../../../server)** - Node.js/Express API.
-- **[User Frontend (Web Client)](../../../user/sanad)** - Next.js application for end-users.
+- **[Admin Dashboard (Frontend)](https://github.com/AbdelatifAhmed/sanad-dashboard)** - You are here! Angular application for administrators.
+- **[Server (Backend)](https://github.com/AbdelatifAhmed/sanad-api)** - Node.js/Express API.
+- **[User Frontend (Web Client)](https://github.com/AbdelatifAhmed/sanad)** - Next.js application for end-users.
 
 ## 🚀 Technologies Used
 - **Angular (v21)**: Comprehensive frontend framework for building robust applications.
