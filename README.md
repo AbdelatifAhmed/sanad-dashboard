@@ -7,6 +7,9 @@ Sanad is a comprehensive healthcare and companion booking platform designed to b
 
 Operating a two-sided marketplace in healthcare requires strict oversight, security, and quality control. This Admin Dashboard solves this problem by giving administrators total visibility into platform operations, user reviews, and security alerts powered by AI.
 
+## Screenshots
+**[Check Screenshots from here 📸](https://drive.google.com/drive/folders/1btnUPc8KuE3MqZOzT7i2F3bDDfcx8LR7?usp=sharing)**
+
 ## ✨ Platform Features & Capabilities
 
 ### 🧠 Advanced AI Features (In the Admin Dashboard)
